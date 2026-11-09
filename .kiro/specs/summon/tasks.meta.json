@@ -18,6 +18,37 @@
         "executionId": "8733ad9b-3685-4a45-9610-757ead72d06c",
         "chatSessionId": "sess_89b0f72a-843b-4f80-a30c-0796c4cade34",
         "timestamp": 1794247894119
+      },
+      {
+        "executionId": "8733ad9b-3685-4a45-9610-757ead72d06c",
+        "chatSessionId": "sess_89b0f72a-843b-4f80-a30c-0796c4cade34",
+        "timestamp": 1794247991706
+      }
+    ],
+    "2. Define shared types": [
+      {
+        "executionId": "8733ad9b-3685-4a45-9610-757ead72d06c",
+        "chatSessionId": "sess_89b0f72a-843b-4f80-a30c-0796c4cade34",
+        "timestamp": 1794247991818
+      }
+    ],
+    "3.1 Create `lib/env.ts`": [
+      {
+        "executionId": "30082dda-d30c-4604-96ce-553bfe6058f5",
+        "chatSessionId": "sess_d6c24c72-021b-4dff-94ee-fb91d493de63",
+        "timestamp": 1794248058407
+      },
+      {
+        "executionId": "30082dda-d30c-4604-96ce-553bfe6058f5",
+        "chatSessionId": "sess_d6c24c72-021b-4dff-94ee-fb91d493de63",
+        "timestamp": 1794248075709
+      }
+    ],
+    "3. Typed environment variables": [
+      {
+        "executionId": "30082dda-d30c-4604-96ce-553bfe6058f5",
+        "chatSessionId": "sess_d6c24c72-021b-4dff-94ee-fb91d493de63",
+        "timestamp": 1794248075833
       }
     ]
   }

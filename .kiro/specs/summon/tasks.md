@@ -14,15 +14,15 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
   - Add `playwright.config.ts` pointing at `e2e/` with `baseURL: "http://localhost:3000"`
   - _Requirements: 8 (test infrastructure)_
 
-- [~] 2. Define shared types
-  - [-] 2.1 Create `lib/soap/types.ts` with all exported types
+- [x] 2. Define shared types
+  - [x] 2.1 Create `lib/soap/types.ts` with all exported types
     - `SoapVersion`, `BindingStyle`, `Warning`, `FieldDescriptor`, `OperationSchema`, `ServicePort`, `ServiceDefinition`
     - `ErrorCode`, `LazarusError`, `ValidationError`, `FaultError`
     - No runtime logic — types only
     - _Requirements: 3.2, 3.3, 3.4, 4.2, 4.3, 5.1, 6.1, 7.1_
 
-- [ ] 3. Typed environment variables
-  - [ ] 3.1 Create `lib/env.ts`
+- [x] 3. Typed environment variables
+  - [x] 3.1 Create `lib/env.ts`
     - Define `EnvSchema` with `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `NODE_ENV`
     - Export `getEnv(): Env` that calls `EnvSchema.parse(process.env)`
     - _Requirements: 6.5 (registry availability implies env config)_
