@@ -6,7 +6,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
 
 ## Tasks
 
-- [ ] 1. Install dependencies and configure test tooling
+- [x] 1. Install dependencies and configure test tooling
   - Add `soap`, `@upstash/redis`, `zod@^4`, `nanoid` to `dependencies` in `package.json`
   - Add `vitest`, `fast-check`, `@vitest/coverage-v8`, `@playwright/test` to `devDependencies`
   - Add `vitest.config.ts` with `globals: true`, `environment: "node"`, and `include: ["tests/**/*.test.ts"]`
@@ -14,8 +14,8 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
   - Add `playwright.config.ts` pointing at `e2e/` with `baseURL: "http://localhost:3000"`
   - _Requirements: 8 (test infrastructure)_
 
-- [ ] 2. Define shared types
-  - [ ] 2.1 Create `lib/soap/types.ts` with all exported types
+- [~] 2. Define shared types
+  - [-] 2.1 Create `lib/soap/types.ts` with all exported types
     - `SoapVersion`, `BindingStyle`, `Warning`, `FieldDescriptor`, `OperationSchema`, `ServicePort`, `ServiceDefinition`
     - `ErrorCode`, `LazarusError`, `ValidationError`, `FaultError`
     - No runtime logic — types only
@@ -129,10 +129,10 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. Download WSDL fixtures
-  - [ *] 9.1 Save Calculator WSDL to `fixtures/calculator.wsdl`
+  - [x] 9.1 Save Calculator WSDL to `fixtures/calculator.wsdl`
     - Fetch from `http://www.dneonline.com/calculator.asmx?WSDL` and save as a static file; no network requests at test time
     - _Requirements: 8.1, 8.5_
-  - [ *] 9.2 Save CountryInfoService WSDL to `fixtures/countryinfo.wsdl`
+  - [x] 9.2 Save CountryInfoService WSDL to `fixtures/countryinfo.wsdl`
     - Fetch from `http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?WSDL` and save as a static file; no network requests at test time
     - _Requirements: 8.2, 8.5_
 

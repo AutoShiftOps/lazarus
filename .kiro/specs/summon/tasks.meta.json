@@ -1,0 +1,24 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Install dependencies and configure test tooling": [
+      {
+        "executionId": "a47e391b-0fa6-4306-9460-53b9c0533604",
+        "chatSessionId": "sess_4fe15ef2-f893-4a74-92e6-4037ec044ca7",
+        "timestamp": 1794247700997
+      },
+      {
+        "executionId": "a47e391b-0fa6-4306-9460-53b9c0533604",
+        "chatSessionId": "sess_4fe15ef2-f893-4a74-92e6-4037ec044ca7",
+        "timestamp": 1794247834502
+      }
+    ],
+    "2.1 Create `lib/soap/types.ts` with all exported types": [
+      {
+        "executionId": "8733ad9b-3685-4a45-9610-757ead72d06c",
+        "chatSessionId": "sess_89b0f72a-843b-4f80-a30c-0796c4cade34",
+        "timestamp": 1794247894119
+      }
+    ]
+  }
+}
