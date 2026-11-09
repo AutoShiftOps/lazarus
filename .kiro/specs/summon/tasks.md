@@ -37,11 +37,11 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - `fetchWsdl`: validates URL scheme, delegates to `safeFetch`, maps all error cases to `LazarusError`
     - Export `FetchResult` type
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 10.1, 10.2, 10.3, 10.4, 10.5_
-  - [ ]* 4.3 Write unit tests for `isBlockedIp` in `tests/soap/fetcher.test.ts`
+  - [x] 4.3 Write unit tests for `isBlockedIp` in `tests/soap/fetcher.test.ts`
     - Test CIDR boundary values for each blocked range
     - Test public IPs that must not be blocked
     - _Requirements: 10.1_
-  - [ ] 4.4 Write property test for `isBlockedIp` — Property 5
+  - [x] 4.4 Write property test for `isBlockedIp` — Property 5
     - **Property 5: IP classifier correctness**
     - Generate IPs inside each blocked range; assert `isBlockedIp` returns `true`
     - Generate IPs outside all blocked ranges; assert `isBlockedIp` returns `false`

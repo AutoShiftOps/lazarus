@@ -1,5 +1,10 @@
 {
-  "pbtResults": {},
+  "pbtResults": {
+    "4.4 Write property test for `isBlockedIp` — Property 5": {
+      "status": "passed",
+      "lastRunTimestamp": 1794252007876
+    }
+  },
   "executionHistory": {
     "1. Install dependencies and configure test tooling": [
       {
@@ -61,6 +66,23 @@
         "executionId": "e3fb9549-9a05-4da0-8d8e-07bae08b9656",
         "chatSessionId": "sess_48e909b4-663f-4946-acf0-706ffba95275",
         "timestamp": 1794248593165
+      }
+    ],
+    "4.4 Write property test for `isBlockedIp` — Property 5": [
+      {
+        "executionId": "e435fc73-a466-4854-b1fc-53612875f1b7",
+        "chatSessionId": "sess_22e1f4ce-18c1-4ac7-8c1c-349b35c6b3e8",
+        "timestamp": 1794251110528
+      },
+      {
+        "executionId": "e9e9cbc5-605b-48d5-9c0b-b08c7f206008",
+        "chatSessionId": "sess_22e1f4ce-18c1-4ac7-8c1c-349b35c6b3e8",
+        "timestamp": 1794251143001
+      },
+      {
+        "executionId": "e9e9cbc5-605b-48d5-9c0b-b08c7f206008",
+        "chatSessionId": "sess_22e1f4ce-18c1-4ac7-8c1c-349b35c6b3e8",
+        "timestamp": 1794252023154
       }
     ]
   }
