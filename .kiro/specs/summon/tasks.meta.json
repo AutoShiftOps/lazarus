@@ -50,6 +50,18 @@
         "chatSessionId": "sess_d6c24c72-021b-4dff-94ee-fb91d493de63",
         "timestamp": 1794248075833
       }
+    ],
+    "4.1 Implement `lib/soap/fetcher.ts` — `isBlockedIp`": [
+      {
+        "executionId": "e3fb9549-9a05-4da0-8d8e-07bae08b9656",
+        "chatSessionId": "sess_48e909b4-663f-4946-acf0-706ffba95275",
+        "timestamp": 1794248546682
+      },
+      {
+        "executionId": "e3fb9549-9a05-4da0-8d8e-07bae08b9656",
+        "chatSessionId": "sess_48e909b4-663f-4946-acf0-706ffba95275",
+        "timestamp": 1794248593165
+      }
     ]
   }
 }

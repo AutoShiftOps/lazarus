@@ -28,7 +28,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - _Requirements: 6.5 (registry availability implies env config)_
 
 - [ ] 4. SSRF-safe WSDL fetcher
-  - [ ] 4.1 Implement `lib/soap/fetcher.ts` — `isBlockedIp`
+  - [x] 4.1 Implement `lib/soap/fetcher.ts` — `isBlockedIp`
     - Pure function; checks unspecified, loopback, private, link-local, cloud-metadata, IPv4-mapped IPv6 ranges using bitwise integer arithmetic
     - No external dependencies inside this function
     - _Requirements: 10.1_
