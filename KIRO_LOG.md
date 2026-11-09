@@ -11,3 +11,4 @@ One line per notable Kiro moment. This becomes the hackathon write-up.
 - 2026-11-09: Downloaded Calculator and CountryInfoService WSDLs into fixtures/ by hand so contract tests never hit the network.
 - 2026-11-09: Added agent hook test-on-agent-stop (trigger: Agent Stop, action: run `npm test`), so every Kiro turn is checked by the test suite and failures go straight back to the agent.
 - 2026-11-09: Adversarial review of isBlockedIp found 9 bypasses (NAT64, 6to4, IPv4-compatible IPv6, CGNAT, multicast/broadcast, leading-zero octets); Kiro extended the ranges, made parsing fail closed, and grew the suite to 27 tests.
+- 2026-11-09: Property test for isBlockedIp uses Node's net.BlockList as an independent oracle (1,000 random IPv4 + IPv6 per run, plus in-range generators). Kiro found BlockList treats ::ffff:0:0/96 rules as matching plain IPv4, so it split the oracle into separate v4/v6 lists. Extra 40,000-case check: 0 mismatches.
