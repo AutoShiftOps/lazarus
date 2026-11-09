@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "test-on-agent-stop",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "npm test"
+      },
+      "enabled": true
+    }
+  ]
+}
