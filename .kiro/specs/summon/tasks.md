@@ -32,7 +32,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Pure function; checks unspecified, loopback, private, link-local, cloud-metadata, IPv4-mapped IPv6 ranges using bitwise integer arithmetic
     - No external dependencies inside this function
     - _Requirements: 10.1_
-  - [ ] 4.2 Implement `lib/soap/fetcher.ts` — `safeFetch` and `fetchWsdl`
+  - [x] 4.2 Implement `lib/soap/fetcher.ts` — `safeFetch` and `fetchWsdl`
     - `safeFetch`: shared HTTP primitive with SSRF IP check, custom `lookup` callback that dials the validated IP (DNS-rebinding defence), 10 s timeout, 5 MB body cap, redirect following (max 5 hops)
     - `fetchWsdl`: validates URL scheme, delegates to `safeFetch`, maps all error cases to `LazarusError`
     - Export `FetchResult` type

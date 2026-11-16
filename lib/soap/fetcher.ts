@@ -1,10 +1,18 @@
 // lib/soap/fetcher.ts
 // SSRF-safe WSDL fetching. Every outbound HTTP request goes through this module.
 //
-// Exports (task 4.1):
-//   isBlockedIp(ip: string): boolean  — pure, no I/O, property-testable
-//
-// TODO (task 4.2): implement safeFetch and fetchWsdl
+// Exports:
+//   isBlockedIp(ip)       — pure, no I/O, property-testable
+//   safeFetch(url, opts)  — shared HTTP primitive (SSRF gate, timeout, size cap, redirects)
+//   fetchWsdl(rawUrl)     — validates the URL, delegates to safeFetch
+
+import dns from "node:dns";
+import http from "node:http";
+import https from "node:https";
+import net from "node:net";
+import { z } from "zod";
+import type { ErrorCode, LazarusError } from "./types";
+
 // ─── IPv4 helpers ─────────────────────────────────────────────────────────────
 /**
  * Parse a dotted-decimal IPv4 string into an unsigned 32-bit integer.
@@ -94,7 +102,7 @@ function expandIPv6(ip: string): string | null {
 function ipv6ToBigInt(expanded: string): bigint {
   return expanded
     .split(":")
-    .reduce((acc, group) => (acc << 16n) | BigInt(parseInt(group, 16)), 0n);
+    .reduce((acc, group) => (acc << BigInt(16)) | BigInt(parseInt(group, 16)), BigInt(0));
 }
 /**
  * Check whether an IPv6 BigInt falls inside a CIDR range described by a
@@ -169,4 +177,277 @@ export function isBlockedIp(ip: string): boolean {
     if (inIPv6Range(ipBig, networkBig, prefix)) return true;
   }
   return false;
+}
+
+// ─── safeFetch ────────────────────────────────────────────────────────────────
+
+export type FetchResult =
+  | { ok: true; xml: string; finalUrl: string }
+  | { ok: false; error: LazarusError };
+
+export type SafeFetchResult = FetchResult;
+
+export type SafeFetchOptions = {
+  /** Total time budget across all redirect hops. Default 10 000 ms. */
+  timeoutMs?: number;
+  /** Maximum response body size in bytes. Default 5 242 880 (5 MB). */
+  maxBytes?: number;
+  /** Maximum number of redirect hops followed. Default 5. */
+  maxRedirects?: number;
+};
+
+const DEFAULT_TIMEOUT_MS = 10_000;
+const DEFAULT_MAX_BYTES = 5_242_880;
+const DEFAULT_MAX_REDIRECTS = 5;
+
+const MSG_TIMEOUT = "The séance timed out — the service did not respond in time.";
+const MSG_INVALID_URL = "Invalid URL — only HTTP and HTTPS are supported.";
+const MSG_BLOCKED =
+  "This address points to a private or internal network and cannot be summoned.";
+const MSG_TOO_LARGE = "The WSDL document is too large (limit: 5 MB).";
+
+function fail(code: ErrorCode, message: string, detail?: unknown): FetchResult {
+  return { ok: false, error: { code, message, detail } };
+}
+
+/** Thrown from the custom lookup when a resolved address is blocked. */
+class BlockedAddressError extends Error {
+  constructor() {
+    super("blocked address");
+    this.name = "BlockedAddressError";
+  }
+}
+
+/** Strip the brackets Node's URL parser leaves around IPv6 hostnames. */
+function bareHostname(hostname: string): string {
+  return hostname.startsWith("[") && hostname.endsWith("]")
+    ? hostname.slice(1, -1)
+    : hostname;
+}
+
+type HopOutcome =
+  | { kind: "done"; xml: string }
+  | { kind: "redirect"; location: string }
+  | { kind: "error"; result: FetchResult };
+
+/**
+ * Perform one HTTP(S) GET. The custom `lookup` validates every resolved
+ * address and hands the validated one to Node, which dials it directly; the
+ * hostname is unchanged so TLS still verifies the certificate against it.
+ */
+function requestOnce(
+  url: URL,
+  maxBytes: number,
+  signal: AbortSignal,
+): Promise<HopOutcome> {
+  return new Promise<HopOutcome>((resolve) => {
+    let blocked = false;
+    let settled = false;
+    const settle = (outcome: HopOutcome): void => {
+      if (settled) return;
+      settled = true;
+      signal.removeEventListener("abort", onAbort);
+      resolve(outcome);
+    };
+    const err = (code: ErrorCode, message: string, detail?: unknown): void =>
+      settle({ kind: "error", result: fail(code, message, detail) });
+
+    const lookup: net.LookupFunction = (hostname, options, callback) => {
+      dns.lookup(
+        hostname,
+        { all: true, family: options.family, hints: options.hints },
+        (lookupErr, addresses) => {
+          if (lookupErr) {
+            callback(lookupErr, "", 0);
+            return;
+          }
+          if (
+            addresses.length === 0 ||
+            addresses.some((a) => isBlockedIp(a.address))
+          ) {
+            blocked = true;
+            callback(new BlockedAddressError(), "", 0);
+            return;
+          }
+          if (options.all) {
+            callback(null, addresses);
+          } else {
+            callback(null, addresses[0].address, addresses[0].family);
+          }
+        },
+      );
+    };
+
+    const transport = url.protocol === "https:" ? https : http;
+    const req = transport.request(
+      url,
+      {
+        method: "GET",
+        lookup,
+        agent: false,
+        headers: {
+          Accept: "text/xml, application/xml, application/wsdl+xml, */*",
+          "User-Agent": "Lazarus/1.0",
+        },
+      },
+      (res) => {
+        const status = res.statusCode ?? 0;
+        if (status >= 300 && status < 400 && res.headers.location) {
+          res.resume();
+          settle({ kind: "redirect", location: res.headers.location });
+          return;
+        }
+        if (status >= 300 && status < 400) {
+          res.resume();
+          err(
+            "WSDL_FETCH_FAILED",
+            `The endpoint is unreachable or rejected the request (HTTP ${status}, redirect without a Location).`,
+          );
+          return;
+        }
+        if (status !== 200) {
+          res.resume();
+          err(
+            "WSDL_FETCH_FAILED",
+            `The endpoint is unreachable or rejected the request (HTTP ${status}).`,
+          );
+          return;
+        }
+        const declared = Number(res.headers["content-length"]);
+        if (res.headers["content-length"] !== undefined && declared > maxBytes) {
+          req.destroy();
+          err("WSDL_TOO_LARGE", MSG_TOO_LARGE);
+          return;
+        }
+        const chunks: Buffer[] = [];
+        let total = 0;
+        res.on("data", (chunk: Buffer) => {
+          total += chunk.length;
+          if (total > maxBytes) {
+            req.destroy();
+            err("WSDL_TOO_LARGE", MSG_TOO_LARGE);
+            return;
+          }
+          chunks.push(chunk);
+        });
+        res.on("end", () =>
+          settle({ kind: "done", xml: Buffer.concat(chunks).toString("utf8") }),
+        );
+        res.on("error", (e) =>
+          err("WSDL_FETCH_FAILED", "The connection was interrupted.", e),
+        );
+      },
+    );
+
+    const onAbort = (): void => {
+      req.destroy();
+      err("TIMEOUT", MSG_TIMEOUT);
+    };
+    if (signal.aborted) {
+      onAbort();
+      return;
+    }
+    signal.addEventListener("abort", onAbort, { once: true });
+
+    req.on("error", (e) => {
+      if (blocked || e instanceof BlockedAddressError) {
+        err("SSRF_BLOCKED", MSG_BLOCKED);
+        return;
+      }
+      err(
+        "WSDL_FETCH_FAILED",
+        "The endpoint is unreachable or rejected the request.",
+        e,
+      );
+    });
+    req.end();
+  });
+}
+
+/**
+ * Shared HTTP primitive for every outbound request in the summon pipeline.
+ * Enforces SSRF checks on every hop, a total timeout, a body-size cap and a
+ * redirect limit. Never throws; failures are returned as `{ ok: false }`.
+ */
+export async function safeFetch(
+  url: string,
+  options: SafeFetchOptions = {},
+): Promise<SafeFetchResult> {
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
+  let remainingHops = options.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    let current: URL;
+    try {
+      current = new URL(url);
+    } catch {
+      return fail("INVALID_REQUEST", MSG_INVALID_URL);
+    }
+
+    for (;;) {
+      if (current.protocol !== "http:" && current.protocol !== "https:") {
+        return fail("INVALID_REQUEST", MSG_INVALID_URL);
+      }
+      // Node skips `lookup` for IP literals, so check them explicitly.
+      const host = bareHostname(current.hostname);
+      if (net.isIP(host) !== 0 && isBlockedIp(host)) {
+        return fail("SSRF_BLOCKED", MSG_BLOCKED);
+      }
+
+      const outcome = await requestOnce(current, maxBytes, controller.signal);
+      if (outcome.kind === "error") return outcome.result;
+      if (outcome.kind === "done") {
+        return { ok: true, xml: outcome.xml, finalUrl: current.toString() };
+      }
+
+      if (remainingHops <= 0) {
+        return fail(
+          "WSDL_FETCH_FAILED",
+          "Too many redirects were encountered (maximum 5).",
+        );
+      }
+      remainingHops -= 1;
+      try {
+        current = new URL(outcome.location, current);
+      } catch {
+        return fail(
+          "WSDL_FETCH_FAILED",
+          "The endpoint returned an invalid redirect location.",
+        );
+      }
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ─── fetchWsdl ────────────────────────────────────────────────────────────────
+
+const WsdlUrlSchema = z.string().url();
+
+/** Validate the URL (HTTP/HTTPS only) and fetch the WSDL via `safeFetch`. */
+export async function fetchWsdl(rawUrl: string): Promise<FetchResult> {
+  const parsed = WsdlUrlSchema.safeParse(rawUrl);
+  if (!parsed.success) return fail("INVALID_REQUEST", MSG_INVALID_URL);
+  let scheme: string;
+  try {
+    scheme = new URL(parsed.data).protocol;
+  } catch {
+    return fail("INVALID_REQUEST", MSG_INVALID_URL);
+  }
+  if (scheme !== "http:" && scheme !== "https:") {
+    return fail("INVALID_REQUEST", MSG_INVALID_URL);
+  }
+  try {
+    return await safeFetch(parsed.data);
+  } catch (e) {
+    return fail(
+      "WSDL_FETCH_FAILED",
+      "The endpoint is unreachable or rejected the request.",
+      e,
+    );
+  }
 }
