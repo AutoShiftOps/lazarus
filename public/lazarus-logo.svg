@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="40%" r="46%">
+      <stop offset="0" stop-color="#5fe0cf" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#5fe0cf" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="spirit" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#36ad9e"/>
+      <stop offset="1" stop-color="#c4fff6"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <ellipse cx="256" cy="200" rx="160" ry="175" fill="url(#glow)"/>
+  <!-- open flap, folded back -->
+  <path d="M110 292 L256 206 L402 292" fill="#1a1423" stroke="#f2a541" stroke-opacity="0.5" stroke-width="14" stroke-linejoin="round"/>
+  <!-- back panel -->
+  <rect x="104" y="292" width="304" height="172" rx="20" fill="#1a1423" stroke="#f2a541" stroke-width="16" stroke-linejoin="round"/>
+  <!-- spirit rising out of the envelope -->
+  <path id="s" d="M256 372 C 188 340, 168 262, 208 204 C 232 170, 226 130, 244 86 C 252 112, 266 130, 288 144 C 332 172, 350 232, 326 290 C 312 324, 290 352, 256 372 Z" fill="url(#spirit)" filter="url(#soft)" opacity="0.55"/>
+  <path d="M256 372 C 188 340, 168 262, 208 204 C 232 170, 226 130, 244 86 C 252 112, 266 130, 288 144 C 332 172, 350 232, 326 290 C 312 324, 290 352, 256 372 Z" fill="url(#spirit)"/>
+  <!-- curly-brace eyes: it speaks JSON now -->
+  <g fill="none" stroke="#120f17" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M238 222 c -11 0 -11 5 -11 13 c 0 9 -4 11 -10 11 c 6 0 10 2 10 11 c 0 8 0 13 11 13"/>
+    <path d="M278 222 c 11 0 11 5 11 13 c 0 9 4 11 10 11 c -6 0 -10 2 -10 11 c 0 8 0 13 -11 13"/>
+  </g>
+  <!-- front pocket -->
+  <path d="M104 304 L256 392 L408 304 L408 444 Q408 464 388 464 L124 464 Q104 464 104 444 Z" fill="#221a2e"/>
+  <path d="M112 306 L256 390 L400 306" fill="none" stroke="#f2a541" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M104 300 L104 444 Q104 464 124 464 L388 464 Q408 464 408 444 L408 300" fill="none" stroke="#f2a541" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

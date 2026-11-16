@@ -198,6 +198,35 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Assert `mcpUrl` is an absolute HTTPS/HTTP URL on the same host
     - _Requirements: 7.1, 8.1_
 
+- [ ] 15. Risk classification
+  - [ ] 15.1 Capture `wsdl:documentation` per operation in the parser into `OperationSchema.documentation`
+    - Truncate to 500 characters; absent documentation leaves the field undefined
+    - _Requirements: 11.4, 11.7_
+  - [ ] 15.2 Implement `lib/soap/risk.ts` — `heuristicRisk`, `mergeRisk`, `classifyOperations`
+    - Bedrock access behind an injectable `BedrockLike` interface; 8 s timeout; zod-validated response
+    - Add `risk`, `riskReason`, `riskSource` to `OperationSchema` in `lib/soap/types.ts`
+    - _Requirements: 11.1, 11.2, 11.3, 11.5, 11.6, 11.8_
+  - [ ] 15.3 Unit tests in `tests/soap/risk.test.ts`
+    - `GetBalance` → read, `TransferFunds` → write, `CloseAccount` → destructive, `getOrDeleteRecord` → destructive
+    - Documentation containing "cannot be undone" raises a write to destructive
+    - Fake Bedrock returning a less restrictive class is ignored; timeout and invalid JSON fall back to the heuristic with `riskSource: "heuristic"`
+    - _Requirements: 11.1–11.8_
+  - [ ]* 15.4 Property tests for risk classification
+    - **Property 25**: merged risk is never less restrictive than the heuristic
+    - **Property 26**: heuristic is total and deterministic for any string
+    - **Property 27**: a destructive token always yields destructive
+    - Minimum 100 iterations each
+    - **Validates: Requirements 11.3, 11.8**
+
+- [ ] 16. Owner token
+  - [ ] 16.1 `upsertService` reports `created: boolean`; the route generates a 32-byte base64url token on create only, stores its SHA-256 hash, and returns it once
+    - _Requirements: 12.1, 12.2, 12.3_
+  - [ ] 16.2 Tests: a second summon of the same WSDL URL returns no `ownerToken`; no response body contains `ownerTokenHash`
+    - _Requirements: 12.2, 12.4_
+
+- [ ] 17. Risk checkpoint — Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for a faster MVP
@@ -224,7 +253,10 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     { "id": 8, "tasks": ["7.3", "7.4", "7.5", "7.6", "7.7", "11.1"] },
     { "id": 9, "tasks": ["12.1"] },
     { "id": 10, "tasks": ["12.2", "12.3"] },
-    { "id": 11, "tasks": ["14.1"] }
+    { "id": 11, "tasks": ["14.1"] },
+    { "id": 12, "tasks": ["15.1"] },
+    { "id": 13, "tasks": ["15.2", "16.1"] },
+    { "id": 14, "tasks": ["15.3", "15.4", "16.2"] }
   ]
 }
 ```

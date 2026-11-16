@@ -231,6 +231,45 @@ JSON Schema output for MCP tool registration is derived from `buildZodSchema` at
 
 ---
 
+### `lib/soap/risk.ts`
+
+**Responsibilities:** assign each operation a risk class and a human-readable reason, before the registry upsert.
+
+Type additions (in `lib/soap/types.ts`):
+
+```typescript
+export type Risk = "read" | "write" | "destructive";
+
+// added to OperationSchema:
+//   risk: Risk;
+//   riskReason: string;                  // <= 120 chars
+//   riskSource: "heuristic" | "model";
+//   documentation?: string;              // from wsdl:documentation, <= 500 chars
+
+// added to ServiceDefinition:
+//   ownerTokenHash?: string;             // never returned to clients
+```
+
+The parser captures `wsdl:documentation` for each operation into `OperationSchema.documentation`.
+
+```typescript
+export function heuristicRisk(name: string, documentation?: string): { risk: Risk; reason: string };
+export function mergeRisk(heuristic: Risk, model: Risk): Risk;          // most restrictive wins
+export async function classifyOperations(
+  ops: OperationSchema[],
+  deps?: { bedrock?: BedrockLike; timeoutMs?: number },
+): Promise<OperationSchema[]>;
+```
+
+`BedrockLike` is a one-method interface, so tests inject a fake and the suite never touches AWS. The real
+implementation uses `@aws-sdk/client-bedrock-runtime` with `ConverseCommand`, `temperature: 0`, and a system
+prompt instructing: *"Return only JSON: `[{name, risk, reason}]`. risk is read, write or destructive. When
+unsure, choose the more dangerous class."* The response is parsed with zod and discarded on any mismatch.
+
+**Pipeline position:** `route.ts` calls `classifyOperations` after schema generation and before the registry
+upsert. `upsertService` reports `created: boolean` so the route generates an Owner_Token only for a new
+service.
+
 ### `lib/soap/translator.ts`
 
 **Responsibilities:** the sole location for SOAP envelope construction and parsing.
@@ -568,6 +607,20 @@ export type FaultError = {
 **Validates: Requirements 9.1, 9.2**
 
 ---
+
+### Property 25: Risk is monotone
+
+For any operation name, any documentation string and any model answer, the merged risk is never less
+restrictive than the heuristic result.
+
+### Property 26: Heuristic is total and deterministic
+
+For any string, `heuristicRisk` returns one of the three classes, and repeated calls return the same class.
+
+### Property 27: Destructive words win
+
+For any name containing a destructive word as a camelCase, snake_case or digit-delimited token, the heuristic
+returns `destructive` regardless of any read words also present.
 
 ## Error Handling
 

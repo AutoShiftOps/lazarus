@@ -26,6 +26,9 @@ can look it up. The feature covers SOAP 1.1 and 1.2 with document/literal and rp
 - **SOAP_Envelope**: A well-formed XML document conforming to the SOAP 1.1 or 1.2 namespace that wraps a SOAP call.
 - **Client**: A human user interacting with the Lazarus UI or a programmatic caller of the Summon API.
 - **SSRF**: Server-Side Request Forgery; an attack where a server is tricked into making requests to internal or unintended network destinations.
+- **Risk_Classifier**: The module `lib/soap/risk.ts` that assigns each operation a risk class.
+- **Risk**: One of `"read"`, `"write"` or `"destructive"`; how dangerous an operation is.
+- **Owner_Token**: A secret returned once by the Summon_API, authorising later changes to the service's rules and settings.
 
 ---
 
@@ -173,3 +176,33 @@ can look it up. The feature covers SOAP 1.1 and 1.2 with document/literal and rp
 3. THE WSDL_Fetcher SHALL apply the same blocked-range check to every IP address encountered during redirect following; IF any redirect destination resolves to a blocked address, THE Summon_API SHALL respond with HTTP 400 and error code `SSRF_BLOCKED`.
 4. THE WSDL_Fetcher SHALL stop reading the response body once 5 242 880 bytes (5 MB) have been received and SHALL reject the response with HTTP 422 and error code `WSDL_TOO_LARGE` if the body exceeds that limit.
 5. IF the `Content-Length` response header is present and its value exceeds 5 242 880 bytes, THEN THE WSDL_Fetcher SHALL reject the response immediately without reading the body, responding with HTTP 422 and error code `WSDL_TOO_LARGE`.
+
+---
+
+### Requirement 11: Classify operation risk
+
+**User Story:** As an integration owner, I want every operation labelled by how dangerous it is, so that dangerous ones are held for a human by default.
+
+#### Acceptance Criteria
+
+1. WHEN a service is summoned, THE Risk_Classifier SHALL assign every OperationSchema a `risk` and a `riskReason` of at most 120 characters before the registry upsert.
+2. THE Risk_Classifier SHALL first apply a heuristic to the operation name, split on camelCase, snake_case and digit boundaries: a name containing `Get`, `List`, `Find`, `Search`, `Query`, `Read`, `Fetch`, `Lookup`, `Check`, `Validate`, `Describe` or `Count` SHALL be classed `read`; a name containing `Delete`, `Remove`, `Close`, `Cancel`, `Terminate`, `Revoke`, `Purge`, `Drop`, `Destroy`, `Void`, `Deactivate` or `Disable` SHALL be classed `destructive`; every other name SHALL be classed `write`.
+3. IF a name matches both a read word and a destructive word, THEN THE Risk_Classifier SHALL class it `destructive`.
+4. WHERE the WSDL documentation for an operation contains "cannot be undone", "irreversible", "permanently" or "delete", THE Risk_Classifier SHALL raise a `read` or `write` result to `destructive`.
+5. WHERE Amazon Bedrock is configured (`BEDROCK_MODEL_ID` and AWS credentials present), THE Risk_Classifier SHALL request one risk class and reason per operation, supplying the operation name, its documentation and its field names, and SHALL accept the model's answer only where it is equal to or more restrictive than the heuristic result.
+6. IF Bedrock is not configured, does not answer within 8 seconds, or returns a body that fails schema validation, THEN THE Risk_Classifier SHALL use the heuristic result alone and SHALL set `riskSource` to `"heuristic"`; otherwise it SHALL set `riskSource` to `"model"`.
+7. THE Risk_Classifier SHALL send the model only operation names, documentation text truncated to 500 characters, and field names; it SHALL NOT send endpoint addresses, credentials or sample values.
+8. THE Risk_Classifier SHALL never assign a risk class less restrictive than the heuristic result.
+
+---
+
+### Requirement 12: Owner token
+
+**User Story:** As the owner of a summoned service, I want a secret that proves it is mine, so that only I can change its safety rules later.
+
+#### Acceptance Criteria
+
+1. WHEN a new service is stored, THE Summon_API SHALL generate an Owner_Token of 32 random bytes encoded base64url, SHALL store only its SHA-256 hash in the Registry, and SHALL include the token in that one response as `ownerToken`.
+2. WHEN a WSDL URL is summoned again and the service already exists, THE Summon_API SHALL NOT return an Owner_Token.
+3. THE Summon_API response SHALL include `risk` and `riskReason` for every operation.
+4. THE Summon_API SHALL never include the Owner_Token hash in any response.
