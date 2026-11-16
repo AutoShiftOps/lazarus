@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { inspectDocument } from "../../lib/soap/parser";
+import { guardXml, inspectDocument } from "../../lib/soap/parser";
 import type { DocumentInfo } from "../../lib/soap/parser";
 import type { LazarusError } from "../../lib/soap/types";
 
@@ -71,5 +71,40 @@ describe("inspectDocument (Stage 2)", () => {
       inspectDocument(`<definitions xmlns="${WSDL_NS}"><message name="m"/></definitions>`),
       "No services found in the WSDL.",
     );
+  });
+});
+
+describe("guardXml (Stage 1)", () => {
+  function expectRejected(xml: string): void {
+    const r = guardXml(xml);
+    expect(r).not.toBeNull();
+    expect(r?.code).toBe("WSDL_PARSE_FAILED");
+  }
+
+  it("rejects a DOCTYPE declaration", () => {
+    expectRejected("<!DOCTYPE foo>");
+  });
+
+  it("rejects a lowercase doctype declaration", () => {
+    expectRejected("<!doctype foo>");
+  });
+
+  it("rejects a DOCTYPE after a 5000-character comment", () => {
+    const body = "x".repeat(5000);
+    expect(body).toHaveLength(5000);
+    expectRejected(`<?xml version="1.0"?><!--${body}--><!DOCTYPE foo><foo/>`);
+  });
+
+  it("rejects a billion-laughs document", () => {
+    const xml = `<?xml version="1.0"?><!DOCTYPE lolz [<!ENTITY lol "lol"><!ENTITY lol1 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;"><!ENTITY lol2 "&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;"><!ENTITY lol9 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">]><lolz>&lol9;</lolz>`;
+    expectRejected(xml);
+  });
+
+  it("rejects an empty string", () => {
+    expectRejected("");
+  });
+
+  it("accepts the calculator fixture", () => {
+    expect(guardXml(readFileSync("fixtures/calculator.wsdl", "utf8"))).toBeNull();
   });
 });

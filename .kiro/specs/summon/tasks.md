@@ -72,7 +72,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Import the `WSDL` class from `soap` only; do not import `open_wsdl`, `createClient` or `createClientAsync`
     - Binding transport filter, operation deduplication across SOAP 1.1 and 1.2, `bindingStyle` classification
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 13.3, 13.7_
-  - [ ] 5.5 Write unit tests for the parser in `tests/soap/parser.test.ts`
+  - [x] 5.5 Write unit tests for the parser in `tests/soap/parser.test.ts`
     - Stage 1: DOCTYPE rejected in several forms, including one preceded by a 5 000-character XML comment; a billion-laughs sample rejected
     - Stage 2: WSDL 1.1 accepted; WSDL 2.0 rejected with its own message; non-WSDL XML rejected; malformed XML reports line and column; no-service error
     - Stage 4: a failing schema fetch yields a warning and parsing continues; an import cycle terminates; the 20-document limit holds

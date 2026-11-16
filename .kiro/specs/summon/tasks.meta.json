@@ -159,6 +159,18 @@
         "chatSessionId": "sess_678d921a-a84e-4f39-a20e-b0fd31248ea7",
         "timestamp": 1794846475076
       }
+    ],
+    "5.5 Write unit tests for the parser in `tests/soap/parser.test.ts`": [
+      {
+        "executionId": "206083a1-fdce-4f0b-a8c3-5fad97873056",
+        "chatSessionId": "sess_678d921a-a84e-4f39-a20e-b0fd31248ea7",
+        "timestamp": 1794846834000
+      },
+      {
+        "executionId": "206083a1-fdce-4f0b-a8c3-5fad97873056",
+        "chatSessionId": "sess_678d921a-a84e-4f39-a20e-b0fd31248ea7",
+        "timestamp": 1794846872928
+      }
     ]
   }
 }
