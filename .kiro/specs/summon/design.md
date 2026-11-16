@@ -156,27 +156,89 @@ export type ParseResult =
 export async function parseWsdl(xml: string): Promise<ParseResult>
 ```
 
-**Algorithm — `parseWsdl`:**
+**Algorithm — `parseWsdl`:** a five-stage pipeline. Each stage is a separate exported function so it can
+be tested on its own, and the order matters: nothing reaches the `soap` library until the document has been
+checked and all external schemas inlined.
 
-1. Parse XML with the `soap` npm package's `WSDL` class (`new soap.WSDL(xml, baseUrl, options)`). On XML syntax error → `WSDL_PARSE_FAILED` with line/column from parser.
-2. Check root element namespace and local name:
-   - `http://schemas.xmlsoap.org/wsdl/` + `definitions` → proceed.
-   - `http://www.w3.org/ns/wsdl` + `description` → `WSDL_PARSE_FAILED` with "WSDL 2.0 is not supported yet."
-   - Anything else → `WSDL_PARSE_FAILED` with "Not a recognised WSDL document."
-3. If no `<service>` elements found → `WSDL_PARSE_FAILED` with "No services found in the WSDL."
-4. For each `<binding>`:
-   - Extract transport namespace from `soap:binding` or `soap12:binding`.
-   - SOAP 1.1: `http://schemas.xmlsoap.org/soap/http` ✓
-   - SOAP 1.2: `http://www.w3.org/2003/05/soap/bindings/HTTP/` ✓
-   - Other transport: skip binding, add warning `{ code: "UNSUPPORTED_BINDING", message: "Binding <name> uses an unsupported transport and was skipped." }`.
-5. For each accepted binding, collect `(operationName, portTypeName, bindingStyle, soapVersion)` tuples.
-6. **Deduplication:** group tuples by `(portTypeName, operationName)`. When both `"1.1"` and `"1.2"` are present → single `OperationSchema` with `soapVersions: ["1.1","1.2"]`, `preferredVersion: "1.1"`. Otherwise single version.
-7. Determine `bindingStyle` per operation:
-   - `document/literal`, `rpc/literal`, `document/encoded` → record as-is.
-   - `rpc/encoded` → record as `"rpc/encoded"`, add warning.
-   - Cannot determine → `"unknown"`.
-8. Resolve external `schemaLocation` URLs with 10 s timeout each. On failure: add `{ code: "SCHEMA_FETCH_FAILED", message: "Could not fetch schema at <url>." }` to warnings; continue.
-9. Return `ServiceDefinition`.
+```
+raw XML
+  │
+  ├─ Stage 1  guardXml(xml)            reject DOCTYPE, reject empty/oversized
+  ├─ Stage 2  inspectDocument(xml)     root element, service presence, syntax errors with line/column
+  ├─ Stage 3  collectSchemaRefs(xml)   list every xsd:import / xsd:include schemaLocation
+  ├─ Stage 4  inlineSchemas(xml, refs) pre-fetch each via safeFetch, splice into <types>
+  └─ Stage 5  buildDefinition(xml)     hand the assembled string to soap's WSDL class, walk bindings
+       ↓
+  ServiceDefinition
+```
+
+**Stage 1 — `guardXml(xml): LazarusError | null`.** Rejects a `<!DOCTYPE` declaration anywhere in the
+document. This is a string check performed before any parser is constructed, because a DTD is dangerous at
+parse time, not after. The scan covers the whole document, not a prefix: XML permits comments and processing
+instructions of unbounded length before the DOCTYPE, so a prefix scan is evaded by padding. The body is
+already capped at 5 MB by `safeFetch`, so a full scan is bounded. Returns `null` when the document is
+acceptable.
+
+**Stage 2 — `inspectDocument(xml): DocumentInfo | LazarusError`.** Uses `fast-xml-parser`'s `XMLValidator`
+for syntax errors, which reports line and column (Requirement 2.2); the `soap` library does not. Then a
+single `XMLParser` pass, configured `processEntities: false`, `ignoreDeclaration: true`,
+`ignoreAttributes: false`, to read the root element's namespace and local name and to count `<service>`
+elements. Returns the root namespace, root local name, service count, and target namespace.
+
+Root element dispatch (Requirement 2.1, 2.3):
+
+| Root namespace | Local name | Outcome |
+|---|---|---|
+| `http://schemas.xmlsoap.org/wsdl/` | `definitions` | proceed |
+| `http://www.w3.org/ns/wsdl` | `description` | `WSDL_PARSE_FAILED` — "WSDL 2.0 is not supported yet." |
+| anything else | anything | `WSDL_PARSE_FAILED` — "Not a recognised WSDL document." |
+
+**Stage 3 — `collectSchemaRefs(xml): string[]`.** Walks the parsed tree for `xsd:import` and `xsd:include`
+elements inside `<types>` and returns their `schemaLocation` attributes, resolved against the WSDL's own URL.
+Relative locations resolve against the WSDL base URL; a location that is already absolute is used as-is.
+
+**Stage 4 — `inlineSchemas(xml, refs, deps): { xml: string; warnings: Warning[] }`.** For each reference, in
+order, subject to the limits in Requirement 13:
+
+- Skip any URL already fetched during this parse (cycle guard, Requirement 13.6).
+- Stop after 20 documents, adding `SCHEMA_LIMIT_REACHED` (Requirement 13.5).
+- Fetch through `safeFetch` with a 10 s timeout. On any failure add
+  `{ code: "SCHEMA_FETCH_FAILED", message: "Could not fetch schema at <url>." }` and continue
+  (Requirement 2.6).
+- Reject a document over 2 MB with `SCHEMA_TOO_LARGE` (Requirement 13.4).
+- Run Stage 1's guard over the fetched schema too — an imported schema is attacker-controlled in exactly the
+  same way as the WSDL.
+- Splice the schema's `<xsd:schema>` element into the WSDL's `<types>` element, replacing the `import`
+  element that referenced it.
+
+`deps` carries the fetch function so tests inject a fake and assert zero real network calls.
+
+**Stage 5 — `buildDefinition(xml, info): ServiceDefinition | LazarusError`.** Constructs
+`new WSDL(xml, baseUrl, options)` from `soap`, where `WSDL` is the class imported from `soap` directly.
+
+> **Forbidden:** `open_wsdl`, `soap.createClient`, and `soap.createClientAsync` all fetch URLs themselves and
+> would bypass every SSRF control in `lib/soap/fetcher.ts`. The parser must not import them. A test asserts
+> that parsing a WSDL with external imports issues zero `http.request` calls when the injected fetch is a fake.
+
+Then, over the constructed definition:
+
+1. If no `<service>` elements were counted in Stage 2 → `WSDL_PARSE_FAILED`, "No services found in the WSDL."
+2. For each `<binding>`, read the transport from `soap:binding` or `soap12:binding`:
+   - SOAP 1.1 — `http://schemas.xmlsoap.org/soap/http` → accept.
+   - SOAP 1.2 — `http://www.w3.org/2003/05/soap/bindings/HTTP/` → accept.
+   - Any other transport → skip the binding, add
+     `{ code: "UNSUPPORTED_BINDING", message: "Binding <name> uses an unsupported transport and was skipped." }`.
+3. Collect `(operationName, portTypeName, bindingStyle, soapVersion)` tuples from accepted bindings.
+4. **Deduplication:** group by `(portTypeName, operationName)`. Both versions present → one `OperationSchema`
+   with `soapVersions: ["1.1","1.2"]` and `preferredVersion: "1.1"`. Otherwise a single version.
+5. Classify `bindingStyle`: `document/literal`, `rpc/literal` and `document/encoded` are recorded as-is;
+   `rpc/encoded` is recorded and warned about; anything undeterminable becomes `"unknown"`.
+6. Return the `ServiceDefinition`.
+
+**Why this order.** The previous draft of this design parsed with the `soap` library first and resolved
+external schemas afterwards, which contradicted the constraint that the library must never perform network
+I/O. Pre-fetching and inlining first is what makes that constraint enforceable, and it is also the only way
+a hostile import can be guarded before it is parsed.
 
 ---
 
@@ -621,6 +683,23 @@ For any string, `heuristicRisk` returns one of the three classes, and repeated c
 
 For any name containing a destructive word as a camelCase, snake_case or digit-delimited token, the heuristic
 returns `destructive` regardless of any read words also present.
+
+### Property 28: DOCTYPE is always rejected
+
+For any string containing a `<!DOCTYPE` declaration at any position, in any letter case, and preceded by any
+amount of comment or processing-instruction padding, `guardXml` returns an error and no parser is
+constructed.
+
+### Property 29: The parser performs no network I/O of its own
+
+For any WSDL document containing any number of external `schemaLocation` references, parsing with an injected
+fake fetch issues zero calls to `http.request` and `https.request`, and the number of fake-fetch calls never
+exceeds 20.
+
+### Property 30: Schema inlining terminates
+
+For any set of schema references, including self-references and cycles of any length, `inlineSchemas`
+terminates and fetches each distinct URL at most once.
 
 ## Error Handling
 

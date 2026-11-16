@@ -125,6 +125,40 @@
         "chatSessionId": "sess_fdd9ce39-4b46-4ad2-8f38-ecb0e77de866",
         "timestamp": 1794837994700
       }
+    ],
+    "5.1 Add `fast-xml-parser` to dependencies; implement `lib/soap/parser.ts` — Stage 1 `guardXml`": [
+      {
+        "executionId": "48c4be1f-0241-4659-9209-1fddf1db2f58",
+        "chatSessionId": "sess_6127d7a5-6b20-40c9-9b75-a3e017186da4",
+        "timestamp": 1794843122949
+      },
+      {
+        "executionId": "48c4be1f-0241-4659-9209-1fddf1db2f58",
+        "chatSessionId": "sess_6127d7a5-6b20-40c9-9b75-a3e017186da4",
+        "timestamp": 1794843380463
+      },
+      {
+        "executionId": "8de84a9c-22ca-4621-ae04-2ce5a70bcf92",
+        "chatSessionId": "sess_6127d7a5-6b20-40c9-9b75-a3e017186da4",
+        "timestamp": 1794844429013
+      },
+      {
+        "executionId": "8de84a9c-22ca-4621-ae04-2ce5a70bcf92",
+        "chatSessionId": "sess_6127d7a5-6b20-40c9-9b75-a3e017186da4",
+        "timestamp": 1794844456220
+      }
+    ],
+    "5.2 Implement Stage 2 `inspectDocument`": [
+      {
+        "executionId": "03da9580-bedc-4c3f-83b2-5d7841987d3e",
+        "chatSessionId": "sess_678d921a-a84e-4f39-a20e-b0fd31248ea7",
+        "timestamp": 1794846359820
+      },
+      {
+        "executionId": "03da9580-bedc-4c3f-83b2-5d7841987d3e",
+        "chatSessionId": "sess_678d921a-a84e-4f39-a20e-b0fd31248ea7",
+        "timestamp": 1794846475076
+      }
     ]
   }
 }

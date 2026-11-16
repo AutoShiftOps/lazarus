@@ -53,20 +53,39 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - _Requirements: 1.2, 1.3, 1.4, 1.5, 1.6, 10.2, 10.3, 10.4, 10.5_
 
 - [ ] 5. WSDL parser
-  - [ ] 5.1 Implement `lib/soap/parser.ts` — `parseWsdl`
-    - Use the `soap` package's `WSDL` class to parse the XML; catch and re-throw XML syntax errors with line/column
-    - Check root element namespace: WSDL 1.1 `definitions`, WSDL 2.0 `description`, or unrecognised
-    - Reject documents with no `<service>` elements
-    - Iterate bindings; keep only SOAP 1.1 (`http://schemas.xmlsoap.org/soap/http`) and SOAP 1.2 (`http://www.w3.org/2003/05/soap/bindings/HTTP/`) transports; add `UNSUPPORTED_BINDING` warnings for others
-    - Deduplicate operations that share `(portTypeName, operationName)` across SOAP versions; set `soapVersions` and `preferredVersion`
-    - Classify `bindingStyle`; flag `rpc/encoded` with warnings
-    - Resolve external `schemaLocation` URLs via `safeFetch` with 10 s timeout each; on failure add `SCHEMA_FETCH_FAILED` warning and continue
-    - Return `ParseResult`
-    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.1, 3.2, 3.3, 3.4, 3.5_
-  - [ ]* 5.2 Write unit tests for `parseWsdl` in `tests/soap/parser.test.ts`
-    - WSDL 1.1 accepted, WSDL 2.0 rejected, non-WSDL XML rejected, no-service error
-    - SOAP 1.1 and 1.2 binding deduplication, rpc/encoded warning, unsupported transport skip
-    - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [x] 5.1 Add `fast-xml-parser` to dependencies; implement `lib/soap/parser.ts` — Stage 1 `guardXml`
+    - Pure function; rejects a `<!DOCTYPE` declaration anywhere in the document, any letter case
+    - Rejects an empty document; returns `LazarusError | null`
+    - _Requirements: 13.1, 13.2_
+  - [x] 5.2 Implement Stage 2 `inspectDocument`
+    - `XMLValidator` for syntax errors with line and column; `XMLParser` with `processEntities: false`
+    - Root namespace and local name dispatch per the design table; count `<service>` elements
+    - Returns `DocumentInfo | LazarusError`
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 13.2_
+  - [ ] 5.3 Implement Stage 3 `collectSchemaRefs` and Stage 4 `inlineSchemas`
+    - Resolve relative `schemaLocation` against the WSDL base URL
+    - Fetch only through an injected fetch function defaulting to `safeFetch`, 10 s each
+    - Cycle guard, 20-document limit, 2 MB per document, run `guardXml` over every fetched schema
+    - Warnings: `SCHEMA_FETCH_FAILED`, `SCHEMA_TOO_LARGE`, `SCHEMA_LIMIT_REACHED`
+    - _Requirements: 2.5, 2.6, 13.3, 13.4, 13.5, 13.6_
+  - [ ] 5.4 Implement Stage 5 `buildDefinition` and the exported `parseWsdl`
+    - Import the `WSDL` class from `soap` only; do not import `open_wsdl`, `createClient` or `createClientAsync`
+    - Binding transport filter, operation deduplication across SOAP 1.1 and 1.2, `bindingStyle` classification
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 13.3, 13.7_
+  - [ ] 5.5 Write unit tests for the parser in `tests/soap/parser.test.ts`
+    - Stage 1: DOCTYPE rejected in several forms, including one preceded by a 5 000-character XML comment; a billion-laughs sample rejected
+    - Stage 2: WSDL 1.1 accepted; WSDL 2.0 rejected with its own message; non-WSDL XML rejected; malformed XML reports line and column; no-service error
+    - Stage 4: a failing schema fetch yields a warning and parsing continues; an import cycle terminates; the 20-document limit holds
+    - Stage 5: SOAP 1.1 and 1.2 bindings deduplicate to one operation; `rpc/encoded` warns; an unsupported transport is skipped
+    - Assert zero `http.request` and `https.request` calls across the whole suite, using the spy pattern from `tests/soap/safefetch.test.ts`
+    - Contract check: `fixtures/calculator.wsdl` and `fixtures/countryinfo.wsdl` parse with zero warnings
+    - _Requirements: 2.1–2.6, 3.1–3.5, 13.1–13.7_
+  - [ ]* 5.6 Property tests for the parser
+    - **Property 28**: DOCTYPE is always rejected
+    - **Property 29**: the parser performs no network I/O of its own
+    - **Property 30**: schema inlining terminates
+    - Minimum 100 iterations each
+    - **Validates: Requirements 13.1, 13.5, 13.6, 13.7**
 
 - [ ] 6. JSON Schema generator
   - [ ] 6.1 Implement `lib/soap/schema-generator.ts` — `xsdTypeToZod`
@@ -246,17 +265,19 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     { "id": 1, "tasks": ["3.1", "4.1"] },
     { "id": 2, "tasks": ["4.2", "4.3", "4.4"] },
     { "id": 3, "tasks": ["4.5", "5.1"] },
-    { "id": 4, "tasks": ["5.2", "6.1"] },
-    { "id": 5, "tasks": ["6.2", "6.3", "6.4", "6.5"] },
-    { "id": 6, "tasks": ["7.1", "9.1", "9.2", "10.1"] },
-    { "id": 7, "tasks": ["7.2", "10.2", "10.3", "10.4"] },
-    { "id": 8, "tasks": ["7.3", "7.4", "7.5", "7.6", "7.7", "11.1"] },
-    { "id": 9, "tasks": ["12.1"] },
-    { "id": 10, "tasks": ["12.2", "12.3"] },
-    { "id": 11, "tasks": ["14.1"] },
-    { "id": 12, "tasks": ["15.1"] },
-    { "id": 13, "tasks": ["15.2", "16.1"] },
-    { "id": 14, "tasks": ["15.3", "15.4", "16.2"] }
+    { "id": 4, "tasks": ["5.2", "5.3"] },
+    { "id": 5, "tasks": ["5.4"] },
+    { "id": 6, "tasks": ["5.5", "5.6", "6.1"] },
+    { "id": 7, "tasks": ["6.2", "6.3", "6.4", "6.5"] },
+    { "id": 8, "tasks": ["7.1", "9.1", "9.2", "10.1"] },
+    { "id": 9, "tasks": ["7.2", "10.2", "10.3", "10.4"] },
+    { "id": 10, "tasks": ["7.3", "7.4", "7.5", "7.6", "7.7", "11.1"] },
+    { "id": 11, "tasks": ["12.1"] },
+    { "id": 12, "tasks": ["12.2", "12.3"] },
+    { "id": 13, "tasks": ["14.1"] },
+    { "id": 14, "tasks": ["15.1"] },
+    { "id": 15, "tasks": ["15.2", "16.1"] },
+    { "id": 16, "tasks": ["15.3", "15.4", "16.2"] }
   ]
 }
 ```

@@ -28,6 +28,8 @@ can look it up. The feature covers SOAP 1.1 and 1.2 with document/literal and rp
 - **SSRF**: Server-Side Request Forgery; an attack where a server is tricked into making requests to internal or unintended network destinations.
 - **Risk_Classifier**: The module `lib/soap/risk.ts` that assigns each operation a risk class.
 - **Risk**: One of `"read"`, `"write"` or `"destructive"`; how dangerous an operation is.
+- **XML_Guard**: The pre-parse check in `lib/soap/parser.ts` that rejects hostile XML before any parser sees it.
+- **Schema_Inliner**: The stage in `lib/soap/parser.ts` that pre-fetches external XSD schemas through `safeFetch` and inlines them, so the `soap` library never performs network I/O.
 - **Owner_Token**: A secret returned once by the Summon_API, authorising later changes to the service's rules and settings.
 
 ---
@@ -206,3 +208,19 @@ can look it up. The feature covers SOAP 1.1 and 1.2 with document/literal and rp
 2. WHEN a WSDL URL is summoned again and the service already exists, THE Summon_API SHALL NOT return an Owner_Token.
 3. THE Summon_API response SHALL include `risk` and `riskReason` for every operation.
 4. THE Summon_API SHALL never include the Owner_Token hash in any response.
+
+---
+
+### Requirement 13: XML hardening
+
+**User Story:** As a platform operator, I want hostile XML documents rejected before any parser processes them, so that a malicious WSDL cannot read server files or exhaust memory.
+
+#### Acceptance Criteria
+
+1. BEFORE any XML parsing, THE XML_Guard SHALL reject any document containing a `<!DOCTYPE` declaration at any position, in any letter case, returning `WSDL_PARSE_FAILED` with the message "This document declares a DTD, which Lazarus does not accept." THE XML_Guard SHALL scan the whole document rather than a prefix of it, because XML permits comments and processing instructions of unbounded length before the DOCTYPE declaration.
+2. THE WSDL_Parser SHALL configure every XML parser it uses with entity processing disabled, so that no internal or external entity is ever expanded.
+3. THE Schema_Inliner SHALL fetch every external `schemaLocation` URL through `safeFetch` only; THE WSDL_Parser SHALL NOT import or call `open_wsdl`, `soap.createClient`, or any other API that performs its own network I/O.
+4. THE WSDL_Parser SHALL reject any single inlined schema document larger than 2 097 152 bytes (2 MB) with a `SCHEMA_TOO_LARGE` warning, and SHALL continue parsing without that schema.
+5. THE Schema_Inliner SHALL resolve at most 20 external schema documents per WSDL; beyond that limit it SHALL add a `SCHEMA_LIMIT_REACHED` warning and SHALL fetch no more.
+6. THE Schema_Inliner SHALL NOT follow a `schemaLocation` it has already fetched during the same parse, so that a cycle of imports terminates.
+7. WHILE parsing any document, THE WSDL_Parser SHALL make no outbound HTTP request other than those issued by the Schema_Inliner through `safeFetch`.
