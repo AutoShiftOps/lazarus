@@ -96,6 +96,35 @@
         "chatSessionId": "sess_ce54dd79-eb46-445f-9c2a-92e9dc657cd7",
         "timestamp": 1794835261204
       }
+    ],
+    "4.5 Write unit tests for `fetchWsdl` in `tests/soap/fetcher.test.ts`": [
+      {
+        "executionId": "d17b9d1f-abe9-4b13-8308-5c61ca6c962e",
+        "chatSessionId": "sess_fdd9ce39-4b46-4ad2-8f38-ecb0e77de866",
+        "timestamp": 1794837711732
+      },
+      {
+        "executionId": "d17b9d1f-abe9-4b13-8308-5c61ca6c962e",
+        "chatSessionId": "sess_fdd9ce39-4b46-4ad2-8f38-ecb0e77de866",
+        "timestamp": 1794837994571
+      },
+      {
+        "executionId": "62b527ce-d28d-40c3-8dcb-ecfdb34640d3",
+        "chatSessionId": "sess_fdd9ce39-4b46-4ad2-8f38-ecb0e77de866",
+        "timestamp": 1794839184037
+      },
+      {
+        "executionId": "62b527ce-d28d-40c3-8dcb-ecfdb34640d3",
+        "chatSessionId": "sess_fdd9ce39-4b46-4ad2-8f38-ecb0e77de866",
+        "timestamp": 1794839271625
+      }
+    ],
+    "4. SSRF-safe WSDL fetcher": [
+      {
+        "executionId": "d17b9d1f-abe9-4b13-8308-5c61ca6c962e",
+        "chatSessionId": "sess_fdd9ce39-4b46-4ad2-8f38-ecb0e77de866",
+        "timestamp": 1794837994700
+      }
     ]
   }
 }

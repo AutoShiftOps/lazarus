@@ -27,7 +27,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Export `getEnv(): Env` that calls `EnvSchema.parse(process.env)`
     - _Requirements: 6.5 (registry availability implies env config)_
 
-- [ ] 4. SSRF-safe WSDL fetcher
+- [x] 4. SSRF-safe WSDL fetcher
   - [x] 4.1 Implement `lib/soap/fetcher.ts` — `isBlockedIp`
     - Pure function; checks unspecified, loopback, private, link-local, cloud-metadata, IPv4-mapped IPv6 ranges using bitwise integer arithmetic
     - No external dependencies inside this function
@@ -47,7 +47,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Generate IPs outside all blocked ranges; assert `isBlockedIp` returns `false`
     - Minimum 100 iterations
     - **Validates: Requirements 10.1**
-  - [ ] 4.5 Write unit tests for `fetchWsdl` in `tests/soap/fetcher.test.ts`
+  - [x] 4.5 Write unit tests for `fetchWsdl` in `tests/soap/fetcher.test.ts`
     - Mock HTTP server for redirect-limit, non-200, timeout, body-size-cap, and SSRF-blocked cases
     - Assert that a WSDL whose `schemaLocation` points to `http://127.0.0.1/evil.xsd` is blocked before any outbound request
     - _Requirements: 1.2, 1.3, 1.4, 1.5, 1.6, 10.2, 10.3, 10.4, 10.5_

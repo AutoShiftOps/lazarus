@@ -194,7 +194,18 @@ export type SafeFetchOptions = {
   maxBytes?: number;
   /** Maximum number of redirect hops followed. Default 5. */
   maxRedirects?: number;
+  /**
+   * TEST-ONLY. Permits 127.0.0.0/8 so tests can use a local HTTP server.
+   * All other blocked ranges stay blocked. `fetchWsdl` never sets this.
+   * Ignored when NODE_ENV is "production".
+   */
+  allowLoopback?: boolean;
 };
+
+/** True for IPv4 addresses in 127.0.0.0/8 (used only with `allowLoopback`). */
+function isLoopbackV4(ip: string): boolean {
+  return net.isIPv4(ip) && ip.startsWith("127.");
+}
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_BYTES = 5_242_880;
@@ -239,6 +250,7 @@ function requestOnce(
   url: URL,
   maxBytes: number,
   signal: AbortSignal,
+  allowLoopback: boolean,
 ): Promise<HopOutcome> {
   return new Promise<HopOutcome>((resolve) => {
     let blocked = false;
@@ -263,7 +275,11 @@ function requestOnce(
           }
           if (
             addresses.length === 0 ||
-            addresses.some((a) => isBlockedIp(a.address))
+            addresses.some(
+              (a) =>
+                isBlockedIp(a.address) &&
+                !(allowLoopback && isLoopbackV4(a.address)),
+            )
           ) {
             blocked = true;
             callback(new BlockedAddressError(), "", 0);
@@ -376,6 +392,8 @@ export async function safeFetch(
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
   let remainingHops = options.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
+  const allowLoopback =
+    options.allowLoopback === true && process.env.NODE_ENV !== "production";
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -393,11 +411,20 @@ export async function safeFetch(
       }
       // Node skips `lookup` for IP literals, so check them explicitly.
       const host = bareHostname(current.hostname);
-      if (net.isIP(host) !== 0 && isBlockedIp(host)) {
+      if (
+        net.isIP(host) !== 0 &&
+        isBlockedIp(host) &&
+        !(allowLoopback && isLoopbackV4(host))
+      ) {
         return fail("SSRF_BLOCKED", MSG_BLOCKED);
       }
 
-      const outcome = await requestOnce(current, maxBytes, controller.signal);
+      const outcome = await requestOnce(
+        current,
+        maxBytes,
+        controller.signal,
+        allowLoopback,
+      );
       if (outcome.kind === "error") return outcome.result;
       if (outcome.kind === "done") {
         return { ok: true, xml: outcome.xml, finalUrl: current.toString() };
