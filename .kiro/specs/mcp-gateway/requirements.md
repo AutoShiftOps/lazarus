@@ -38,7 +38,7 @@ This spec depends on `summon` (ServiceDefinition, Translator, safeFetch, Registr
 3. THE Gateway SHALL respond to `OPTIONS` with CORS headers permitting any origin, `POST` and the MCP headers.
 4. IF the service id does not exist THEN THE Gateway SHALL return a JSON-RPC error with HTTP 404.
 5. WHEN `tools/list` is called, THE Gateway SHALL return one Tool per operation across all ports, plus the built-in tool `check_approval`.
-6. THE Gateway SHALL declare `export const runtime = "nodejs"` and a `maxDuration` of 60 seconds.
+6. THE Gateway SHALL declare a `maxDuration` of 60 seconds and SHALL NOT export `runtime` (rejected by `cacheComponents`).
 
 ---
 

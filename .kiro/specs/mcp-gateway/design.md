@@ -162,7 +162,7 @@ export function isDemoService(wsdlUrl: string, ownOrigin: string): boolean;
 - `app/api/services/[id]/approvals/[aid]/route.ts`: POST.
 - `app/api/services/[id]/transcripts/route.ts`: GET.
 
-All `export const runtime = "nodejs"`.
+No route exports `runtime` (rejected by `cacheComponents: true`).
 
 ## Correctness Properties
 

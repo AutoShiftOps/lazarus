@@ -437,14 +437,12 @@ export async function getService(
 
 **Responsibilities:** accept POST requests, run the pipeline, return structured JSON.
 
-> The file must export:
->   `export const runtime = "nodejs";`
-> at module scope, before the POST handler, to opt the route out of the Edge runtime and ensure Node.js APIs (dns, net, crypto) are available.
+> Next.js runs routes on Node.js (dns, net, crypto available). The project enables `cacheComponents: true`, which rejects any `runtime` export, so the file must NOT export `runtime`. It exports `maxDuration = 60` only.
 
 ```typescript
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest): Promise<NextResponse>
 ```

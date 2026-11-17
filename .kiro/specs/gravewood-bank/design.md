@@ -97,7 +97,7 @@ export async function hit(key: string, limit: number, windowSec: number): Promis
 
 ### Routes
 
-All with `export const runtime = "nodejs"`.
+No `runtime` export (rejected by `cacheComponents: true`; Node.js is the default).
 
 - `app/api/gravewood/sandboxes/route.ts`: POST. Rate-limited by IP (`x-forwarded-for`, first value).
 - `app/api/gravewood/[id]/route.ts`: POST (SOAP). Checks size, rate limit, loads state, calls `handleSoap`, saves, returns `text/xml; charset=utf-8`.

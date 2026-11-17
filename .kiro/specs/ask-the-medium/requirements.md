@@ -30,7 +30,7 @@ Depends on: `mcp-gateway`, `seance-ui`.
 3. THE Medium SHALL run at most 6 model turns and 8 tool calls per message.
 4. IF a tool call is held THEN THE Medium SHALL emit a `held` event with the approval id, wait up to 20 seconds for resolution (same as the gateway), and continue with the real result or the denial.
 5. IF the Approval is still pending after the wait THEN THE Medium SHALL tell the user to open the Inbox and SHALL end the turn without retrying.
-6. THE route SHALL declare `runtime = "nodejs"` and `maxDuration = 60`.
+6. THE route SHALL declare `maxDuration = 60` and SHALL NOT export `runtime` (rejected by `cacheComponents`).
 
 ---
 

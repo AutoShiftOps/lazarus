@@ -197,7 +197,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
 
 - [x] 12. Summon API route
   - [x] 12.1 Implement `app/api/summon/route.ts`
-    - Export `runtime = "nodejs"` at module scope
+    - Do NOT export `runtime` (rejected by `cacheComponents: true`); export `maxDuration = 60`
     - Define `SummonRequestSchema = z.object({ wsdlUrl: z.string().url() })`
     - POST handler: parse body → validate schema (400 `INVALID_REQUEST`) → URL length ≤ 2048 (400 `INVALID_REQUEST`) → `fetchWsdl` → `parseWsdl` → `generateSchemas` → `upsertService` → build `mcpUrl` from request origin → return 200 with `{ id, name, operations[0..499], wsdlUrl, mcpUrl, warnings[0..49] }`
     - Map all `LazarusError.code` values to correct HTTP status per design table
@@ -264,7 +264,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
 - Properties 1–10 from the design document each map to a specific test sub-task above
 - `lib/soap/translator.ts` is pure (no I/O); all functions are safe to property-test without mocking
 - The parser performs no network I/O of its own: all external XSD schemas are pre-fetched through `safeFetch` and inlined before Stage 5 reads the tree; the `soap` package is not used
-- `export const runtime = "nodejs"` in the route is required for Node.js DNS/crypto APIs
+- Do not export `runtime` from route files: `cacheComponents: true` rejects it and Node.js is already the only runtime
 
 ## Task Dependency Graph
 

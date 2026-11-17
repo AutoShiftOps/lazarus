@@ -125,7 +125,7 @@ It is NOT a real bank. No real names, accounts or money exist anywhere in it.
 1. THE Gravewood_Bank SHALL reject request bodies over 64 KB with HTTP 413.
 2. THE Bank_Handler SHALL parse XML with entity expansion and DTD processing disabled (no XXE, no billion-laughs).
 3. THE Gravewood_Bank SHALL allow at most 120 SOAP calls per minute per sandbox; IF exceeded THEN it SHALL return HTTP 429.
-4. THE route handlers SHALL declare `export const runtime = "nodejs"`.
+4. THE route handlers SHALL NOT export `runtime`; the project enables `cacheComponents`, which rejects it and runs routes on Node.js.
 5. THE Gravewood_Bank SHALL accept only `POST` for SOAP calls and `GET` for the WSDL.
 
 ---
