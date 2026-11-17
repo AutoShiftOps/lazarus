@@ -71,13 +71,13 @@ Build the fake SOAP bank bottom-up: money, seed, XML helpers, pure handler, WSDL
   - [x] 9.4 `POST /api/gravewood/[id]/reset`
     - _Requirements: 2.4_
 
-- [ ] 10. Dev loopback override
-  - [ ] 10.1 Add `LAZARUS_DEV_ALLOW_LOOPBACK` to `lib/env.ts`, honoured by `safeFetch` only when not in production
-  - [ ] 10.2 Test: production ignores the flag
+- [x] 10. Dev loopback override
+  - [x] 10.1 Add `LAZARUS_DEV_ALLOW_LOOPBACK` to `lib/env.ts`, honoured by `safeFetch` only when not in production
+  - [x] 10.2 Test: production ignores the flag
     - _Requirements: 7.3_
 
-- [ ] 11. Contract test against the real Lazarus pipeline
-  - [ ] 11.1 `tests/gravewood/contract.test.ts`: parse `fixtures/gravewood.wsdl` with zero warnings, round-trip every operation through translator and handler
+- [x] 11. Contract test against the real Lazarus pipeline
+  - [x] 11.1 `tests/gravewood/contract.test.ts`: parse `fixtures/gravewood.wsdl` with zero warnings, round-trip every operation through translator and handler
     - _Requirements: 7.1, 7.2_
 
 - [ ] 12. Playwright smoke test

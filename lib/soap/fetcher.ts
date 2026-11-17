@@ -11,6 +11,7 @@ import http from "node:http";
 import https from "node:https";
 import net from "node:net";
 import { z } from "zod";
+import { devAllowLoopback } from "../env";
 import type { ErrorCode, LazarusError } from "./types";
 
 // ─── IPv4 helpers ─────────────────────────────────────────────────────────────
@@ -202,9 +203,16 @@ export type SafeFetchOptions = {
   allowLoopback?: boolean;
 };
 
-/** True for IPv4 addresses in 127.0.0.0/8 (used only with `allowLoopback`). */
+/**
+ * True for IPv4 127.0.0.0/8 and exactly ::1 (used only with `allowLoopback`).
+ * IPv4-mapped forms such as ::ffff:127.0.0.1 are deliberately not loopback here.
+ */
 function isLoopbackV4(ip: string): boolean {
-  return net.isIPv4(ip) && ip.startsWith("127.");
+  if (net.isIPv4(ip)) return ip.startsWith("127.");
+  if (net.isIPv6(ip)) {
+    return expandIPv6(ip) === "0000:0000:0000:0000:0000:0000:0000:0001";
+  }
+  return false;
 }
 
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -393,7 +401,8 @@ export async function safeFetch(
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
   let remainingHops = options.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
   const allowLoopback =
-    options.allowLoopback === true && process.env.NODE_ENV !== "production";
+    (options.allowLoopback ?? devAllowLoopback()) === true &&
+    process.env.NODE_ENV !== "production";
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

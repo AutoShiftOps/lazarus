@@ -6,12 +6,31 @@ import { z } from "zod";
 const EnvSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().url(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+  /** Dev only; ignored in production. Read via devAllowLoopback(). */
+  LAZARUS_DEV_ALLOW_LOOPBACK: z.string().optional(),
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("production"),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
+
+const DevAllowLoopbackSchema = z
+  .string()
+  .optional()
+  .transform((v) => {
+    const s = v?.trim().toLowerCase();
+    return s === "1" || s === "true";
+  });
+
+/**
+ * Dev-only loopback override. Reads only LAZARUS_DEV_ALLOW_LOOPBACK (does not
+ * require Upstash variables). Always false in production.
+ */
+export function devAllowLoopback(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  return DevAllowLoopbackSchema.parse(process.env.LAZARUS_DEV_ALLOW_LOOPBACK);
+}
 
 export function getEnv(): Env {
   return EnvSchema.parse(process.env);

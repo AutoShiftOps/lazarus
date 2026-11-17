@@ -320,6 +320,56 @@
         "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
         "timestamp": 1794934660182
       }
+    ],
+    "10.1 Add `LAZARUS_DEV_ALLOW_LOOPBACK` to `lib/env.ts`, honoured by `safeFetch` only when not in production": [
+      {
+        "executionId": "1f1d344b-30d6-4363-afca-a68f1a9ec816",
+        "chatSessionId": "sess_af5ab9d0-36ae-46f7-b0be-87341c828f02",
+        "timestamp": 1794951992804
+      },
+      {
+        "executionId": "1f1d344b-30d6-4363-afca-a68f1a9ec816",
+        "chatSessionId": "sess_af5ab9d0-36ae-46f7-b0be-87341c828f02",
+        "timestamp": 1794952114625
+      }
+    ],
+    "10.2 Test: production ignores the flag": [
+      {
+        "executionId": "1f1d344b-30d6-4363-afca-a68f1a9ec816",
+        "chatSessionId": "sess_af5ab9d0-36ae-46f7-b0be-87341c828f02",
+        "timestamp": 1794952116197
+      },
+      {
+        "executionId": "328b15c9-73e2-4a53-8d03-1faeeb5019be",
+        "chatSessionId": "sess_af5ab9d0-36ae-46f7-b0be-87341c828f02",
+        "timestamp": 1794957986276
+      }
+    ],
+    "10. Dev loopback override": [
+      {
+        "executionId": "328b15c9-73e2-4a53-8d03-1faeeb5019be",
+        "chatSessionId": "sess_af5ab9d0-36ae-46f7-b0be-87341c828f02",
+        "timestamp": 1794957986402
+      }
+    ],
+    "11.1 `tests/gravewood/contract.test.ts`: parse `fixtures/gravewood.wsdl` with zero warnings, round-trip every operation through translator and handler": [
+      {
+        "executionId": "328b15c9-73e2-4a53-8d03-1faeeb5019be",
+        "chatSessionId": "sess_af5ab9d0-36ae-46f7-b0be-87341c828f02",
+        "timestamp": 1794957986777
+      },
+      {
+        "executionId": "328b15c9-73e2-4a53-8d03-1faeeb5019be",
+        "chatSessionId": "sess_af5ab9d0-36ae-46f7-b0be-87341c828f02",
+        "timestamp": 1794958093796
+      }
+    ],
+    "11. Contract test against the real Lazarus pipeline": [
+      {
+        "executionId": "328b15c9-73e2-4a53-8d03-1faeeb5019be",
+        "chatSessionId": "sess_af5ab9d0-36ae-46f7-b0be-87341c828f02",
+        "timestamp": 1794958093882
+      }
     ]
   }
 }
