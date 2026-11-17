@@ -11,6 +11,14 @@ export function parseAmountToCents(s: string): number | null {
   return cents > 0 ? cents : null;
 }
 
+/** Format signed integer cents with exactly 2 fractional digits, e.g. -120000 -> "-1200.00". Zero has no sign. */
+export function formatSignedCents(c: number): string {
+  if (!Number.isInteger(c)) {
+    throw new RangeError(`Invalid cents value: ${String(c)}`);
+  }
+  return c < 0 ? `-${formatCents(-c)}` : formatCents(c);
+}
+
 /** Format integer cents with exactly 2 fractional digits, e.g. 1245000 -> "12450.00". */
 export function formatCents(c: number): string {
   if (!Number.isInteger(c) || c < 0 || c > MAX_CENTS) {

@@ -31,9 +31,9 @@ Build the fake SOAP bank bottom-up: money, seed, XML helpers, pure handler, WSDL
   - [x] 4.2 Unit tests: DOCTYPE rejected, billion-laughs sample rejected, namespace prefixes (`soap:`, `s:`, `env:`) all accepted
 
 - [ ] 5. Pure handler
-  - [ ] 5.1 Implement read operations: `ListAccounts`, `GetBalance`, `GetStatement`
+  - [x] 5.1 Implement read operations: `ListAccounts`, `GetBalance`, `GetStatement`
     - _Requirements: 3b.1, 3b.2, 3b.3_
-  - [ ] 5.2 Implement `TransferFunds` with all fault cases
+  - [x] 5.2 Implement `TransferFunds` with all fault cases
     - _Requirements: 3b.4, 4.2, 4.3, 4.5_
   - [ ] 5.3 Implement `UpdateAddress` and `CloseAccount`
     - _Requirements: 3b.5, 3b.6, 3b.7_

@@ -122,6 +122,30 @@
         "chatSessionId": "sess_d83e9086-fb58-4028-8dd5-2ecbe6b39ae1",
         "timestamp": 1794930094376
       }
+    ],
+    "5.1 Implement read operations: `ListAccounts`, `GetBalance`, `GetStatement`": [
+      {
+        "executionId": "80e83b8d-7ec7-43ef-bd17-cbc8d9cac302",
+        "chatSessionId": "sess_0625357c-e428-4113-87d9-2e76601774f3",
+        "timestamp": 1794930406474
+      },
+      {
+        "executionId": "80e83b8d-7ec7-43ef-bd17-cbc8d9cac302",
+        "chatSessionId": "sess_0625357c-e428-4113-87d9-2e76601774f3",
+        "timestamp": 1794930496462
+      }
+    ],
+    "5.2 Implement `TransferFunds` with all fault cases": [
+      {
+        "executionId": "80e83b8d-7ec7-43ef-bd17-cbc8d9cac302",
+        "chatSessionId": "sess_0625357c-e428-4113-87d9-2e76601774f3",
+        "timestamp": 1794930496927
+      },
+      {
+        "executionId": "80e83b8d-7ec7-43ef-bd17-cbc8d9cac302",
+        "chatSessionId": "sess_0625357c-e428-4113-87d9-2e76601774f3",
+        "timestamp": 1794930599085
+      }
     ]
   }
 }
