@@ -69,7 +69,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Warnings: `SCHEMA_FETCH_FAILED`, `SCHEMA_TOO_LARGE`, `SCHEMA_LIMIT_REACHED`, `SCHEMA_TIME_BUDGET_EXCEEDED`
     - Total 25 s budget across all fetches; strip location attributes for any element prefix, leaving `soap:address` alone
     - _Requirements: 2.5, 2.6, 13.3, 13.4, 13.5, 13.6, 13.8, 13.9_
-  - [ ] 5.4a Stage 5 part 1: tree verifier and indexes in `lib/soap/parser.ts`
+  - [x] 5.4a Stage 5 part 1: tree verifier and indexes in `lib/soap/parser.ts`
     - Parse with `fast-xml-parser` (`processEntities: false`); tree-based verifier fails closed if any import/include/redefine, any prefix, still has `schemaLocation` or `location`
     - Index messages, portTypes, bindings (SOAP version from `soap:binding` vs `soap12:binding`, transport, style) and services/ports (address) by local name
     - Export the index builder and verifier for direct tests; no `soap` import anywhere

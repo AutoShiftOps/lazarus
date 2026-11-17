@@ -2,8 +2,15 @@ import { readFileSync } from "node:fs";
 import http from "node:http";
 import https from "node:https";
 import { afterAll, describe, expect, it, vi } from "vitest";
-import { collectSchemaRefs, guardXml, inlineSchemas, inspectDocument } from "../../lib/soap/parser";
-import type { SchemaFetchDeps } from "../../lib/soap/parser";
+import {
+  collectSchemaRefs,
+  guardXml,
+  indexDocument,
+  inlineSchemas,
+  inspectDocument,
+  verifyNoLocations,
+} from "../../lib/soap/parser";
+import type { SchemaFetchDeps, WsdlIndex } from "../../lib/soap/parser";
 import type { FetchResult } from "../../lib/soap/fetcher";
 import type { DocumentInfo } from "../../lib/soap/parser";
 import type { LazarusError } from "../../lib/soap/types";
@@ -351,5 +358,111 @@ describe("inlineSchemas (Stage 4)", () => {
     const r = await inlineSchemas(xml, refs, "", f.deps);
     expect(f.calls).toEqual([]);
     expect(r.warnings.map((w) => w.code)).toEqual(["SCHEMA_FETCH_FAILED"]);
+  });
+});
+
+// ─── Stage 5 part 1 ───────────────────────────────────────────────────────────
+
+const S11 = "http://schemas.xmlsoap.org/wsdl/soap/";
+const S12 = "http://schemas.xmlsoap.org/wsdl/soap12/";
+
+function cleanWsdl(): string {
+  return `<wsdl:definitions xmlns:wsdl="${WSDL_NS}" xmlns:xsd="${XSD_NS}" targetNamespace="urn:t"><wsdl:types><xsd:schema targetNamespace="urn:t"><xsd:import namespace="urn:x"/></xsd:schema></wsdl:types><wsdl:service name="S"/></wsdl:definitions>`;
+}
+
+describe("verifyNoLocations (Stage 5)", () => {
+  it("passes on a clean document and on a fixture", () => {
+    expect(verifyNoLocations(cleanWsdl())).toBeNull();
+    expect(verifyNoLocations(readFileSync("fixtures/calculator.wsdl", "utf8"))).toBeNull();
+  });
+
+  it.each([
+    ["xsd:", "xsd:import"],
+    ["s:", "s:include"],
+    ["é:", "é:import"],
+    ["no prefix", "import"],
+  ])("fails on a leftover schemaLocation with %s prefix", (_label, tag) => {
+    const xml = `<wsdl:definitions xmlns:wsdl="${WSDL_NS}"><wsdl:types><schema><${tag} schemaLocation="http://host.test/a.xsd"/></schema></wsdl:types></wsdl:definitions>`;
+    expect(verifyNoLocations(xml)?.code).toBe("WSDL_PARSE_FAILED");
+  });
+
+  it("fails on a leftover location on wsdl:import and on redefine", () => {
+    expect(
+      verifyNoLocations(`<d><wsdl:import location="http://host.test/o.wsdl"/></d>`)?.code,
+    ).toBe("WSDL_PARSE_FAILED");
+    expect(
+      verifyNoLocations(`<d><xs:redefine schemaLocation="a.xsd"><x/></xs:redefine></d>`)?.code,
+    ).toBe("WSDL_PARSE_FAILED");
+  });
+
+  it("ignores soap:address and other elements carrying location", () => {
+    const xml = `<d><s><p><soap:address location="http://host.test/svc"/><other location="x" schemaLocation="y"/></p></s></d>`;
+    expect(verifyNoLocations(xml)).toBeNull();
+  });
+});
+
+function indexed(xml: string): WsdlIndex {
+  const r = indexDocument(xml);
+  if ("code" in r) throw new Error(r.message);
+  return r;
+}
+
+function bindingXml(prefix: string, ns: string, style: string, ops: string[]): string {
+  const body = ops
+    .map(
+      (o) =>
+        `<wsdl:operation name="${o}"><${prefix}:operation soapAction="urn:${o}"/><wsdl:input><${prefix}:body use="literal"/></wsdl:input><wsdl:output><${prefix}:body use="literal"/></wsdl:output></wsdl:operation>`,
+    )
+    .join("");
+  const ptOps = ops
+    .map(
+      (o) =>
+        `<wsdl:operation name="${o}"><wsdl:input message="tns:AddIn"/><wsdl:output message="tns:AddOut"/></wsdl:operation>`,
+    )
+    .join("");
+  return `<wsdl:definitions xmlns:wsdl="${WSDL_NS}" xmlns:${prefix}="${ns}" targetNamespace="urn:t"><wsdl:message name="AddIn"><wsdl:part name="parameters" element="tns:Add"/></wsdl:message><wsdl:portType name="PT">${ptOps}</wsdl:portType><wsdl:binding name="B" type="tns:PT"><${prefix}:binding transport="http://schemas.xmlsoap.org/soap/http" style="${style}"/>${body}</wsdl:binding><wsdl:service name="S"><wsdl:port name="P" binding="tns:B"><${prefix}:address location="http://host.test/svc"/></wsdl:port></wsdl:service></wsdl:definitions>`;
+}
+
+describe("indexDocument (Stage 5)", () => {
+  it("indexes a single operation (object, not array, from the parser)", () => {
+    const idx = indexed(bindingXml("soap", S11, "document", ["Add"]));
+    expect(idx.messages.AddIn.parts[0]).toEqual({ name: "parameters", element: "Add", type: null });
+    expect(idx.portTypes.PT.operations).toEqual([{ name: "Add", input: "AddIn", output: "AddOut" }]);
+    expect(idx.bindings.B.operations).toEqual([
+      { name: "Add", soapAction: "urn:Add", style: null, inputUse: "literal", outputUse: "literal" },
+    ]);
+    expect(idx.services.S.ports).toEqual([{ name: "P", binding: "B", address: "http://host.test/svc" }]);
+  });
+
+  it("indexes many operations", () => {
+    const idx = indexed(bindingXml("soap", S11, "document", ["Add", "Sub", "Mul"]));
+    expect(idx.portTypes.PT.operations.map((o) => o.name)).toEqual(["Add", "Sub", "Mul"]);
+    expect(idx.bindings.B.operations.map((o) => o.name)).toEqual(["Add", "Sub", "Mul"]);
+  });
+
+  it("detects SOAP 1.1 and 1.2 from the namespace, not the prefix", () => {
+    expect(indexed(bindingXml("soap", S11, "document", ["Add"])).bindings.B.soapVersion).toBe("1.1");
+    expect(indexed(bindingXml("soap12", S12, "document", ["Add"])).bindings.B.soapVersion).toBe("1.2");
+    expect(indexed(bindingXml("x", S12, "document", ["Add"])).bindings.B.soapVersion).toBe("1.2");
+    expect(indexed(bindingXml("soap", S11, "document", ["Add"])).bindings.B.transport).toBe(
+      "http://schemas.xmlsoap.org/soap/http",
+    );
+  });
+
+  it("reads rpc vs document style", () => {
+    expect(indexed(bindingXml("soap", S11, "rpc", ["Add"])).bindings.B.style).toBe("rpc");
+    expect(indexed(bindingXml("soap", S11, "document", ["Add"])).bindings.B.style).toBe("document");
+  });
+
+  it("indexes the calculator fixture with both SOAP versions", () => {
+    const calc = indexed(readFileSync("fixtures/calculator.wsdl", "utf8"));
+    const versions = Object.values(calc.bindings).map((b) => b.soapVersion);
+    expect(versions).toContain("1.1");
+    expect(versions).toContain("1.2");
+  });
+
+  it("returns WSDL_PARSE_FAILED for a non-definitions root", () => {
+    const r = indexDocument("<root/>");
+    expect("code" in r && r.code).toBe("WSDL_PARSE_FAILED");
   });
 });

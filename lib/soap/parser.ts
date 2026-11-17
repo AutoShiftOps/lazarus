@@ -342,3 +342,240 @@ export async function inlineSchemas(
 
   return { xml: spliceIntoTypes(stripLocations(xml), schemas), warnings };
 }
+
+// ─── Stage 5 part 1: tree verifier and indexes ────────────────────────────────
+
+const SOAP_11_BINDING_NS = "http://schemas.xmlsoap.org/wsdl/soap/";
+const SOAP_12_BINDING_NS = "http://schemas.xmlsoap.org/wsdl/soap12/";
+const LOCATION_ELEMENTS = new Set(["import", "include", "redefine"]);
+
+function parseTree(xml: string): Record<string, unknown> | null {
+  try {
+    const parser = new XMLParser({
+      processEntities: false,
+      ignoreDeclaration: true,
+      ignoreAttributes: false,
+    });
+    return parser.parse(xml) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function isElementKey(key: string): boolean {
+  return !key.startsWith("@_") && !key.startsWith("#") && !key.startsWith("?");
+}
+
+/** fast-xml-parser returns one child as an object and many as an array; normalise to a list of nodes. */
+function childNodes(node: Record<string, unknown>, local: string): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  for (const [key, value] of Object.entries(node)) {
+    if (!isElementKey(key) || splitName(key).local !== local) continue;
+    for (const item of Array.isArray(value) ? value : [value]) {
+      out.push(asRecord(item) ?? {});
+    }
+  }
+  return out;
+}
+
+function attrOf(node: Record<string, unknown>, name: string): string | null {
+  const v = node[`@_${name}`];
+  return typeof v === "string" ? v : null;
+}
+
+function localAttr(node: Record<string, unknown>, name: string): string | null {
+  const v = attrOf(node, name);
+  return v === null ? null : splitName(v).local;
+}
+
+function treeHasLocation(node: unknown): boolean {
+  if (Array.isArray(node)) return node.some(treeHasLocation);
+  const rec = asRecord(node);
+  if (rec === null) return false;
+  for (const [key, value] of Object.entries(rec)) {
+    if (!isElementKey(key)) continue;
+    if (LOCATION_ELEMENTS.has(splitName(key).local)) {
+      const items = Array.isArray(value) ? value : [value];
+      const dirty = items.some((i) => {
+        const r = asRecord(i);
+        return r !== null && ("@_schemaLocation" in r || "@_location" in r);
+      });
+      if (dirty) return true;
+    }
+    if (treeHasLocation(value)) return true;
+  }
+  return false;
+}
+
+/**
+ * Stage 5 verifier: fails closed when any import/include/redefine element (any prefix)
+ * still carries schemaLocation or location. Returns null when the tree is clean.
+ */
+export function verifyNoLocations(xml: string): LazarusError | null {
+  const tree = parseTree(xml);
+  if (tree === null) return parseFailed("The WSDL document could not be parsed.");
+  if (treeHasLocation(tree)) {
+    return parseFailed(
+      "The WSDL document still references an external location after schema inlining.",
+    );
+  }
+  return null;
+}
+
+export type SoapVersion = "1.1" | "1.2";
+export type MessagePart = { name: string; element: string | null; type: string | null };
+export type PortTypeOperation = { name: string; input: string | null; output: string | null };
+export type BindingOperation = {
+  name: string;
+  soapAction: string | null;
+  style: string | null;
+  inputUse: string | null;
+  outputUse: string | null;
+};
+export type BindingIndex = {
+  name: string;
+  portType: string | null;
+  soapVersion: SoapVersion | null;
+  transport: string | null;
+  style: string | null;
+  operations: BindingOperation[];
+};
+export type PortIndex = { name: string; binding: string | null; address: string | null };
+export type WsdlIndex = {
+  messages: Record<string, { name: string; parts: MessagePart[] }>;
+  portTypes: Record<string, { name: string; operations: PortTypeOperation[] }>;
+  bindings: Record<string, BindingIndex>;
+  services: Record<string, { name: string; ports: PortIndex[] }>;
+};
+
+function nsDeclarations(node: Record<string, unknown>, into: Map<string, string>): void {
+  for (const [key, value] of Object.entries(node)) {
+    if (typeof value !== "string") continue;
+    if (key === "@_xmlns") into.set("", value);
+    else if (key.startsWith("@_xmlns:")) into.set(key.slice(8), value);
+  }
+}
+
+/** First child element with the given local name, with its qualified key (needed for namespace lookup). */
+function firstChild(
+  node: Record<string, unknown>,
+  local: string,
+): { key: string; node: Record<string, unknown> } | null {
+  for (const [key, value] of Object.entries(node)) {
+    if (!isElementKey(key) || splitName(key).local !== local) continue;
+    return { key, node: asRecord(Array.isArray(value) ? value[0] : value) ?? {} };
+  }
+  return null;
+}
+
+function bodyUse(op: Record<string, unknown>, direction: "input" | "output"): string | null {
+  const io = childNodes(op, direction)[0];
+  const body = io === undefined ? undefined : childNodes(io, "body")[0];
+  return body === undefined ? null : attrOf(body, "use");
+}
+
+function indexBinding(b: Record<string, unknown>, name: string, root: Map<string, string>): BindingIndex {
+  const scope = new Map(root);
+  nsDeclarations(b, scope);
+  const sb = firstChild(b, "binding");
+  let soapVersion: SoapVersion | null = null;
+  if (sb !== null) {
+    const inner = new Map(scope);
+    nsDeclarations(sb.node, inner);
+    const ns = inner.get(splitName(sb.key).prefix);
+    if (ns === SOAP_12_BINDING_NS) soapVersion = "1.2";
+    else if (ns === SOAP_11_BINDING_NS) soapVersion = "1.1";
+  }
+  const operations: BindingOperation[] = [];
+  for (const op of childNodes(b, "operation")) {
+    const opName = attrOf(op, "name");
+    if (opName === null) continue;
+    const so = firstChild(op, "operation");
+    operations.push({
+      name: opName,
+      soapAction: so === null ? null : attrOf(so.node, "soapAction"),
+      style: so === null ? null : attrOf(so.node, "style"),
+      inputUse: bodyUse(op, "input"),
+      outputUse: bodyUse(op, "output"),
+    });
+  }
+  return {
+    name,
+    portType: localAttr(b, "type"),
+    soapVersion,
+    transport: sb === null ? null : attrOf(sb.node, "transport"),
+    style: sb === null ? null : attrOf(sb.node, "style"),
+    operations,
+  };
+}
+
+/**
+ * Stage 5 index builder: messages, portTypes, bindings and services/ports keyed by local name.
+ * Returns WSDL_PARSE_FAILED if the document cannot be parsed or is not a definitions root.
+ */
+export function indexDocument(xml: string): WsdlIndex | LazarusError {
+  const tree = parseTree(xml);
+  if (tree === null) return parseFailed("The WSDL document could not be parsed.");
+  const rootKey = Object.keys(tree).find(isElementKey);
+  const rootValue = rootKey === undefined ? undefined : tree[rootKey];
+  const root = asRecord(Array.isArray(rootValue) ? rootValue[0] : rootValue);
+  if (rootKey === undefined || root === null || splitName(rootKey).local !== "definitions") {
+    return parseFailed("Not a recognised WSDL document.");
+  }
+  const scope = new Map<string, string>();
+  nsDeclarations(root, scope);
+
+  const index: WsdlIndex = { messages: {}, portTypes: {}, bindings: {}, services: {} };
+
+  for (const m of childNodes(root, "message")) {
+    const name = attrOf(m, "name");
+    if (name === null) continue;
+    index.messages[name] = {
+      name,
+      parts: childNodes(m, "part").map((p) => ({
+        name: attrOf(p, "name") ?? "",
+        element: localAttr(p, "element"),
+        type: localAttr(p, "type"),
+      })),
+    };
+  }
+
+  for (const pt of childNodes(root, "portType")) {
+    const name = attrOf(pt, "name");
+    if (name === null) continue;
+    const operations: PortTypeOperation[] = [];
+    for (const op of childNodes(pt, "operation")) {
+      const opName = attrOf(op, "name");
+      if (opName === null) continue;
+      operations.push({
+        name: opName,
+        input: localAttr(childNodes(op, "input")[0] ?? {}, "message"),
+        output: localAttr(childNodes(op, "output")[0] ?? {}, "message"),
+      });
+    }
+    index.portTypes[name] = { name, operations };
+  }
+
+  for (const b of childNodes(root, "binding")) {
+    const name = attrOf(b, "name");
+    if (name !== null) index.bindings[name] = indexBinding(b, name, scope);
+  }
+
+  for (const s of childNodes(root, "service")) {
+    const name = attrOf(s, "name");
+    if (name === null) continue;
+    index.services[name] = {
+      name,
+      ports: childNodes(s, "port").map((p) => {
+        const addr = firstChild(p, "address");
+        return {
+          name: attrOf(p, "name") ?? "",
+          binding: localAttr(p, "binding"),
+          address: addr === null ? null : attrOf(addr.node, "location"),
+        };
+      }),
+    };
+  }
+
+  return index;
+}
