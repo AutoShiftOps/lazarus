@@ -7,7 +7,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
 ## Tasks
 
 - [x] 1. Install dependencies and configure test tooling
-  - Add `soap`, `@upstash/redis`, `zod@^4`, `nanoid` to `dependencies` in `package.json`
+  - Add `@upstash/redis`, `zod@^4`, `nanoid` to `dependencies` in `package.json`
   - Add `vitest`, `fast-check`, `@vitest/coverage-v8`, `@playwright/test` to `devDependencies`
   - Add `vitest.config.ts` with `globals: true`, `environment: "node"`, and `include: ["tests/**/*.test.ts"]`
   - Add `test` script (`vitest --run`) and `e2e` script (`playwright test`) to `package.json`
@@ -69,11 +69,19 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Warnings: `SCHEMA_FETCH_FAILED`, `SCHEMA_TOO_LARGE`, `SCHEMA_LIMIT_REACHED`, `SCHEMA_TIME_BUDGET_EXCEEDED`
     - Total 25 s budget across all fetches; strip location attributes for any element prefix, leaving `soap:address` alone
     - _Requirements: 2.5, 2.6, 13.3, 13.4, 13.5, 13.6, 13.8, 13.9_
-  - [ ] 5.4 Implement Stage 5 `buildDefinition` and the exported `parseWsdl`
-    - Import the `WSDL` class from `soap` only; do not import `open_wsdl`, `createClient` or `createClientAsync`
-    - Before constructing `WSDL`, run a tree-based verifier (XMLParser, not regex) that fails closed if any import/include/redefine element, any prefix, still has `schemaLocation` or `location`
-    - Binding transport filter, operation deduplication across SOAP 1.1 and 1.2, `bindingStyle` classification
-    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 13.3, 13.7, 13.10_
+  - [ ] 5.4a Stage 5 part 1: tree verifier and indexes in `lib/soap/parser.ts`
+    - Parse with `fast-xml-parser` (`processEntities: false`); tree-based verifier fails closed if any import/include/redefine, any prefix, still has `schemaLocation` or `location`
+    - Index messages, portTypes, bindings (SOAP version from `soap:binding` vs `soap12:binding`, transport, style) and services/ports (address) by local name
+    - Export the index builder and verifier for direct tests; no `soap` import anywhere
+    - _Requirements: 3.1, 3.5, 13.3, 13.7, 13.10_
+  - [ ] 5.4b Stage 5 part 2: operations and exported `parseWsdl`
+    - Binding transport filter with `UNSUPPORTED_BINDING` warning, operation dedupe across SOAP 1.1 and 1.2 by `(portTypeName, operationName)`, `bindingStyle` classification, `rpc/encoded` warning
+    - `parseWsdl(xml)` runs Stages 1-5 in order and returns `{ ok, definition | error }`
+    - Remove `soap` from `package.json` and run `npm install`
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [ ] 5.4c Stage 5 part 3: descriptors
+    - New `lib/soap/xsd.ts`: build `FieldDescriptor[]` for each operation's input and output from the inlined schema, in `xsd:sequence` order, with `minOccurs`, `maxOccurs`, `nillable`, `ref`, named types and `extension`; depth limit 8; cycle guard; unresolvable types become `"unknown"` with a warning
+    - _Requirements: 4.1, 4.2_
   - [x] 5.5 Write unit tests for the parser in `tests/soap/parser.test.ts`
     - Stage 1: DOCTYPE rejected in several forms, including one preceded by a 5 000-character XML comment; a billion-laughs sample rejected
     - Stage 2: WSDL 1.1 accepted; WSDL 2.0 rejected with its own message; non-WSDL XML rejected; malformed XML reports line and column; no-service error
@@ -255,7 +263,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
 - Property tests are in the same test files as their unit tests (no separate property-test files)
 - Properties 1–10 from the design document each map to a specific test sub-task above
 - `lib/soap/translator.ts` is pure (no I/O); all functions are safe to property-test without mocking
-- The `soap` npm package must never make autonomous network requests — `safeFetch` is injected as its HTTP resolver and all external XSD schemas are pre-fetched before the WSDL string is handed to the library
+- The parser performs no network I/O of its own: all external XSD schemas are pre-fetched through `safeFetch` and inlined before Stage 5 reads the tree; the `soap` package is not used
 - `export const runtime = "nodejs"` in the route is required for Node.js DNS/crypto APIs
 
 ## Task Dependency Graph
@@ -268,7 +276,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     { "id": 2, "tasks": ["4.2", "4.3", "4.4"] },
     { "id": 3, "tasks": ["4.5", "5.1"] },
     { "id": 4, "tasks": ["5.2", "5.3"] },
-    { "id": 5, "tasks": ["5.4"] },
+    { "id": 5, "tasks": ["5.4a", "5.4b", "5.4c"] },
     { "id": 6, "tasks": ["5.5", "5.6", "6.1"] },
     { "id": 7, "tasks": ["6.2", "6.3", "6.4", "6.5"] },
     { "id": 8, "tasks": ["7.1", "9.1", "9.2", "10.1"] },

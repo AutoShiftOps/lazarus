@@ -5,7 +5,7 @@ inclusion: always
 
 ## Stack
 - Next.js (App Router) + TypeScript in strict mode
-- `soap` npm package for WSDL parsing and SOAP calls
+- `fast-xml-parser` for WSDL parsing and SOAP envelopes; SOAP calls go through `safeFetch` (no `soap` package)
 - `@modelcontextprotocol/sdk` with Streamable HTTP transport for MCP endpoints
 - zod for all schemas and input validation
 - Upstash Redis for the service registry and transcripts

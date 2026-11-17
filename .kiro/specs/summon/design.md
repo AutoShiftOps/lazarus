@@ -98,7 +98,7 @@ Never import `process.env` directly elsewhere; always call `getEnv()`.
 
 ### `lib/soap/fetcher.ts`
 
-**Responsibilities:** fetch a WSDL URL with SSRF protection, redirect tracking, timeout, and size cap. Exposes `safeFetch` as the single shared HTTP client used by ALL outbound requests: WSDL document fetch, schemaLocation imports, and any imports the soap library would otherwise make on its own.
+**Responsibilities:** fetch a WSDL URL with SSRF protection, redirect tracking, timeout, and size cap. Exposes `safeFetch` as the single shared HTTP client used by ALL outbound requests: WSDL document fetch, and schemaLocation imports. No other module performs network I/O.
 
 ```typescript
 export type FetchResult =
@@ -126,11 +126,9 @@ export async function fetchWsdl(rawUrl: string): Promise<FetchResult>
 
 **`safeFetch(url: string, options?: SafeFetchOptions): Promise<SafeFetchResult>`**
 
-A lower-level primitive called by `fetchWsdl` and injected wherever the soap library would make its own network requests (e.g. XSD imports, schemaLocation URLs). It carries out SSRF IP resolution, blocked-range check, size cap, and timeout — so every outbound byte goes through the same gate.
+A lower-level primitive called by `fetchWsdl` and injected into the schema inliner (XSD imports, schemaLocation URLs). It carries out SSRF IP resolution, blocked-range check, size cap, and timeout — so every outbound byte goes through the same gate.
 
-The `soap` npm library must never make autonomous network requests. Achieve this by:
-1. Passing `safeFetch` as the custom HTTP(S) client/resolver option when constructing the soap `WSDL` object (e.g. via `customDeserializer` or equivalent injection point the library exposes).
-2. Where the library offers no injection point for a specific import type, pre-resolve and inline all external XSD schemas by fetching them via `safeFetch` before handing the WSDL string to the library.
+The parser performs no network I/O of its own. Every external schema is fetched by Stage 4 through an injected `safeFetch`, and Stage 5 reads only the in-memory tree. No third-party SOAP or WSDL library is used for parsing.
 
 **Test requirement:** Add a test in `tests/soap/fetcher.test.ts` that constructs a valid WSDL string whose `<xsd:import>` or `schemaLocation` points to `http://127.0.0.1/evil.xsd` and asserts that `parseWsdl` (or the import resolution step) returns `{ ok: false, error: { code: "SSRF_BLOCKED" } }` without making any outbound request.
 
@@ -157,7 +155,7 @@ export async function parseWsdl(xml: string): Promise<ParseResult>
 ```
 
 **Algorithm — `parseWsdl`:** a five-stage pipeline. Each stage is a separate exported function so it can
-be tested on its own, and the order matters: nothing reaches the `soap` library until the document has been
+be tested on its own, and the order matters: nothing is interpreted until the document has been
 checked and all external schemas inlined.
 
 ```
@@ -167,7 +165,7 @@ raw XML
   ├─ Stage 2  inspectDocument(xml)     root element, service presence, syntax errors with line/column
   ├─ Stage 3  collectSchemaRefs(xml)   list every xsd:import / xsd:include schemaLocation
   ├─ Stage 4  inlineSchemas(xml, refs) pre-fetch each via safeFetch, splice into <types>
-  └─ Stage 5  buildDefinition(xml)     hand the assembled string to soap's WSDL class, walk bindings
+  └─ Stage 5  buildDefinition(xml)     walk the parsed tree: services, bindings, operations, descriptors
        ↓
   ServiceDefinition
 ```
@@ -180,7 +178,7 @@ already capped at 5 MB by `safeFetch`, so a full scan is bounded. Returns `null`
 acceptable.
 
 **Stage 2 — `inspectDocument(xml): DocumentInfo | LazarusError`.** Uses `fast-xml-parser`'s `XMLValidator`
-for syntax errors, which reports line and column (Requirement 2.2); the `soap` library does not. Then a
+for syntax errors, which reports line and column (Requirement 2.2). Then a
 single `XMLParser` pass, configured `processEntities: false`, `ignoreDeclaration: true`,
 `ignoreAttributes: false`, to read the root element's namespace and local name and to count `<service>`
 elements. Returns the root namespace, root local name, service count, and target namespace.
@@ -212,22 +210,24 @@ order, subject to the limits in Requirement 13:
   element that referenced it.
 - Enforce a total 25 s budget: each fetch receives the lesser of 10 s and the time remaining. This keeps the
   worst case (20 schemas, each slow) inside the serverless function limit instead of 20 × 10 s.
-- **Strip every location reference from the output.** The `soap` library's `WSDL` constructor reads each
-  `import`/`include` location and opens it itself, over HTTP or, for a non-HTTP document URI, as a local
-  file path. Any location left in the XML is therefore both an SSRF bypass and a local-file read. Element
-  matching for the strip must not assume an ASCII prefix: XML names allow other characters, and the library
-  matches on the local name.
+- **Strip every location reference from the output.** A location left in the assembled XML would invite any
+  downstream consumer to fetch or open it, which is an SSRF bypass or a local-file read. Stage 5 verifies the
+  strip with a tree walk and fails closed. Element matching for the strip must not assume an ASCII prefix:
+  XML names allow other characters, so it matches on the local name.
 
 `deps` carries the fetch function so tests inject a fake and assert zero real network calls.
 
-**Stage 5 — `buildDefinition(xml, info): ServiceDefinition | LazarusError`.** Constructs
-`new WSDL(xml, baseUrl, options)` from `soap`, where `WSDL` is the class imported from `soap` directly.
+**Stage 5 — `buildDefinition(xml, info): ServiceDefinition | LazarusError`.** Builds the definition from the
+`fast-xml-parser` tree of the assembled document (`processEntities: false`, attributes kept, namespace prefixes
+resolved by local name). No SOAP library is involved, which keeps the parser synchronous, free of hidden I/O,
+and able to see the SOAP version of each binding (`soap:binding` is 1.1, `soap12:binding` is 1.2).
 
-> **Forbidden:** `open_wsdl`, `soap.createClient`, and `soap.createClientAsync` all fetch URLs themselves and
-> would bypass every SSRF control in `lib/soap/fetcher.ts`. The parser must not import them. A test asserts
-> that parsing a WSDL with external imports issues zero `http.request` calls when the injected fetch is a fake.
+> **Verifier first.** Before reading anything, walk the tree and fail closed with `WSDL_PARSE_FAILED` if any
+> `import`, `include` or `redefine` element (local name, any prefix) still carries `schemaLocation` or
+> `location`. A test asserts that parsing a WSDL with external imports issues zero `http.request` and
+> `https.request` calls when the injected fetch is a fake.
 
-Then, over the constructed definition:
+Then, over the parsed tree:
 
 1. If no `<service>` elements were counted in Stage 2 → `WSDL_PARSE_FAILED`, "No services found in the WSDL."
 2. For each `<binding>`, read the transport from `soap:binding` or `soap12:binding`:
@@ -240,12 +240,16 @@ Then, over the constructed definition:
    with `soapVersions: ["1.1","1.2"]` and `preferredVersion: "1.1"`. Otherwise a single version.
 5. Classify `bindingStyle`: `document/literal`, `rpc/literal` and `document/encoded` are recorded as-is;
    `rpc/encoded` is recorded and warned about; anything undeterminable becomes `"unknown"`.
-6. Return the `ServiceDefinition`.
+6. Resolve each operation's input and output element through `portType` → `message` → `part` (document
+   style: the part's `element`; rpc style: the operation name). Build the `FieldDescriptor[]` tree from the
+   inlined schema in `xsd:sequence` order, following `ref`, `type`, `complexContent/extension` and named
+   `complexType`s, with a depth limit of 8 and a cycle guard. Unresolvable types become `xsdType: "unknown"`.
+7. Return the `ServiceDefinition`.
 
-**Why this order.** The previous draft of this design parsed with the `soap` library first and resolved
-external schemas afterwards, which contradicted the constraint that the library must never perform network
-I/O. Pre-fetching and inlining first is what makes that constraint enforceable, and it is also the only way
-a hostile import can be guarded before it is parsed.
+**Why this order and why no `soap` library.** An earlier draft parsed with the `soap` package. Its `WSDL`
+constructor is asynchronous, opens every import location itself (over HTTP, or as a local file path when the
+document URI is not http), and keeps no per-binding SOAP version. Pre-fetching, inlining and verifying first,
+then reading a plain tree, makes "no network I/O in the parser" provable rather than hoped for.
 
 ---
 

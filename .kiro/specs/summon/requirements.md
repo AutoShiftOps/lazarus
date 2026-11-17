@@ -29,7 +29,7 @@ can look it up. The feature covers SOAP 1.1 and 1.2 with document/literal and rp
 - **Risk_Classifier**: The module `lib/soap/risk.ts` that assigns each operation a risk class.
 - **Risk**: One of `"read"`, `"write"` or `"destructive"`; how dangerous an operation is.
 - **XML_Guard**: The pre-parse check in `lib/soap/parser.ts` that rejects hostile XML before any parser sees it.
-- **Schema_Inliner**: The stage in `lib/soap/parser.ts` that pre-fetches external XSD schemas through `safeFetch` and inlines them, so the `soap` library never performs network I/O.
+- **Schema_Inliner**: The stage in `lib/soap/parser.ts` that pre-fetches external XSD schemas through `safeFetch` and inlines them, so that no later stage performs network I/O.
 - **Owner_Token**: A secret returned once by the Summon_API, authorising later changes to the service's rules and settings.
 
 ---
@@ -219,11 +219,11 @@ can look it up. The feature covers SOAP 1.1 and 1.2 with document/literal and rp
 
 1. BEFORE any XML parsing, THE XML_Guard SHALL reject any document containing a `<!DOCTYPE` declaration at any position, in any letter case, returning `WSDL_PARSE_FAILED` with the message "This document declares a DTD, which Lazarus does not accept." THE XML_Guard SHALL scan the whole document rather than a prefix of it, because XML permits comments and processing instructions of unbounded length before the DOCTYPE declaration.
 2. THE WSDL_Parser SHALL configure every XML parser it uses with entity processing disabled, so that no internal or external entity is ever expanded.
-3. THE Schema_Inliner SHALL fetch every external `schemaLocation` URL through `safeFetch` only; THE WSDL_Parser SHALL NOT import or call `open_wsdl`, `soap.createClient`, or any other API that performs its own network I/O.
+3. THE Schema_Inliner SHALL fetch every external `schemaLocation` URL through `safeFetch` only; THE WSDL_Parser SHALL NOT import the `soap` package or any other API that performs its own network I/O.
 4. THE WSDL_Parser SHALL reject any single inlined schema document larger than 2 097 152 bytes (2 MB) with a `SCHEMA_TOO_LARGE` warning, and SHALL continue parsing without that schema.
 5. THE Schema_Inliner SHALL resolve at most 20 external schema documents per WSDL; beyond that limit it SHALL add a `SCHEMA_LIMIT_REACHED` warning and SHALL fetch no more.
 6. THE Schema_Inliner SHALL NOT follow a `schemaLocation` it has already fetched during the same parse, so that a cycle of imports terminates.
 7. WHILE parsing any document, THE WSDL_Parser SHALL make no outbound HTTP request other than those issued by the Schema_Inliner through `safeFetch`.
 8. THE Schema_Inliner SHALL complete within a total time budget of 25 seconds across all schema fetches, passing each fetch the lesser of 10 seconds and the remaining budget; WHEN the budget is exhausted THE Schema_Inliner SHALL fetch no further schemas and SHALL add a `SCHEMA_TIME_BUDGET_EXCEEDED` warning.
 9. THE Schema_Inliner SHALL remove every `schemaLocation` and `noNamespaceSchemaLocation` attribute, and the `location` attribute of every `import`, `include` and `redefine` element, from the document it returns, regardless of the namespace prefix used on that element (including prefixes containing non-ASCII characters), and regardless of whether the reference was fetched, failed or was skipped; it SHALL leave the `location` attribute of `soap:address` and `soap12:address` untouched.
-10. BEFORE constructing the `soap` library's `WSDL` object, THE WSDL_Parser SHALL verify, using a parsed document tree and not a text pattern, that no `import`, `include` or `redefine` element (matched on local name, any prefix) in the assembled document still carries a `schemaLocation` or `location` attribute; IF one does THEN THE WSDL_Parser SHALL return `WSDL_PARSE_FAILED` and SHALL NOT construct the object.
+10. BEFORE reading bindings or operations from the assembled document, THE WSDL_Parser SHALL verify, using a parsed document tree and not a text pattern, that no `import`, `include` or `redefine` element (matched on local name, any prefix) in the assembled document still carries a `schemaLocation` or `location` attribute; IF one does THEN THE WSDL_Parser SHALL return `WSDL_PARSE_FAILED` and SHALL NOT build a definition.
