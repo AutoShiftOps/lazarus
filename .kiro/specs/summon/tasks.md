@@ -121,7 +121,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - **Validates: Requirements 4.4, 4.5**
 
 - [ ] 7. SOAP envelope translator
-  - [ ] 7.1 Implement `lib/soap/translator.ts` — `xmlEscape` and `toEnvelope`
+  - [x] 7.1 Implement `lib/soap/translator.ts` — `xmlEscape` and `toEnvelope`
     - `xmlEscape`: escape `<`, `>`, `&`, `"`, `'` in all leaf values before insertion
     - `toEnvelope`: validate `args` via `buildZodSchema(schema.inputDescriptor).safeParse`; select SOAP 1.1 or 1.2 namespace from `schema.preferredVersion`; iterate `inputDescriptor` in order to build child elements; return `EnvelopeResult`; if `schema.bindingStyle` is `rpc/encoded`, return an error `rpc/encoded is not supported for live calls` before building anything
     - _Requirements: 5.1, 5.2, 5.3, 5.7_

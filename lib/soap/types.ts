@@ -98,7 +98,17 @@ export type LazarusError = {
 export type ValidationError = {
   type: "validationError";
   missingFields: string[];
+  issues: { path: string; message: string }[];
 };
+
+export type UnsupportedError = {
+  type: "unsupported";
+  message: string;
+};
+
+export type EnvelopeResult =
+  | { ok: true; xml: string; headers: Record<string, string> }
+  | { ok: false; error: ValidationError | UnsupportedError };
 
 export type FaultError = {
   type: "fault";
