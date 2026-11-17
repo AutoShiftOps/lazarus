@@ -5,6 +5,8 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { safeFetch } from "./fetcher";
 import type { FetchResult } from "./fetcher";
+import { buildDescriptors } from "./xsd";
+import type { DescriptorResult } from "./xsd";
 import type {
   BindingStyle,
   LazarusError,
@@ -625,7 +627,7 @@ type Candidate = {
 
 /**
  * Stage 5: build the ServiceDefinition from the assembled, location-free document.
- * Descriptors are left empty; they are filled by the descriptor builder.
+ * Input and output descriptors are filled by buildDescriptors (lib/soap/xsd.ts).
  */
 export function buildDefinition(
   xml: string,
@@ -706,13 +708,30 @@ export function buildDefinition(
       if (bindingStyle === "rpc/encoded") {
         opWarnings.push({
           code: "RPC_ENCODED",
-          message: `Operation ${opName} uses rpc/encoded, which is only partly supported.`,
+          message: `Operation ${opName} uses rpc/encoded, which is not supported for live calls.`,
         });
       }
-      const messageElement = (msg: string | null): string | null => {
-        const part = msg === null ? undefined : index.messages[msg]?.parts[0];
-        return part?.element ?? null;
-      };
+      const messageParts = (msg: string | null): MessagePart[] =>
+        msg === null ? [] : (index.messages[msg]?.parts ?? []);
+      const messageElement = (msg: string | null): string | null =>
+        messageParts(msg)[0]?.element ?? null;
+      const describe = (msg: string | null, elementName: string): DescriptorResult =>
+        msg === null
+          ? { fields: [], warnings: [] }
+          : buildDescriptors(root, isRpc ? null : elementName, {
+              style: isRpc ? "rpc" : "document",
+              parts: messageParts(msg),
+            });
+      const inputElementName = isRpc ? opName : (messageElement(ptOp.input) ?? opName);
+      const outputElementName =
+        ptOp.output === null
+          ? ""
+          : isRpc
+            ? `${opName}Response`
+            : (messageElement(ptOp.output) ?? `${opName}Response`);
+      const inputDesc = describe(ptOp.input, inputElementName);
+      const outputDesc = describe(ptOp.output, outputElementName);
+      opWarnings.push(...inputDesc.warnings, ...outputDesc.warnings);
       operations.push({
         name: opName,
         soapVersions: hasBoth ? ["1.1", "1.2"] : [preferred.version],
@@ -720,17 +739,12 @@ export function buildDefinition(
         bindingStyle,
         soapAction: bop.soapAction ?? "",
         targetNamespace,
-        inputElementName: isRpc ? opName : (messageElement(ptOp.input) ?? opName),
-        outputElementName:
-          ptOp.output === null
-            ? ""
-            : isRpc
-              ? `${opName}Response`
-              : (messageElement(ptOp.output) ?? `${opName}Response`),
+        inputElementName,
+        outputElementName,
         endpointAddress: preferred.address,
         elementFormDefault,
-        inputDescriptor: [],
-        outputDescriptor: [],
+        inputDescriptor: inputDesc.fields,
+        outputDescriptor: outputDesc.fields,
         warnings: opWarnings,
       });
     }

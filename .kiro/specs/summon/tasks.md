@@ -79,7 +79,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - `parseWsdl(xml)` runs Stages 1-5 in order and returns `{ ok, definition | error }`
     - Remove `soap` from `package.json` and run `npm install`
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
-  - [ ] 5.4c Stage 5 part 3: descriptors
+  - [x] 5.4c Stage 5 part 3: descriptors
     - New `lib/soap/xsd.ts`: build `FieldDescriptor[]` for each operation's input and output from the inlined schema, in `xsd:sequence` order, with `minOccurs`, `maxOccurs`, `nillable`, `ref`, named types and `extension`; depth limit 8; cycle guard; unresolvable types become `"unknown"` with a warning
     - _Requirements: 4.1, 4.2_
   - [x] 5.5 Write unit tests for the parser in `tests/soap/parser.test.ts`
@@ -123,7 +123,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
 - [ ] 7. SOAP envelope translator
   - [ ] 7.1 Implement `lib/soap/translator.ts` — `xmlEscape` and `toEnvelope`
     - `xmlEscape`: escape `<`, `>`, `&`, `"`, `'` in all leaf values before insertion
-    - `toEnvelope`: validate `args` via `buildZodSchema(schema.inputDescriptor).safeParse`; select SOAP 1.1 or 1.2 namespace from `schema.preferredVersion`; iterate `inputDescriptor` in order to build child elements; return `EnvelopeResult`
+    - `toEnvelope`: validate `args` via `buildZodSchema(schema.inputDescriptor).safeParse`; select SOAP 1.1 or 1.2 namespace from `schema.preferredVersion`; iterate `inputDescriptor` in order to build child elements; return `EnvelopeResult`; if `schema.bindingStyle` is `rpc/encoded`, return an error `rpc/encoded is not supported for live calls` before building anything
     - _Requirements: 5.1, 5.2, 5.3, 5.7_
   - [ ] 7.2 Implement `lib/soap/translator.ts` — `normaliseFault` and `fromEnvelope`
     - `normaliseFault`: map SOAP 1.1 `faultcode`/`faultstring` and SOAP 1.2 `env:Code`/`env:Reason` to `FaultError`

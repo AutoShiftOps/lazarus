@@ -600,6 +600,29 @@ describe("parseWsdl (Stage 5 part 2)", () => {
     expect(def.warnings).toEqual([]);
   });
 
+  it("fills calculator Add descriptors in order", async () => {
+    const def = await parseOk(readFileSync("fixtures/calculator.wsdl", "utf8"));
+    const add = def.ports.flatMap((p) => p.operations).find((o) => o.name === "Add");
+    expect(add?.inputDescriptor.map((f) => [f.name, f.xsdType])).toEqual([
+      ["intA", "int"],
+      ["intB", "int"],
+    ]);
+    expect(add?.outputDescriptor.map((f) => [f.name, f.xsdType])).toEqual([["AddResult", "int"]]);
+  });
+
+  it("fills non-empty descriptors for countryinfo", async () => {
+    const def = await parseOk(readFileSync("fixtures/countryinfo.wsdl", "utf8"));
+    const ops = def.ports.flatMap((p) => p.operations);
+    expect(ops.some((o) => o.inputDescriptor.length > 0 && o.outputDescriptor.length > 0)).toBe(true);
+  });
+
+  it("uses the rpc/encoded warning text", async () => {
+    const def = await parseOk(multiWsdl([{ name: "b11", ns: S11, style: "rpc", use: "encoded" }]));
+    expect(def.ports[0].operations[0].warnings[0].message).toBe(
+      "Operation Add uses rpc/encoded, which is not supported for live calls.",
+    );
+  });
+
   it("parses the countryinfo fixture with zero warnings", async () => {
     const def = await parseOk(readFileSync("fixtures/countryinfo.wsdl", "utf8"));
     const ops = def.ports.flatMap((p) => p.operations);
