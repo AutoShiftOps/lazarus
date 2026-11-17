@@ -154,10 +154,10 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Minimum 100 iterations
     - **Validates: Requirements 5.6**
 
-- [ ] 8. Checkpoint — core library complete
+- [x] 8. Checkpoint — core library complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. Download WSDL fixtures
+- [x] 9. Download WSDL fixtures
   - [x] 9.1 Save Calculator WSDL to `fixtures/calculator.wsdl`
     - Fetch from `http://www.dneonline.com/calculator.asmx?WSDL` and save as a static file; no network requests at test time
     - _Requirements: 8.1, 8.5_
@@ -165,22 +165,22 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Fetch from `http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?WSDL` and save as a static file; no network requests at test time
     - _Requirements: 8.2, 8.5_
 
-- [ ] 10. Redis registry
-  - [ ] 10.1 Implement `lib/registry/index.ts`
+- [x] 10. Redis registry
+  - [x] 10.1 Implement `lib/registry/index.ts`
     - Import `getEnv()` from `lib/env.ts`; construct `Redis` client from `@upstash/redis` using env vars
     - `upsertService`: SHA-256 hash WSDL URL with `crypto.subtle`; check `wsdl-url:{hash}` key; if exists return existing id; else generate 8-char nanoid (`customAlphabet`, alphanumeric only), `HSET service:{id}`, `EXPIRE 2592000`, `SET wsdl-url:{hash}` with same TTL
     - `getService`: `HGET service:{id}`; deserialise JSON; return `ServiceDefinition | null`
     - On any Redis error → `{ ok: false, error: { code: "REGISTRY_UNAVAILABLE", ... } }`
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
-  - [ ]* 10.2 Write unit tests for `upsertService` and `getService` in `tests/registry/index.test.ts`
+  - [x]* 10.2 Write unit tests for `upsertService` and `getService` in `tests/registry/index.test.ts`
     - Mock `@upstash/redis`; test upsert (new entry), dedup (existing URL returns same id), TTL set, 503 on Redis connection error
     - _Requirements: 6.1, 6.3, 6.4, 6.5_
-  - [ ]* 10.3 Write property test for registry ID format and uniqueness — Property 6
+  - [x]* 10.3 Write property test for registry ID format and uniqueness — Property 6
     - **Property 6: Registry ID uniqueness and format**
     - For any sequence of distinct WSDL URLs, assert all generated ids are distinct, 8–12 chars, and match `[A-Za-z0-9]+`
     - Minimum 100 iterations
     - **Validates: Requirements 6.1**
-  - [ ]* 10.4 Write property test for registry deduplication — Property 7
+  - [x]* 10.4 Write property test for registry deduplication — Property 7
     - **Property 7: Registry deduplication (idempotence)**
     - For any WSDL URL, calling `upsertService` twice returns the same id and makes only one Redis write
     - Minimum 100 iterations
