@@ -39,11 +39,11 @@ Build the fake SOAP bank bottom-up: money, seed, XML helpers, pure handler, WSDL
     - _Requirements: 3b.5, 3b.6, 3b.7_
   - [x] 5.4 Implement dispatch, SOAPAction check, unknown-operation fault
     - _Requirements: 5.1, 5.2, 5.5, 5.6_
-  - [ ]* 5.5 Property test 11: transfers conserve money
+  - [x]* 5.5 Property test 11: transfers conserve money
     - **Property 11**
-  - [ ]* 5.6 Property test 12: failed operations change nothing
+  - [x]* 5.6 Property test 12: failed operations change nothing
     - **Property 12**
-  - [ ]* 5.7 Property test 15: faults leak nothing
+  - [x]* 5.7 Property test 15: faults leak nothing
     - **Property 15**
     - _Requirements: 5.3_
 

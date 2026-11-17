@@ -177,6 +177,32 @@
         "chatSessionId": "sess_7a0012d2-e800-43f6-81f1-f49475dca158",
         "timestamp": 1794932462070
       }
+    ],
+    "5.5 Property test 11: transfers conserve money": [
+      {
+        "executionId": "2bc11eb7-0d75-4b6e-b131-be8a40125991",
+        "chatSessionId": "sess_69e93c2e-2842-4ece-a8a5-05aa587764ea",
+        "timestamp": 1794933020513
+      },
+      {
+        "executionId": "2bc11eb7-0d75-4b6e-b131-be8a40125991",
+        "chatSessionId": "sess_69e93c2e-2842-4ece-a8a5-05aa587764ea",
+        "timestamp": 1794933214211
+      }
+    ],
+    "5.6 Property test 12: failed operations change nothing": [
+      {
+        "executionId": "2bc11eb7-0d75-4b6e-b131-be8a40125991",
+        "chatSessionId": "sess_69e93c2e-2842-4ece-a8a5-05aa587764ea",
+        "timestamp": 1794933216543
+      }
+    ],
+    "5.7 Property test 15: faults leak nothing": [
+      {
+        "executionId": "2bc11eb7-0d75-4b6e-b131-be8a40125991",
+        "chatSessionId": "sess_69e93c2e-2842-4ece-a8a5-05aa587764ea",
+        "timestamp": 1794933216924
+      }
     ]
   }
 }
