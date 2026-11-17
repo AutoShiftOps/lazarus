@@ -91,6 +91,37 @@
         "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
         "timestamp": 1794929716850
       }
+    ],
+    "4.1 Implement `lib/gravewood/xml.ts` (parse envelope, build envelope, build fault)": [
+      {
+        "executionId": "7149bc0f-bc5f-4c6b-9a66-d79fac1fdb71",
+        "chatSessionId": "sess_d83e9086-fb58-4028-8dd5-2ecbe6b39ae1",
+        "timestamp": 1794929953738
+      },
+      {
+        "executionId": "7149bc0f-bc5f-4c6b-9a66-d79fac1fdb71",
+        "chatSessionId": "sess_d83e9086-fb58-4028-8dd5-2ecbe6b39ae1",
+        "timestamp": 1794930019311
+      }
+    ],
+    "4.2 Unit tests: DOCTYPE rejected, billion-laughs sample rejected, namespace prefixes (`soap:`, `s:`, `env:`) all accepted": [
+      {
+        "executionId": "7149bc0f-bc5f-4c6b-9a66-d79fac1fdb71",
+        "chatSessionId": "sess_d83e9086-fb58-4028-8dd5-2ecbe6b39ae1",
+        "timestamp": 1794930019941
+      },
+      {
+        "executionId": "7149bc0f-bc5f-4c6b-9a66-d79fac1fdb71",
+        "chatSessionId": "sess_d83e9086-fb58-4028-8dd5-2ecbe6b39ae1",
+        "timestamp": 1794930094264
+      }
+    ],
+    "4. XML helpers": [
+      {
+        "executionId": "7149bc0f-bc5f-4c6b-9a66-d79fac1fdb71",
+        "chatSessionId": "sess_d83e9086-fb58-4028-8dd5-2ecbe6b39ae1",
+        "timestamp": 1794930094376
+      }
     ]
   }
 }

@@ -24,11 +24,11 @@ Build the fake SOAP bank bottom-up: money, seed, XML helpers, pure handler, WSDL
     - _Requirements: 3.1, 3.2, 3.3_
   - [x] 3.2 Unit test: sum of seed balances is 63650.00; all timestamps are fixed strings
 
-- [ ] 4. XML helpers
-  - [ ] 4.1 Implement `lib/gravewood/xml.ts` (parse envelope, build envelope, build fault)
+- [x] 4. XML helpers
+  - [x] 4.1 Implement `lib/gravewood/xml.ts` (parse envelope, build envelope, build fault)
     - Reject `<!DOCTYPE`; entity processing off
     - _Requirements: 5.1, 5.4, 6.2_
-  - [ ] 4.2 Unit tests: DOCTYPE rejected, billion-laughs sample rejected, namespace prefixes (`soap:`, `s:`, `env:`) all accepted
+  - [x] 4.2 Unit tests: DOCTYPE rejected, billion-laughs sample rejected, namespace prefixes (`soap:`, `s:`, `env:`) all accepted
 
 - [ ] 5. Pure handler
   - [ ] 5.1 Implement read operations: `ListAccounts`, `GetBalance`, `GetStatement`
