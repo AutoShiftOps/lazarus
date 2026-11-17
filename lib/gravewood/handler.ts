@@ -1,6 +1,6 @@
 import { formatCents, formatSignedCents, parseAmountToCents } from "./money";
-import type { Account, BankState } from "./types";
-import { safeId, type XmlNode } from "./xml";
+import type { Account, BankState, HandlerResult } from "./types";
+import { buildEnvelope, buildFault, parseRequest, safeId, type XmlNode } from "./xml";
 
 export type Params = Record<string, unknown>;
 
@@ -221,4 +221,111 @@ export function transferFunds(state: BankState, params: Params, nowIso: string):
       ],
     },
   };
+}
+const ADDRESS_MAX = 200;
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS_RE = /[\u0000-\u001F\u007F]/;
+/** Updates the address of an open account. Pure: returns a new state, never mutates the input. */
+export function updateAddress(state: BankState, params: Params, nowIso: string): OpResult {
+  void nowIso;
+  const bad = checkParamsAreStrings(params);
+  if (bad) return bad;
+  const id = requireAccountId(params, "accountId");
+  if (typeof id !== "string") return id;
+  const raw = requireString(params, "address");
+  if (typeof raw !== "string") return raw;
+  const account = findAccount(state, id);
+  if (!account) return accountNotFound(id);
+  if (account.status === "CLOSED") return accountClosed(id);
+  const address = raw.trim();
+  if (address === "" || CONTROL_CHARS_RE.test(address)) return clientFault("Invalid address");
+  if (Array.from(address).length > ADDRESS_MAX) return clientFault("Address too long");
+  const next = structuredClone(state);
+  (findAccount(next, id) as Account).address = address;
+  next.version += 1;
+  return {
+    ok: true,
+    state: next,
+    node: { name: "UpdateAddressResponse", children: [text("updated", "true")] },
+  };
+}
+/** Closes an account; its balance stays on the account. Pure: never mutates the input. */
+export function closeAccount(state: BankState, params: Params, nowIso: string): OpResult {
+  const bad = checkParamsAreStrings(params);
+  if (bad) return bad;
+  const id = requireAccountId(params, "accountId");
+  if (typeof id !== "string") return id;
+  const account = findAccount(state, id);
+  if (!account) return accountNotFound(id);
+  if (account.status === "CLOSED") return accountClosed(id);
+  const closedAt = nowIso.replace(/\.\d+(?=Z$|[+-]\d{2}:\d{2}$)/, "");
+  const next = structuredClone(state);
+  const target = findAccount(next, id) as Account;
+  target.status = "CLOSED";
+  target.closedAt = closedAt;
+  next.version += 1;
+  return {
+    ok: true,
+    state: next,
+    node: {
+      name: "CloseAccountResponse",
+      children: [text("closed", "true"), text("closedAt", closedAt)],
+    },
+  };
+}
+
+// ---------- dispatch ----------
+
+type Operation = (state: BankState, params: Params, nowIso: string) => OpResult;
+
+const OPERATIONS: Readonly<Record<string, Operation>> = {
+  ListAccounts: (state) => listAccounts(state),
+  GetBalance: getBalance,
+  GetStatement: getStatement,
+  TransferFunds: transferFunds,
+  UpdateAddress: updateAddress,
+  CloseAccount: closeAccount,
+};
+
+function faultResult(state: BankState, kind: "Client" | "Server", message: string): HandlerResult {
+  return { ok: false, state, xml: buildFault(kind, message), status: 500 };
+}
+
+/** Normalises a SOAPAction header: trims, strips surrounding double quotes, trims again. */
+function normaliseSoapAction(raw: string | null): string | null {
+  if (raw === null) return null;
+  let v = raw.trim();
+  if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) v = v.slice(1, -1).trim();
+  return v === "" ? null : v;
+}
+
+/**
+ * Pure entry point: parse, dispatch, check SOAPAction, run the operation.
+ * On any failure the original state object is returned untouched.
+ */
+export function handleSoap(
+  state: BankState,
+  soapAction: string | null,
+  bodyXml: string,
+  nowIso: string,
+): HandlerResult {
+  try {
+    const req = parseRequest(bodyXml);
+    if (!req.ok) return faultResult(state, "Client", "Malformed request");
+
+    if (!Object.hasOwn(OPERATIONS, req.operation)) {
+      return faultResult(state, "Client", "Unknown operation");
+    }
+
+    const action = normaliseSoapAction(soapAction);
+    if (action !== null && action !== `urn:gravewood:${req.operation}`) {
+      return faultResult(state, "Client", "SOAPAction mismatch");
+    }
+
+    const res = OPERATIONS[req.operation](state, req.params, nowIso);
+    if (!res.ok) return faultResult(state, res.kind, res.message);
+    return { ok: true, state: res.state, xml: buildEnvelope(res.node), status: 200 };
+  } catch {
+    return faultResult(state, "Server", "Internal error");
+  }
 }

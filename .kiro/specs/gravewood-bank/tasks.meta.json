@@ -146,6 +146,37 @@
         "chatSessionId": "sess_0625357c-e428-4113-87d9-2e76601774f3",
         "timestamp": 1794930599085
       }
+    ],
+    "5.3 Implement `UpdateAddress` and `CloseAccount`": [
+      {
+        "executionId": "74f0878d-f2d1-4ee6-b617-9511a47c4961",
+        "chatSessionId": "sess_7a0012d2-e800-43f6-81f1-f49475dca158",
+        "timestamp": 1794930903960
+      },
+      {
+        "executionId": "74f0878d-f2d1-4ee6-b617-9511a47c4961",
+        "chatSessionId": "sess_7a0012d2-e800-43f6-81f1-f49475dca158",
+        "timestamp": 1794931494379
+      }
+    ],
+    "5.4 Implement dispatch, SOAPAction check, unknown-operation fault": [
+      {
+        "executionId": "74f0878d-f2d1-4ee6-b617-9511a47c4961",
+        "chatSessionId": "sess_7a0012d2-e800-43f6-81f1-f49475dca158",
+        "timestamp": 1794931494518
+      },
+      {
+        "executionId": "74f0878d-f2d1-4ee6-b617-9511a47c4961",
+        "chatSessionId": "sess_7a0012d2-e800-43f6-81f1-f49475dca158",
+        "timestamp": 1794932461932
+      }
+    ],
+    "5. Pure handler": [
+      {
+        "executionId": "74f0878d-f2d1-4ee6-b617-9511a47c4961",
+        "chatSessionId": "sess_7a0012d2-e800-43f6-81f1-f49475dca158",
+        "timestamp": 1794932462070
+      }
     ]
   }
 }

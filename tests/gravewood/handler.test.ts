@@ -4,6 +4,9 @@ import {
   getStatement,
   listAccounts,
   transferFunds,
+  updateAddress,
+  closeAccount,
+  handleSoap,
   type OpResult,
 } from "../../lib/gravewood/handler";
 import { formatSignedCents } from "../../lib/gravewood/money";
@@ -484,5 +487,356 @@ describe("transferFunds", () => {
   it("does not echo hostile ids in faults", () => {
     const msg = fault(transfer(ok("<script>", "5530", "1")));
     expect(msg).not.toContain("<");
+  });
+});
+
+describe("updateAddress", () => {
+  function update(params: Record<string, unknown>, state: BankState = seedState()): OpResult {
+    const snapshot = structuredClone(state);
+    const res = updateAddress(state, params, NOW);
+    expect(state).toEqual(snapshot);
+    if (res.ok) expect(res.state).not.toBe(state);
+    return res;
+  }
+  const addr = (accountId: string, address: unknown) => ({ accountId, address });
+  const acct = (s: BankState, id: string) => s.accounts.find((a) => a.id === id)!;
+  const total = (s: BankState) => s.accounts.reduce((sum, a) => sum + a.balanceCents, 0);
+
+  it("stores the trimmed address, bumps version and returns updated=true", () => {
+    const base = seedState();
+    const res = update(addr("4471", "  12 Elm Street, Hollow Creek \t"), base);
+    expect(node(res)).toEqual({
+      name: "UpdateAddressResponse",
+      children: [{ name: "updated", text: "true" }],
+    });
+    if (!res.ok) throw new Error("unreachable");
+    expect(acct(res.state, "4471").address).toBe("12 Elm Street, Hollow Creek");
+    expect(res.state.version).toBe(base.version + 1);
+    expect(total(res.state)).toBe(total(base));
+    expect(res.state.txns).toEqual(base.txns);
+    expect(acct(base, "4471").address).toBeUndefined();
+  });
+
+  it("replaces an existing address", () => {
+    const first = update(addr("4471", "A"));
+    if (!first.ok) throw new Error("unreachable");
+    const second = update(addr("4471", "B"), first.state);
+    if (!second.ok) throw new Error("unreachable");
+    expect(acct(second.state, "4471").address).toBe("B");
+    expect(second.state.version).toBe(2);
+  });
+
+  it("accepts exactly 200 characters and rejects 201", () => {
+    expect(update(addr("4471", "a".repeat(200))).ok).toBe(true);
+    expect(fault(update(addr("4471", "a".repeat(201))))).toBe("Address too long");
+  });
+
+  it("measures length after trimming", () => {
+    expect(update(addr("4471", ` ${"a".repeat(200)} `)).ok).toBe(true);
+  });
+
+  it("accepts unicode addresses and counts code points", () => {
+    const res = update(addr("4471", "Ünïcödé 通り 12 🪦"));
+    if (!res.ok) throw new Error("unreachable");
+    expect(acct(res.state, "4471").address).toBe("Ünïcödé 通り 12 🪦");
+    expect(update(addr("4471", "🪦".repeat(200))).ok).toBe(true);
+    expect(fault(update(addr("4471", "🪦".repeat(201))))).toBe("Address too long");
+  });
+
+  it("rejects empty, whitespace-only and control character addresses", () => {
+    expect(fault(update(addr("4471", "")))).toBe("Invalid address");
+    expect(fault(update(addr("4471", "   \t ")))).toBe("Invalid address");
+    expect(fault(update(addr("4471", "a\u0000b")))).toBe("Invalid address");
+    expect(fault(update(addr("4471", "a\nb")))).toBe("Invalid address");
+    expect(fault(update(addr("4471", "a\u007Fb")))).toBe("Invalid address");
+  });
+
+  it("faults on unknown account and closed account", () => {
+    expect(fault(update(addr("999", "x")))).toBe("Account 999 not found");
+    const s = seedState();
+    s.accounts[0].status = "CLOSED";
+    expect(fault(update(addr("4471", "x"), s))).toBe("Account 4471 is closed");
+  });
+
+  it("rejects bad ids and missing or non-string params", () => {
+    expect(fault(update(addr("x", "a")))).toBe("Invalid account id");
+    expect(fault(update({ accountId: "4471" }))).toBe("Invalid request");
+    expect(fault(update(addr("4471", ["a"])))).toBe("Invalid request");
+  });
+
+  it("does not echo hostile ids in faults", () => {
+    expect(fault(update(addr("<script>", "a")))).not.toContain("<");
+  });
+});
+
+describe("closeAccount", () => {
+  const NOW_MS = "2026-01-02T03:04:05.678Z";
+  function close(
+    params: Record<string, unknown>,
+    state: BankState = seedState(),
+    now = NOW,
+  ): OpResult {
+    const snapshot = structuredClone(state);
+    const res = closeAccount(state, params, now);
+    expect(state).toEqual(snapshot);
+    if (res.ok) expect(res.state).not.toBe(state);
+    return res;
+  }
+  const total = (s: BankState) => s.accounts.reduce((sum, a) => sum + a.balanceCents, 0);
+
+  it("closes the account, keeps its balance, bumps version and returns closedAt without ms", () => {
+    const base = seedState();
+    const res = close({ accountId: "4471" }, base, NOW_MS);
+    expect(node(res)).toEqual({
+      name: "CloseAccountResponse",
+      children: [
+        { name: "closed", text: "true" },
+        { name: "closedAt", text: NOW },
+      ],
+    });
+    if (!res.ok) throw new Error("unreachable");
+    const a = res.state.accounts.find((x) => x.id === "4471")!;
+    expect(a.status).toBe("CLOSED");
+    expect(a.closedAt).toBe(NOW);
+    expect(a.balanceCents).toBe(1245000);
+    expect(res.state.version).toBe(base.version + 1);
+    expect(total(res.state)).toBe(total(base));
+    expect(res.state.txns).toEqual(base.txns);
+    expect(base.accounts[0].status).toBe("OPEN");
+  });
+
+  it("leaves other accounts untouched", () => {
+    const base = seedState();
+    const res = close({ accountId: "5530" }, base);
+    if (!res.ok) throw new Error("unreachable");
+    expect(res.state.accounts.filter((a) => a.id !== "5530")).toEqual(
+      base.accounts.filter((a) => a.id !== "5530"),
+    );
+  });
+
+  it("faults on a repeat close", () => {
+    const first = close({ accountId: "4471" });
+    if (!first.ok) throw new Error("unreachable");
+    expect(fault(close({ accountId: "4471" }, first.state))).toBe("Account 4471 is closed");
+  });
+
+  it("makes a closed account reject address updates", () => {
+    const first = close({ accountId: "4471" });
+    if (!first.ok) throw new Error("unreachable");
+    const res = updateAddress(first.state, { accountId: "4471", address: "x" }, NOW);
+    expect(fault(res)).toBe("Account 4471 is closed");
+  });
+
+  it("faults on unknown account, bad id and bad params", () => {
+    expect(fault(close({ accountId: "999" }))).toBe("Account 999 not found");
+    expect(fault(close({ accountId: "x" }))).toBe("Invalid account id");
+    expect(fault(close({}))).toBe("Invalid request");
+    expect(fault(close({ accountId: ["4471"] }))).toBe("Invalid request");
+  });
+
+  it("does not echo hostile ids in faults", () => {
+    expect(fault(close({ accountId: "<script>" }))).not.toContain("<");
+  });
+});
+
+describe("handleSoap", () => {
+  const SOAP_NS = "http://schemas.xmlsoap.org/soap/envelope/";
+  const prefixed = (p: string, inner: string) =>
+    `<${p}:Envelope xmlns:${p}="${SOAP_NS}"><${p}:Body>${inner}</${p}:Body></${p}:Envelope>`;
+  const defaultNs = (inner: string) =>
+    `<Envelope xmlns="${SOAP_NS}"><Body>${inner}</Body></Envelope>`;
+  const op = (name: string, fields = "") => `<${name} xmlns="urn:gravewood">${fields}</${name}>`;
+
+  const faultXml = (kind: string, msg: string) =>
+    `<soap:Fault><faultcode>soap:${kind}</faultcode><faultstring>${msg}</faultstring></soap:Fault>`;
+
+  it.each([
+    ["soap", (i: string) => prefixed("soap", i)],
+    ["s", (i: string) => prefixed("s", i)],
+    ["default", defaultNs],
+  ])("runs all six operations end to end (%s prefix)", (_n, wrap) => {
+    const s0 = seedState();
+    const call = (state: BankState, name: string, fields = "") =>
+      handleSoap(state, `"urn:gravewood:${name}"`, wrap(op(name, fields)), NOW);
+
+    const list = call(s0, "ListAccounts");
+    expect(list.ok).toBe(true);
+    expect(list.status).toBe(200);
+    expect(list.xml).toContain("<ListAccountsResponse");
+    expect(list.xml).toContain("<account>");
+
+    const bal = call(s0, "GetBalance", "<accountId>4471</accountId>");
+    expect(bal.ok).toBe(true);
+    expect(bal.xml).toContain("<GetBalanceResponse");
+    expect(bal.xml).toContain("<accountId>4471</accountId>");
+    expect(bal.xml).toContain(`<asOf>${NOW}</asOf>`);
+
+    const stmt = call(s0, "GetStatement", "<accountId>4471</accountId>");
+    expect(stmt.ok).toBe(true);
+    expect(stmt.xml).toContain("<GetStatementResponse");
+    expect(stmt.xml).toContain("<transaction>");
+
+    const before = s0.accounts.find((a) => a.id === "4471")!.balanceCents;
+    const tr = call(
+      s0,
+      "TransferFunds",
+      "<fromAccount>4471</fromAccount><toAccount>5530</toAccount><amount>1.00</amount>",
+    );
+    expect(tr.ok).toBe(true);
+    expect(tr.xml).toContain("<TransferFundsResponse");
+    expect(tr.xml).toContain("<confirmationId>GW-");
+    expect(tr.state).not.toBe(s0);
+    expect(tr.state.accounts.find((a) => a.id === "4471")!.balanceCents).toBe(before - 100);
+
+    const up = call(
+      tr.state,
+      "UpdateAddress",
+      "<accountId>4471</accountId><address>1 Crypt Lane</address>",
+    );
+    expect(up.ok).toBe(true);
+    expect(up.xml).toContain("<UpdateAddressResponse");
+    expect(up.xml).toContain("<updated>true</updated>");
+
+    const cl = call(up.state, "CloseAccount", "<accountId>4471</accountId>");
+    expect(cl.ok).toBe(true);
+    expect(cl.xml).toContain("<CloseAccountResponse");
+    expect(cl.xml).toContain("<closed>true</closed>");
+    expect(cl.state.accounts.find((a) => a.id === "4471")!.status).toBe("CLOSED");
+  });
+
+  describe("SOAPAction", () => {
+    const body = prefixed("soap", op("GetBalance", "<accountId>4471</accountId>"));
+    const s = seedState();
+
+    it.each([
+      ["quoted", '"urn:gravewood:GetBalance"'],
+      ["unquoted", "urn:gravewood:GetBalance"],
+      ["padded and quoted", '  "urn:gravewood:GetBalance" '],
+      ["null", null],
+      ["empty", ""],
+      ["empty quotes", '""'],
+      ["whitespace only", "   "],
+    ])("accepts %s", (_n, action) => {
+      const r = handleSoap(s, action, body, NOW);
+      expect(r.ok).toBe(true);
+      expect(r.status).toBe(200);
+    });
+
+    it.each([
+      ["wrong operation", '"urn:gravewood:ListAccounts"'],
+      ["wrong namespace", "urn:other:GetBalance"],
+      ["wrong case", "urn:gravewood:getbalance"],
+      ["lone quote", '"'],
+      ["inner whitespace", "urn:gravewood: GetBalance"],
+    ])("rejects %s", (_n, action) => {
+      const r = handleSoap(s, action, body, NOW);
+      expect(r.ok).toBe(false);
+      expect(r.status).toBe(500);
+      expect(r.xml).toContain(faultXml("Client", "SOAPAction mismatch"));
+      expect(r.state).toBe(s);
+    });
+  });
+
+  describe("faults", () => {
+    const s = seedState();
+    const expectFault = (
+      r: ReturnType<typeof handleSoap>,
+      kind: string,
+      msg: string,
+      state: BankState = s,
+    ) => {
+      expect(r.ok).toBe(false);
+      expect(r.status).toBe(500);
+      expect(r.xml).toContain(faultXml(kind, msg));
+      expect(r.state).toBe(state);
+    };
+
+    it("unknown operation", () => {
+      expectFault(
+        handleSoap(s, null, prefixed("soap", op("DropTables")), NOW),
+        "Client",
+        "Unknown operation",
+      );
+    });
+
+    it("operation names are case-sensitive and own-property only", () => {
+      for (const name of ["getBalance", "toString", "hasOwnProperty"]) {
+        expectFault(
+          handleSoap(s, null, prefixed("soap", `<${name}/>`), NOW),
+          "Client",
+          "Unknown operation",
+        );
+      }
+    });
+
+    it("a prototype-named element never reaches an operation", () => {
+      // fast-xml-parser rejects <constructor/> as malformed, so parseRequest reports that.
+      expectFault(
+        handleSoap(s, null, prefixed("soap", "<constructor/>"), NOW),
+        "Client",
+        "Malformed request",
+      );
+    });
+
+    it("unknown operation is reported before a SOAPAction mismatch", () => {
+      expectFault(
+        handleSoap(s, "urn:x", prefixed("soap", op("Nope")), NOW),
+        "Client",
+        "Unknown operation",
+      );
+    });
+
+    it("DOCTYPE body", () => {
+      const xml = `<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY x "y">]>${prefixed("soap", op("ListAccounts"))}`;
+      expectFault(handleSoap(s, null, xml, NOW), "Client", "Malformed request");
+    });
+
+    it.each([
+      ["garbage", "not xml at all"],
+      ["empty", ""],
+      ["unclosed", "<a><b></a>"],
+      ["no operation", prefixed("soap", "")],
+      ["non-envelope root", "<root/>"],
+    ])("%s input", (_n, xml) => {
+      expectFault(handleSoap(s, null, xml, NOW), "Client", "Malformed request");
+    });
+
+    it("operation faults keep their message, HTTP 500 and the original state", () => {
+      const r = handleSoap(
+        s,
+        null,
+        prefixed("soap", op("GetBalance", "<accountId>9999</accountId>")),
+        NOW,
+      );
+      expectFault(r, "Client", "Account 9999 not found");
+    });
+
+    it("a failed transfer returns the same state reference", () => {
+      const r = handleSoap(
+        s,
+        null,
+        prefixed(
+          "soap",
+          op(
+            "TransferFunds",
+            "<fromAccount>4471</fromAccount><toAccount>5530</toAccount><amount>999999999</amount>",
+          ),
+        ),
+        NOW,
+      );
+      expectFault(r, "Client", "Insufficient funds");
+    });
+
+    it("a thrown error becomes a fixed Server fault with no leak", () => {
+      const broken = { ...seedState(), accounts: "SECRET-LEAK-xyz" } as unknown as BankState;
+      for (const [name, fields] of [
+        ["ListAccounts", ""],
+        ["GetBalance", "<accountId>4471</accountId>"],
+      ] as const) {
+        const r = handleSoap(broken, null, prefixed("soap", op(name, fields)), NOW);
+        expectFault(r, "Server", "Internal error", broken);
+        expect(r.xml).not.toMatch(/SECRET-LEAK|TypeError|is not a function|find|map|undefined/);
+      }
+    });
   });
 });
