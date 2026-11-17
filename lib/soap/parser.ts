@@ -5,6 +5,7 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { safeFetch } from "./fetcher";
 import type { FetchResult } from "./fetcher";
+import { heuristicRisk } from "./risk";
 import { buildDescriptors } from "./xsd";
 import type { DescriptorResult } from "./xsd";
 import type {
@@ -53,6 +54,7 @@ export type DocumentInfo = {
 const WSDL_11_NS = "http://schemas.xmlsoap.org/wsdl/";
 const WSDL_20_NS = "http://www.w3.org/ns/wsdl";
 const MAX_MESSAGE_LENGTH = 500;
+const MAX_DOCUMENTATION = 500;
 
 function parseFailed(message: string): LazarusError {
   return {
@@ -433,9 +435,15 @@ export function verifyNoLocations(xml: string): LazarusError | null {
 }
 
 export type MessagePart = { name: string; element: string | null; type: string | null };
-export type PortTypeOperation = { name: string; input: string | null; output: string | null };
+export type PortTypeOperation = {
+  name: string;
+  input: string | null;
+  output: string | null;
+  documentation?: string;
+};
 export type BindingOperation = {
   name: string;
+  documentation?: string;
   soapAction: string | null;
   style: string | null;
   inputUse: string | null;
@@ -477,6 +485,36 @@ function firstChild(
   return null;
 }
 
+function collectText(value: unknown, out: string[]): void {
+  if (typeof value === "string") out.push(value);
+  else if (typeof value === "number" || typeof value === "boolean") out.push(String(value));
+  else if (Array.isArray(value)) for (const v of value) collectText(v, out);
+  else {
+    const rec = asRecord(value);
+    if (rec === null) return;
+    for (const [k, v] of Object.entries(rec)) {
+      if (!k.startsWith("@_") && !k.startsWith("?")) collectText(v, out);
+    }
+  }
+}
+
+/** Text of the first child element named "documentation" (any prefix): tags stripped, whitespace collapsed, <= 500 chars. */
+function documentationOf(node: Record<string, unknown>): string | undefined {
+  for (const [key, value] of Object.entries(node)) {
+    if (!isElementKey(key) || splitName(key).local !== "documentation") continue;
+    const parts: string[] = [];
+    collectText(Array.isArray(value) ? value[0] : value, parts);
+    const text = parts
+      .join(" ")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, MAX_DOCUMENTATION);
+    return text === "" ? undefined : text;
+  }
+  return undefined;
+}
+
 function bodyUse(op: Record<string, unknown>, direction: "input" | "output"): string | null {
   const io = childNodes(op, direction)[0];
   const body = io === undefined ? undefined : childNodes(io, "body")[0];
@@ -502,6 +540,7 @@ function indexBinding(b: Record<string, unknown>, name: string, root: Map<string
     const so = firstChild(op, "operation");
     operations.push({
       name: opName,
+      documentation: documentationOf(op),
       soapAction: so === null ? null : attrOf(so.node, "soapAction"),
       style: so === null ? null : attrOf(so.node, "style"),
       inputUse: bodyUse(op, "input"),
@@ -558,6 +597,7 @@ export function indexDocument(xml: string): WsdlIndex | LazarusError {
       if (opName === null) continue;
       operations.push({
         name: opName,
+        documentation: documentationOf(op),
         input: localAttr(childNodes(op, "input")[0] ?? {}, "message"),
         output: localAttr(childNodes(op, "output")[0] ?? {}, "message"),
       });
@@ -732,8 +772,14 @@ export function buildDefinition(
       const inputDesc = describe(ptOp.input, inputElementName);
       const outputDesc = describe(ptOp.output, outputElementName);
       opWarnings.push(...inputDesc.warnings, ...outputDesc.warnings);
+      const documentation = ptOp.documentation ?? bop.documentation;
+      const heuristic = heuristicRisk(opName, documentation);
       operations.push({
         name: opName,
+        risk: heuristic.risk,
+        riskReason: heuristic.reason,
+        riskSource: "heuristic",
+        ...(documentation === undefined ? {} : { documentation }),
         soapVersions: hasBoth ? ["1.1", "1.2"] : [preferred.version],
         preferredVersion: preferred.version,
         bindingStyle,

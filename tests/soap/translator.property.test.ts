@@ -1,10 +1,10 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import { XMLValidator } from "fast-xml-parser";
 import { fromEnvelope, toEnvelope } from "../../lib/soap/translator";
 import type { FieldDescriptor, OperationSchema, SoapVersion } from "../../lib/soap/types";
 
-// ─── Schema builders ──────────────────────────────────────────────────────────
+// --- Schema builders ----------------------------------------------------------
 
 function field(name: string, extra: Partial<FieldDescriptor> = {}): FieldDescriptor {
   return { name, xsdType: "string", minOccurs: 1, maxOccurs: 1, nillable: false, ...extra };
@@ -27,6 +27,9 @@ function schemaOf(
     outputElementName: "Op",
     endpointAddress: "http://example.com/svc",
     elementFormDefault: "qualified",
+    risk: "write",
+    riskReason: "test",
+    riskSource: "heuristic",
     inputDescriptor: descriptor,
     outputDescriptor: descriptor,
     warnings: [],
@@ -62,7 +65,7 @@ const nestedDescriptor: FieldDescriptor[] = [
   }),
 ];
 
-// ─── Arbitraries (values valid for the schema only) ───────────────────────────
+// --- Arbitraries (values valid for the schema only) ---------------------------
 
 // Legal XML 1.0 characters, excluding CR and surrogates.
 const xmlChar: fc.Arbitrary<string> = fc.oneof(
@@ -121,7 +124,7 @@ const nestedArgs = fc.record({
   }),
 });
 
-// ─── Property 1 ───────────────────────────────────────────────────────────────
+// --- Property 1 ---------------------------------------------------------------
 
 const VERSIONS: SoapVersion[] = ["1.1", "1.2"];
 
@@ -198,7 +201,7 @@ describe("Empty repeating fields", () => {
   });
 });
 
-// ─── Property 2 (escaping) ────────────────────────────────────────────────────
+// --- Property 2 (escaping) ----------------------------------------------------
 
 describe("Envelope escaping of arbitrary string values", () => {
   /** **Validates: Requirements 5.7** */

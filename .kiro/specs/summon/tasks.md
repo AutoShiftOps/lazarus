@@ -217,7 +217,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Minimum 100 iterations
     - **Validates: Requirements 9.1, 9.2**
 
-- [ ] 13. Final checkpoint — Ensure all tests pass
+- [x] 13. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 14. End-to-end tests
@@ -227,20 +227,20 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Assert `mcpUrl` is an absolute HTTPS/HTTP URL on the same host
     - _Requirements: 7.1, 8.1_
 
-- [ ] 15. Risk classification
-  - [ ] 15.1 Capture `wsdl:documentation` per operation in the parser into `OperationSchema.documentation`
+- [x] 15. Risk classification
+  - [x] 15.1 Capture `wsdl:documentation` per operation in the parser into `OperationSchema.documentation`
     - Truncate to 500 characters; absent documentation leaves the field undefined
     - _Requirements: 11.4, 11.7_
-  - [ ] 15.2 Implement `lib/soap/risk.ts` — `heuristicRisk`, `mergeRisk`, `classifyOperations`
+  - [x] 15.2 Implement `lib/soap/risk.ts` — `heuristicRisk`, `mergeRisk`, `classifyOperations`
     - Bedrock access behind an injectable `BedrockLike` interface; 8 s timeout; zod-validated response
     - Add `risk`, `riskReason`, `riskSource` to `OperationSchema` in `lib/soap/types.ts`
     - _Requirements: 11.1, 11.2, 11.3, 11.5, 11.6, 11.8_
-  - [ ] 15.3 Unit tests in `tests/soap/risk.test.ts`
+  - [x] 15.3 Unit tests in `tests/soap/risk.test.ts`
     - `GetBalance` → read, `TransferFunds` → write, `CloseAccount` → destructive, `getOrDeleteRecord` → destructive
     - Documentation containing "cannot be undone" raises a write to destructive
     - Fake Bedrock returning a less restrictive class is ignored; timeout and invalid JSON fall back to the heuristic with `riskSource: "heuristic"`
     - _Requirements: 11.1–11.8_
-  - [ ]* 15.4 Property tests for risk classification
+  - [x]* 15.4 Property tests for risk classification
     - **Property 25**: merged risk is never less restrictive than the heuristic
     - **Property 26**: heuristic is total and deterministic for any string
     - **Property 27**: a destructive token always yields destructive

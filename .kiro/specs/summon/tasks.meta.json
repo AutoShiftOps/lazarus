@@ -434,6 +434,46 @@
         "chatSessionId": "sess_6925cff5-f31c-4939-a96b-4ae45b8921e8",
         "timestamp": 1794926690073
       }
+    ],
+    "15.1 Capture `wsdl:documentation` per operation in the parser into `OperationSchema.documentation`": [
+      {
+        "executionId": "d580cbf2-eacb-42e5-92ce-25d2a5a74dd1",
+        "chatSessionId": "sess_a0ecd161-4880-4669-8fe4-fc4f24739b48",
+        "timestamp": 1794927044515
+      },
+      {
+        "executionId": "d580cbf2-eacb-42e5-92ce-25d2a5a74dd1",
+        "chatSessionId": "sess_a0ecd161-4880-4669-8fe4-fc4f24739b48",
+        "timestamp": 1794927216606
+      }
+    ],
+    "15.2 Implement `lib/soap/risk.ts` — `heuristicRisk`, `mergeRisk`, `classifyOperations`": [
+      {
+        "executionId": "d580cbf2-eacb-42e5-92ce-25d2a5a74dd1",
+        "chatSessionId": "sess_a0ecd161-4880-4669-8fe4-fc4f24739b48",
+        "timestamp": 1794927216855
+      }
+    ],
+    "15.3 Unit tests in `tests/soap/risk.test.ts`": [
+      {
+        "executionId": "d580cbf2-eacb-42e5-92ce-25d2a5a74dd1",
+        "chatSessionId": "sess_a0ecd161-4880-4669-8fe4-fc4f24739b48",
+        "timestamp": 1794927217526
+      }
+    ],
+    "15. Risk classification": [
+      {
+        "executionId": "d580cbf2-eacb-42e5-92ce-25d2a5a74dd1",
+        "chatSessionId": "sess_a0ecd161-4880-4669-8fe4-fc4f24739b48",
+        "timestamp": 1794927217606
+      }
+    ],
+    "15.4 Property tests for risk classification": [
+      {
+        "executionId": "d580cbf2-eacb-42e5-92ce-25d2a5a74dd1",
+        "chatSessionId": "sess_a0ecd161-4880-4669-8fe4-fc4f24739b48",
+        "timestamp": 1794927220362
+      }
     ]
   }
 }

@@ -662,3 +662,52 @@ describe("parseWsdl (Stage 5 part 2)", () => {
     if (!r.ok) expect(r.error.code).toBe("WSDL_PARSE_FAILED");
   });
 });
+
+describe("operation documentation and risk (task 15.1)", () => {
+  function docWsdl(ptDoc: string, bindingDoc: string): string {
+    return `<?xml version="1.0"?>
+<w:definitions xmlns:w="http://schemas.xmlsoap.org/wsdl/" xmlns:s="http://www.w3.org/2001/XMLSchema"
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:t="urn:t" targetNamespace="urn:t">
+  <w:types><s:schema targetNamespace="urn:t" elementFormDefault="qualified">
+    <s:element name="Ping"><s:complexType><s:sequence/></s:complexType></s:element>
+    <s:element name="PingResponse"><s:complexType><s:sequence/></s:complexType></s:element>
+  </s:schema></w:types>
+  <w:message name="PingIn"><w:part name="p" element="t:Ping"/></w:message>
+  <w:message name="PingOut"><w:part name="p" element="t:PingResponse"/></w:message>
+  <w:portType name="PT"><w:operation name="DeleteThing">${ptDoc}
+    <w:input message="t:PingIn"/><w:output message="t:PingOut"/></w:operation></w:portType>
+  <w:binding name="B" type="t:PT"><soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+    <w:operation name="DeleteThing">${bindingDoc}<soap:operation soapAction="urn:x"/>
+      <w:input><soap:body use="literal"/></w:input><w:output><soap:body use="literal"/></w:output></w:operation></w:binding>
+  <w:service name="S"><w:port name="P" binding="t:B"><soap:address location="http://h.test/s"/></w:port></w:service>
+</w:definitions>`;
+  }
+
+  async function firstOp(xml: string) {
+    const r = await parseWsdl(xml);
+    if (!r.ok) throw new Error(r.error.message);
+    return r.definition.ports[0].operations[0];
+  }
+
+  it("captures portType documentation, strips tags and whitespace", async () => {
+    const op = await firstOp(
+      docWsdl("<w:documentation>  <b>Removes\n   the   thing.</b>  </w:documentation>", ""),
+    );
+    expect(op.documentation).toBe("Removes the thing.");
+    expect(op.riskSource).toBe("heuristic");
+    expect(op.risk).toBe("destructive");
+    expect(op.riskReason.length).toBeLessThanOrEqual(120);
+  });
+
+  it("falls back to binding operation documentation", async () => {
+    const op = await firstOp(docWsdl("", "<w:documentation>From binding</w:documentation>"));
+    expect(op.documentation).toBe("From binding");
+  });
+
+  it("truncates to 500 characters and leaves undefined when absent", async () => {
+    const long = await firstOp(docWsdl(`<w:documentation>${"x".repeat(900)}</w:documentation>`, ""));
+    expect(long.documentation).toHaveLength(500);
+    const none = await firstOp(docWsdl("", ""));
+    expect(none.documentation).toBeUndefined();
+  });
+});

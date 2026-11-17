@@ -17,3 +17,4 @@ One line per notable Kiro moment. This becomes the hackathon write-up.
 - 2026-11-16: Replaced the soap library with a tree-based Stage 5 + XSD walker; Kiro flagged the rpc/encoded rule conflict itself.
 - 2026-11-17: Property test 1 found that an empty list and an absent field are the same thing in XML. Documented as a limitation and covered by a unit test.
 - 2026-11-17: First live smoke test found that cacheComponents rejects a runtime export. All 288 unit tests missed it. Spec corrected across five specs.
+- 2026-11-17: Property 10 found a path fragment surviving the error sanitiser. Fixed in the code, not by loosening the test, and now fail-closed.

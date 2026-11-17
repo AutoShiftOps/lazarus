@@ -6,6 +6,8 @@
 
 export type SoapVersion = "1.1" | "1.2";
 
+export type Risk = "read" | "write" | "destructive";
+
 export type BindingStyle =
   | "document/literal"
   | "rpc/literal"
@@ -58,6 +60,13 @@ export type OperationSchema = {
   /** Output fields in xsd:sequence order. */
   outputDescriptor: FieldDescriptor[];
   warnings: Warning[];
+  /** How dangerous the operation is. */
+  risk: Risk;
+  /** Short human-readable reason for the risk class (<= 120 chars). */
+  riskReason: string;
+  riskSource: "heuristic" | "model";
+  /** wsdl:documentation text, tags stripped, <= 500 chars. */
+  documentation?: string;
 };
 
 export type ServicePort = {
