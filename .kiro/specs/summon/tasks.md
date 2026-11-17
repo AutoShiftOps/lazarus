@@ -253,7 +253,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
   - [x] 16.2 Tests: a second summon of the same WSDL URL returns no `ownerToken`; no response body contains `ownerTokenHash`
     - _Requirements: 12.2, 12.4_
 
-- [ ] 17. Risk checkpoint — Ensure all tests pass
+- [x] 17. Risk checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
