@@ -1,11 +1,16 @@
 // lib/soap/translator.ts
 // JSON -> SOAP envelope translation (Requirement 5). Pure, no I/O.
 
-import { buildZodSchema } from "./schema-generator";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
+import { guardXml } from "./parser";
+import { INTEGER_TYPES, NUMBER_TYPES, buildZodSchema } from "./schema-generator";
 import type {
   EnvelopeResult,
+  FaultError,
   FieldDescriptor,
   OperationSchema,
+  ParseEnvelopeResult,
+  SoapVersion,
   ValidationError,
 } from "./types";
 
@@ -242,4 +247,245 @@ export function toEnvelope(args: unknown, schema: OperationSchema): EnvelopeResu
     : { "Content-Type": "text/xml; charset=utf-8", SOAPAction: `"${action}"` };
 
   return { ok: true, xml, headers };
+}
+
+// ─── SOAP response -> JSON (Requirements 5.4, 5.5, 5.6) ───────────────────────
+
+const MAX_WARNINGS = 10;
+const MAX_DETAIL_LENGTH = 1000;
+const UNKNOWN = "unknown";
+
+type XmlNode = Record<string, unknown>;
+
+function parseFailure(message: string): ParseEnvelopeResult {
+  return { ok: false, error: { type: "parseError", message: truncate(message) } };
+}
+
+function localName(name: string): string {
+  const i = name.indexOf(":");
+  return i === -1 ? name : name.slice(i + 1);
+}
+
+function isElementKey(key: string): boolean {
+  return !key.startsWith("@_") && !key.startsWith("#") && !key.startsWith("?");
+}
+
+/** All child elements with the given local name, flattening fast-xml-parser's object-or-array shape. */
+function childrenByLocalName(node: XmlNode, local: string): unknown[] {
+  const out: unknown[] = [];
+  for (const [key, value] of Object.entries(node)) {
+    if (!isElementKey(key) || localName(key) !== local) continue;
+    if (Array.isArray(value)) out.push(...(value as unknown[]));
+    else out.push(value);
+  }
+  return out;
+}
+
+function asNode(value: unknown): XmlNode {
+  return isRecord(value) ? value : {};
+}
+
+/** Own text of an element: a plain string, or the #text of an element that has attributes. */
+function ownText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (isRecord(value)) {
+    const t = value["#text"];
+    return typeof t === "string" ? t : "";
+  }
+  return "";
+}
+
+/** Concatenated text of a whole subtree, joined with single spaces. */
+function flattenText(value: unknown, parts: string[] = []): string[] {
+  if (typeof value === "string") {
+    parts.push(value);
+  } else if (Array.isArray(value)) {
+    for (const item of value as unknown[]) flattenText(item, parts);
+  } else if (isRecord(value)) {
+    for (const [key, v] of Object.entries(value)) {
+      if (key.startsWith("@_") || key.startsWith("?")) continue;
+      flattenText(v, parts);
+    }
+  }
+  return parts;
+}
+
+function textOrUnknown(values: unknown[]): string {
+  const first = values[0];
+  const text = ownText(first);
+  return text === "" ? UNKNOWN : text;
+}
+
+export function normaliseFault(faultNode: unknown, version: SoapVersion): FaultError {
+  const node = asNode(faultNode);
+  let faultCode: string;
+  let faultString: string;
+  let detailNodes: unknown[];
+
+  if (version === "1.2") {
+    const code = asNode(childrenByLocalName(node, "Code")[0]);
+    faultCode = textOrUnknown(childrenByLocalName(code, "Value"));
+    const reason = asNode(childrenByLocalName(node, "Reason")[0]);
+    faultString = textOrUnknown(childrenByLocalName(reason, "Text"));
+    detailNodes = childrenByLocalName(node, "Detail");
+  } else {
+    faultCode = textOrUnknown(childrenByLocalName(node, "faultcode"));
+    faultString = textOrUnknown(childrenByLocalName(node, "faultstring"));
+    detailNodes = childrenByLocalName(node, "detail");
+  }
+
+  const fault: FaultError = { type: "fault", faultCode, faultString };
+  const detail = flattenText(detailNodes).join(" ").trim().slice(0, MAX_DETAIL_LENGTH);
+  if (detail !== "") fault.detail = detail;
+  return fault;
+}
+
+class Warnings {
+  readonly items: string[] = [];
+  add(message: string): void {
+    if (this.items.length < MAX_WARNINGS) this.items.push(truncate(message));
+  }
+}
+
+function isNil(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  for (const [key, v] of Object.entries(value)) {
+    if (!key.startsWith("@_") || localName(key.slice(2)) !== "nil") continue;
+    if (v === "true" || v === "1") return true;
+  }
+  return false;
+}
+
+const INTEGER_PATTERN = /^[+-]?\d+$/;
+const NUMBER_PATTERN = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+
+/** Returns undefined when the text cannot be converted (a warning has been added). */
+function convertLeaf(field: FieldDescriptor, text: string, warnings: Warnings): unknown {
+  const type = field.xsdType;
+  if (INTEGER_TYPES.has(type) || NUMBER_TYPES.has(type)) {
+    const t = text.trim();
+    const pattern = INTEGER_TYPES.has(type) ? INTEGER_PATTERN : NUMBER_PATTERN;
+    const n = pattern.test(t) ? Number(t) : Number.NaN;
+    if (!Number.isFinite(n)) {
+      warnings.add(`Element ${field.name} is not a valid ${type}`);
+      return undefined;
+    }
+    return n;
+  }
+  if (type === "boolean") {
+    const t = text.trim();
+    if (t === "true" || t === "1") return true;
+    if (t === "false" || t === "0") return false;
+    warnings.add(`Element ${field.name} is not a valid boolean`);
+    return undefined;
+  }
+  return text;
+}
+
+function convertItem(field: FieldDescriptor, value: unknown, warnings: Warnings): unknown {
+  if (isNil(value)) return null;
+  if (field.children) {
+    return walkFields(field.children, asNode(value), warnings);
+  }
+  return convertLeaf(field, ownText(value), warnings);
+}
+
+function walkFields(
+  fields: FieldDescriptor[],
+  node: XmlNode,
+  warnings: Warnings,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const field of fields) {
+    if (field.name === "__proto__") continue;
+    const matches = childrenByLocalName(node, field.name);
+    if (matches.length === 0) {
+      if (field.minOccurs > 0) warnings.add(`Missing required element ${field.name}`);
+      continue;
+    }
+    const isList = field.maxOccurs === "unbounded" || field.maxOccurs > 1;
+    if (isList) {
+      const items: unknown[] = [];
+      for (const m of matches) {
+        const item = convertItem(field, m, warnings);
+        if (item !== undefined) items.push(item);
+      }
+      out[field.name] = items;
+    } else {
+      const item = convertItem(field, matches[0], warnings);
+      if (item !== undefined) out[field.name] = item;
+    }
+  }
+  return out;
+}
+
+function parseXml(xml: string): XmlNode | null {
+  try {
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      parseTagValue: false,
+      parseAttributeValue: false,
+      trimValues: false,
+      // Safe only because guardXml has already rejected every DOCTYPE.
+      processEntities: true,
+      // Required for numeric references (&#65;); also decodes common HTML names.
+      htmlEntities: true,
+    });
+    return asNode(parser.parse(xml));
+  } catch {
+    return null;
+  }
+}
+
+function envelopeVersion(envelopeKey: string, envelope: XmlNode): SoapVersion | null {
+  const colon = envelopeKey.indexOf(":");
+  const attr = colon === -1 ? "@_xmlns" : `@_xmlns:${envelopeKey.slice(0, colon)}`;
+  const ns = envelope[attr];
+  if (ns === SOAP_11_NS) return "1.1";
+  if (ns === SOAP_12_NS) return "1.2";
+  return null;
+}
+
+export function fromEnvelope(xml: string, schema: OperationSchema): ParseEnvelopeResult {
+  const guard = guardXml(xml);
+  if (guard !== null) {
+    return parseFailure(
+      xml.trim().length === 0
+        ? "The response is empty."
+        : "The response contains a DOCTYPE declaration, which is not allowed.",
+    );
+  }
+  if (XMLValidator.validate(xml) !== true) {
+    return parseFailure("The response is not well-formed XML.");
+  }
+  const tree = parseXml(xml);
+  if (tree === null) return parseFailure("The response could not be parsed as XML.");
+
+  const rootKey = Object.keys(tree).find(isElementKey);
+  if (rootKey === undefined || localName(rootKey) !== "Envelope") {
+    return parseFailure("The response is not a SOAP envelope.");
+  }
+  const envelope = asNode(Array.isArray(tree[rootKey]) ? (tree[rootKey] as unknown[])[0] : tree[rootKey]);
+  const version = envelopeVersion(rootKey, envelope);
+  if (version === null) {
+    return parseFailure("The response envelope has an unknown SOAP namespace.");
+  }
+
+  const bodies = childrenByLocalName(envelope, "Body");
+  if (bodies.length === 0) return parseFailure("The SOAP envelope has no Body.");
+  const body = asNode(bodies[0]);
+
+  const faults = childrenByLocalName(body, "Fault");
+  if (faults.length > 0) return { ok: false, error: normaliseFault(faults[0], version) };
+
+  const wrapperKey = Object.keys(body).find(isElementKey);
+  if (wrapperKey === undefined) {
+    return parseFailure("The SOAP Body has no response element.");
+  }
+  const wrapperValue = body[wrapperKey];
+  const wrapper = asNode(Array.isArray(wrapperValue) ? (wrapperValue as unknown[])[0] : wrapperValue);
+
+  const warnings = new Warnings();
+  const data = walkFields(schema.outputDescriptor, wrapper, warnings);
+  return { ok: true, data, warnings: warnings.items };
 }

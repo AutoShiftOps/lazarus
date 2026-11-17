@@ -255,6 +255,13 @@
         "chatSessionId": "sess_ad078a05-8b92-46b5-a63b-4fc0f7eab64c",
         "timestamp": 1794887283135
       }
+    ],
+    "7.2 Implement `lib/soap/translator.ts` — `normaliseFault` and `fromEnvelope`": [
+      {
+        "executionId": "93f4e691-03d6-44ec-8bf9-6564b1066feb",
+        "chatSessionId": "sess_88a3e516-3370-4a28-a264-13487171681f",
+        "timestamp": 1794887896975
+      }
     ]
   }
 }

@@ -116,3 +116,13 @@ export type FaultError = {
   faultString: string;
   detail?: string;
 };
+
+export type ParseError = {
+  type: "parseError";
+  /** At most 200 characters; never contains raw XML. */
+  message: string;
+};
+
+export type ParseEnvelopeResult =
+  | { ok: true; data: Record<string, unknown>; warnings: string[] }
+  | { ok: false; error: FaultError | ParseError };

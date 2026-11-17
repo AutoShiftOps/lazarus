@@ -125,11 +125,11 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - `xmlEscape`: escape `<`, `>`, `&`, `"`, `'` in all leaf values before insertion
     - `toEnvelope`: validate `args` via `buildZodSchema(schema.inputDescriptor).safeParse`; select SOAP 1.1 or 1.2 namespace from `schema.preferredVersion`; iterate `inputDescriptor` in order to build child elements; return `EnvelopeResult`; if `schema.bindingStyle` is `rpc/encoded`, return an error `rpc/encoded is not supported for live calls` before building anything
     - _Requirements: 5.1, 5.2, 5.3, 5.7_
-  - [ ] 7.2 Implement `lib/soap/translator.ts` — `normaliseFault` and `fromEnvelope`
+  - [x] 7.2 Implement `lib/soap/translator.ts` — `normaliseFault` and `fromEnvelope`
     - `normaliseFault`: map SOAP 1.1 `faultcode`/`faultstring` and SOAP 1.2 `env:Code`/`env:Reason` to `FaultError`
     - `fromEnvelope`: parse XML, detect `<Fault>`, walk response body per `outputDescriptor`, handle `xsi:nil="true"` → `null`, absent elements → omit key; return `ParseEnvelopeResult`
     - _Requirements: 5.4, 5.5, 5.6_
-  - [ ]* 7.3 Write unit tests for `toEnvelope` and `fromEnvelope` in `tests/soap/translator.test.ts`
+  - [x]* 7.3 Write unit tests for `toEnvelope` and `fromEnvelope` in `tests/soap/translator.test.ts`
     - Missing required fields, fault normalisation (SOAP 1.1 and 1.2), nil/absent element handling, XML-escape correctness
     - _Requirements: 5.2, 5.3, 5.4, 5.6, 5.7_
   - [ ] 7.4 Write property test for round-trip identity — Property 1
