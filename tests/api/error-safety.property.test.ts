@@ -40,6 +40,8 @@ function depsFailingAt(stage: Stage, error: LazarusError): SummonDeps {
     generateSchemas: () => new Map(),
     upsertService: async () =>
       stage === "upsert" ? { ok: false, error } : { ok: true, id: "abcd1234", created: true },
+    classifyOperations: async (ops) => ops,
+    generateOwnerToken: async () => ({ token: "t".repeat(43), hash: "h".repeat(64) }),
   };
 }
 

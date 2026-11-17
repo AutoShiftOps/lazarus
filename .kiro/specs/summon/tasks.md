@@ -247,10 +247,10 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Minimum 100 iterations each
     - **Validates: Requirements 11.3, 11.8**
 
-- [ ] 16. Owner token
-  - [ ] 16.1 `upsertService` reports `created: boolean`; the route generates a 32-byte base64url token on create only, stores its SHA-256 hash, and returns it once
+- [x] 16. Owner token
+  - [x] 16.1 `upsertService` reports `created: boolean`; the route generates a 32-byte base64url token on create only, stores its SHA-256 hash, and returns it once
     - _Requirements: 12.1, 12.2, 12.3_
-  - [ ] 16.2 Tests: a second summon of the same WSDL URL returns no `ownerToken`; no response body contains `ownerTokenHash`
+  - [x] 16.2 Tests: a second summon of the same WSDL URL returns no `ownerToken`; no response body contains `ownerTokenHash`
     - _Requirements: 12.2, 12.4_
 
 - [ ] 17. Risk checkpoint — Ensure all tests pass

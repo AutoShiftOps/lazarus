@@ -83,6 +83,8 @@ export type ServiceDefinition = {
   wsdlUrl: string;
   ports: ServicePort[];
   warnings: Warning[];
+  /** SHA-256 hex of the owner token. Never serialised to clients. */
+  ownerTokenHash?: string;
 };
 
 // ─── Error types ──────────────────────────────────────────────────────────────

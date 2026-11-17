@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { summon, summonFromBody, type SummonDeps, type SummonResponse } from "../../lib/summon";
+import { createHash } from "node:crypto";
+import { classifyOperations, heuristicRisk } from "../../lib/soap/risk";
+import { generateOwnerToken } from "../../lib/owner-token";
 import type {
   ErrorCode,
   LazarusError,
@@ -62,6 +65,8 @@ function makeDeps(overrides: Overrides = {}, def: ServiceDefinition = makeDef([m
       return m;
     },
     upsertService: upsert,
+    classifyOperations: (ops) => classifyOperations(ops),
+    generateOwnerToken,
     ...overrides,
   };
   return { deps, upsert };
@@ -288,5 +293,91 @@ describe("summon API: stored definition", () => {
       { code: "GEN", message: "generated warning" },
     ]);
     expect(original.ports[0].operations[0].warnings).toEqual([]);
+  });
+});
+
+describe("summon API: owner token and risk", () => {
+  it("returns a 43-char ownerToken on first summon and stores only its hash", async () => {
+    const { deps, upsert } = makeDeps();
+    const res = await summon(URL_OK, ORIGIN, deps);
+    expect(res.status).toBe(200);
+    const token = (res.body as { ownerToken?: string }).ownerToken;
+    expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    const stored = upsert.mock.calls[0][0];
+    expect(stored.ownerTokenHash).toBe(createHash("sha256").update(token as string).digest("hex"));
+    expect(JSON.stringify(stored)).not.toContain(token as string);
+  });
+
+  it("omits ownerToken entirely when the service already exists", async () => {
+    const { deps } = makeDeps({
+      upsertService: async () => ({ ok: true as const, id: "abcd1234", created: false }),
+    });
+    const res = await summon(URL_OK, ORIGIN, deps);
+    expect(res.status).toBe(200);
+    expect("ownerToken" in (res.body as object)).toBe(false);
+  });
+
+  it("never includes ownerTokenHash or the hash value in a 200 body", async () => {
+    for (const created of [true, false]) {
+      const { deps, upsert } = makeDeps({
+        upsertService: async (d) => {
+          upsertSeen.push(d);
+          return { ok: true as const, id: "abcd1234", created };
+        },
+      });
+      const upsertSeen: ServiceDefinition[] = [];
+      void upsert;
+      const res = await summon(URL_OK, ORIGIN, deps);
+      const json = JSON.stringify(res.body);
+      expect(json).not.toContain("ownerTokenHash");
+      expect(json).not.toContain(upsertSeen[0].ownerTokenHash as string);
+    }
+  });
+
+  it("includes risk, riskReason and riskSource, classifying CloseAccount as destructive", async () => {
+    // The schema generator assigns the heuristic class; mirror that in the fake.
+    const classified = (name: string): OperationSchema => {
+      const h = heuristicRisk(name);
+      return { ...makeOp(name), risk: h.risk, riskReason: h.reason };
+    };
+    const { deps } = makeDeps({}, makeDef([classified("GetBalance"), classified("CloseAccount")]));
+    const res = await summon(URL_OK, ORIGIN, deps);
+    const ops = (res.body as { operations: Record<string, unknown>[] }).operations;
+    for (const o of ops) {
+      expect(typeof o.risk).toBe("string");
+      expect(typeof o.riskReason).toBe("string");
+      expect(typeof o.riskSource).toBe("string");
+    }
+    expect(ops.find((o) => o.name === "CloseAccount")?.risk).toBe("destructive");
+  });
+
+  it("never logs or returns the token on failure paths", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const TOKEN = "T".repeat(43);
+    const gen = async () => ({ token: TOKEN, hash: "h".repeat(64) });
+    const cases: Overrides[] = [
+      { generateOwnerToken: gen, parseWsdl: async () => ({ ok: false, error: lzError("WSDL_PARSE_FAILED") }) },
+      {
+        generateOwnerToken: gen,
+        upsertService: async () => ({ ok: false, error: lzError("REGISTRY_UNAVAILABLE") }),
+      },
+      {
+        generateOwnerToken: gen,
+        upsertService: async () => {
+          throw new Error(`boom ${TOKEN}`);
+        },
+      },
+    ];
+    for (const c of cases) {
+      const { deps } = makeDeps(c);
+      const res = await summon(URL_OK, ORIGIN, deps);
+      expect(res.status).not.toBe(200);
+      expect(JSON.stringify(res.body)).not.toContain(TOKEN);
+      expect("ownerToken" in (res.body as object)).toBe(false);
+    }
+    for (const spy of [err, log]) {
+      for (const call of spy.mock.calls) expect(JSON.stringify(call)).not.toContain(TOKEN);
+    }
   });
 });

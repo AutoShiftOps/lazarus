@@ -6,11 +6,15 @@ import { fetchWsdl } from "../soap/fetcher";
 import { parseWsdl } from "../soap/parser";
 import { generateSchemas } from "../soap/schema-generator";
 import { upsertService } from "../registry";
+import { classifyOperations } from "../soap/risk";
+import { generateOwnerToken } from "../owner-token";
 import type {
   BindingStyle,
+  Risk,
   ErrorCode,
   OperationSchema,
   ServiceDefinition,
+  ServicePort,
   SoapVersion,
   Warning,
 } from "../soap/types";
@@ -40,9 +44,19 @@ export type SummonDeps = {
   parseWsdl: (xml: string, deps?: { baseUrl?: string }) => Promise<ParseOutcome>;
   generateSchemas: (service: ServiceDefinition) => Map<string, OperationSchema>;
   upsertService: (def: ServiceDefinition) => Promise<UpsertOutcome>;
+  classifyOperations: (ops: OperationSchema[]) => Promise<OperationSchema[]>;
+  generateOwnerToken: () => Promise<{ token: string; hash: string }>;
 };
 
-const defaultDeps: SummonDeps = { fetchWsdl, parseWsdl, generateSchemas, upsertService };
+const defaultDeps: SummonDeps = {
+  fetchWsdl,
+  parseWsdl,
+  generateSchemas,
+  upsertService,
+  // Heuristic only. The Bedrock adapter is wired in a later task.
+  classifyOperations: (ops) => classifyOperations(ops),
+  generateOwnerToken,
+};
 
 /** Client-facing code and HTTP status for each internal error code. TIMEOUT is shown as WSDL_FETCH_FAILED (design.md). */
 const ERROR_MAP: Record<ErrorCode, { status: number; code: ErrorCode }> = {
@@ -126,6 +140,9 @@ type OperationSummary = {
   bindingStyle: BindingStyle;
   soapVersions: SoapVersion[];
   warnings: Warning[];
+  risk: Risk;
+  riskReason: string;
+  riskSource: "heuristic" | "model";
 };
 
 function capWarnings(warnings: Warning[]): Warning[] {
@@ -140,6 +157,9 @@ function summarise(op: OperationSchema): OperationSummary {
     bindingStyle: op.bindingStyle,
     soapVersions: [...op.soapVersions],
     warnings: capWarnings(op.warnings),
+    risk: op.risk,
+    riskReason: op.riskReason,
+    riskSource: op.riskSource,
   };
   const doc = (op as OperationSchema & { documentation?: unknown }).documentation;
   if (typeof doc === "string" && doc.length > 0) summary.description = doc.slice(0, 500);
@@ -176,15 +196,26 @@ export async function summon(
     const generated = d.generateSchemas(parsed.definition);
     // generateSchemas copies operations in port order; swap them in so warnings are persisted.
     const copies = generated.values();
-    const ports = parsed.definition.ports.map((port) => ({
+    const swapped = parsed.definition.ports.map((port) => ({
       ...port,
       operations: port.operations.map((original) => {
         const next = copies.next();
         return next.done ? original : next.value;
       }),
     }));
+    const ports: ServicePort[] = [];
+    for (const port of swapped) {
+      ports.push({ ...port, operations: await d.classifyOperations(port.operations) });
+    }
+    // Generated before upsert; only returned to the caller when the service is newly created.
+    const { token, hash } = await d.generateOwnerToken();
     // Keyed by the submitted URL so repeat summons dedupe even when the WSDL redirects.
-    const definition: ServiceDefinition = { ...parsed.definition, ports, wsdlUrl };
+    const definition: ServiceDefinition = {
+      ...parsed.definition,
+      ports,
+      wsdlUrl,
+      ownerTokenHash: hash,
+    };
 
     const stored = await d.upsertService(definition);
     if (!stored.ok) return fromLazarusError(stored.error);
@@ -203,6 +234,7 @@ export async function summon(
         wsdlUrl,
         mcpUrl: `${origin}/api/mcp/${stored.id}`,
         warnings: capWarnings(definition.warnings),
+        ...(stored.created ? { ownerToken: token } : {}),
       },
     };
   } catch (e) {
