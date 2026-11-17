@@ -98,15 +98,15 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - **Validates: Requirements 13.1, 13.5, 13.6, 13.7**
 
 - [ ] 6. JSON Schema generator
-  - [ ] 6.1 Implement `lib/soap/schema-generator.ts` — `xsdTypeToZod`
+  - [x] 6.1 Implement `lib/soap/schema-generator.ts` — `xsdTypeToZod`
     - Pure function mapping each XSD primitive (`string`, `int`, `integer`, `long`, `short`, `decimal`, `float`, `double`, `boolean`, `dateTime`, `date`) to the correct zod type per the design table
     - Fall through to `z.unknown()` for unmapped types; push warning
     - _Requirements: 4.3_
-  - [ ] 6.2 Implement `lib/soap/schema-generator.ts` — `buildZodSchema` and `generateSchemas`
+  - [x] 6.2 Implement `lib/soap/schema-generator.ts` — `buildZodSchema` and `generateSchemas`
     - `buildZodSchema(descriptors: FieldDescriptor[])`: apply `optional()`, `nullable()`, `z.array()` modifiers as required by `minOccurs`, `nillable`, `maxOccurs`; recurse into `children` for complex types
     - `generateSchemas(service: ServiceDefinition): OperationSchemaMap`: iterate every port's operations and annotate each `OperationSchema` with its `inputDescriptor` and `outputDescriptor`
     - _Requirements: 4.1, 4.2, 4.4, 4.5, 4.6_
-  - [ ]* 6.3 Write unit tests for `xsdTypeToZod` and `buildZodSchema` in `tests/soap/schema-generator.test.ts`
+  - [x]* 6.3 Write unit tests for `xsdTypeToZod` and `buildZodSchema` in `tests/soap/schema-generator.test.ts`
     - Each XSD type mapping; each modifier combination; `z.unknown()` fallback
     - _Requirements: 4.3, 4.4, 4.5, 4.6_
   - [ ] 6.4 Write property test for `xsdTypeToZod` — Property 8

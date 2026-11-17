@@ -212,6 +212,42 @@
         "chatSessionId": "sess_1e078394-6a2c-410e-8707-e983a0acc2f0",
         "timestamp": 1794883632567
       }
+    ],
+    "6.1 Implement `lib/soap/schema-generator.ts` — `xsdTypeToZod`": [
+      {
+        "executionId": "9462f7e3-e9a2-4075-b79a-e35a4f745626",
+        "chatSessionId": "sess_9a829879-fcb1-40cd-b9cb-040fb8747d11",
+        "timestamp": 1794885820448
+      },
+      {
+        "executionId": "9462f7e3-e9a2-4075-b79a-e35a4f745626",
+        "chatSessionId": "sess_9a829879-fcb1-40cd-b9cb-040fb8747d11",
+        "timestamp": 1794885897495
+      }
+    ],
+    "6.2 Implement `lib/soap/schema-generator.ts` — `buildZodSchema` and `generateSchemas`": [
+      {
+        "executionId": "9462f7e3-e9a2-4075-b79a-e35a4f745626",
+        "chatSessionId": "sess_9a829879-fcb1-40cd-b9cb-040fb8747d11",
+        "timestamp": 1794885898007
+      },
+      {
+        "executionId": "9462f7e3-e9a2-4075-b79a-e35a4f745626",
+        "chatSessionId": "sess_9a829879-fcb1-40cd-b9cb-040fb8747d11",
+        "timestamp": 1794885936991
+      }
+    ],
+    "6.3 Write unit tests for `xsdTypeToZod` and `buildZodSchema` in `tests/soap/schema-generator.test.ts`": [
+      {
+        "executionId": "9462f7e3-e9a2-4075-b79a-e35a4f745626",
+        "chatSessionId": "sess_9a829879-fcb1-40cd-b9cb-040fb8747d11",
+        "timestamp": 1794885937443
+      },
+      {
+        "executionId": "9462f7e3-e9a2-4075-b79a-e35a4f745626",
+        "chatSessionId": "sess_9a829879-fcb1-40cd-b9cb-040fb8747d11",
+        "timestamp": 1794886008325
+      }
     ]
   }
 }
