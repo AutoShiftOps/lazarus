@@ -186,8 +186,8 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Minimum 100 iterations
     - **Validates: Requirements 6.3**
 
-- [ ] 11. Contract tests for WSDL fixtures
-  - [ ] 11.1 Write `tests/soap/contract.test.ts`
+- [x] 11. Contract tests for WSDL fixtures
+  - [x] 11.1 Write `tests/soap/contract.test.ts`
     - Load `fixtures/calculator.wsdl` from filesystem; assert `parseWsdl` returns `ServiceDefinition` with operations `Add`, `Subtract`, `Multiply`, `Divide` (exactly, no extras)
     - Load `fixtures/countryinfo.wsdl`; assert operations include `CountryFlag`, `CountryName`, `CapitalCity`, `CountryCurrency` and total deduplicated count ≥ 4
     - Run `generateSchemas` on both fixtures; assert every zod field uses only the supported types (no `z.unknown()`)

@@ -362,6 +362,25 @@
         "chatSessionId": "sess_3951c551-510f-437c-9fdc-28eaa097d55e",
         "timestamp": 1794922768934
       }
+    ],
+    "11.1 Write `tests/soap/contract.test.ts`": [
+      {
+        "executionId": "023b3884-b3f9-40e4-b614-d45df544419c",
+        "chatSessionId": "sess_46768fe7-160f-4d74-9377-4f5d8e201509",
+        "timestamp": 1794923581212
+      },
+      {
+        "executionId": "023b3884-b3f9-40e4-b614-d45df544419c",
+        "chatSessionId": "sess_46768fe7-160f-4d74-9377-4f5d8e201509",
+        "timestamp": 1794923786435
+      }
+    ],
+    "11. Contract tests for WSDL fixtures": [
+      {
+        "executionId": "023b3884-b3f9-40e4-b614-d45df544419c",
+        "chatSessionId": "sess_46768fe7-160f-4d74-9377-4f5d8e201509",
+        "timestamp": 1794923786602
+      }
     ]
   }
 }
