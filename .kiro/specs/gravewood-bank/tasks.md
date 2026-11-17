@@ -61,14 +61,14 @@ Build the fake SOAP bank bottom-up: money, seed, XML helpers, pure handler, WSDL
   - [x]* 8.2 Property test 14: sandbox isolation (in-memory fake)
     - **Property 14**
 
-- [ ] 9. Routes
-  - [ ] 9.1 `POST /api/gravewood/sandboxes`
+- [x] 9. Routes
+  - [x] 9.1 `POST /api/gravewood/sandboxes`
     - _Requirements: 2.1, 2.3_
-  - [ ] 9.2 `GET /api/gravewood/[id]/wsdl`
+  - [x] 9.2 `GET /api/gravewood/[id]/wsdl`
     - _Requirements: 1.1, 1.5, 1.7_
-  - [ ] 9.3 `POST /api/gravewood/[id]` (SOAP) with size cap and method checks
+  - [x] 9.3 `POST /api/gravewood/[id]` (SOAP) with size cap and method checks
     - _Requirements: 5.1, 6.1, 6.3, 6.4, 6.5_
-  - [ ] 9.4 `POST /api/gravewood/[id]/reset`
+  - [x] 9.4 `POST /api/gravewood/[id]/reset`
     - _Requirements: 2.4_
 
 - [ ] 10. Dev loopback override

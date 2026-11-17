@@ -260,6 +260,66 @@
         "chatSessionId": "sess_43effee1-bdcb-40ba-9fa6-be31ac16429f",
         "timestamp": 1794934146546
       }
+    ],
+    "9.1 `POST /api/gravewood/sandboxes`": [
+      {
+        "executionId": "80f644f9-05fb-4aa0-9c3c-2af30e2285e4",
+        "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
+        "timestamp": 1794934403190
+      },
+      {
+        "executionId": "80f644f9-05fb-4aa0-9c3c-2af30e2285e4",
+        "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
+        "timestamp": 1794934404923
+      },
+      {
+        "executionId": "80f644f9-05fb-4aa0-9c3c-2af30e2285e4",
+        "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
+        "timestamp": 1794934650579
+      }
+    ],
+    "9.2 `GET /api/gravewood/[id]/wsdl`": [
+      {
+        "executionId": "80f644f9-05fb-4aa0-9c3c-2af30e2285e4",
+        "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
+        "timestamp": 1794934652124
+      },
+      {
+        "executionId": "80f644f9-05fb-4aa0-9c3c-2af30e2285e4",
+        "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
+        "timestamp": 1794934653698
+      }
+    ],
+    "9.3 `POST /api/gravewood/[id]` (SOAP) with size cap and method checks": [
+      {
+        "executionId": "80f644f9-05fb-4aa0-9c3c-2af30e2285e4",
+        "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
+        "timestamp": 1794934655331
+      },
+      {
+        "executionId": "80f644f9-05fb-4aa0-9c3c-2af30e2285e4",
+        "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
+        "timestamp": 1794934656851
+      }
+    ],
+    "9.4 `POST /api/gravewood/[id]/reset`": [
+      {
+        "executionId": "80f644f9-05fb-4aa0-9c3c-2af30e2285e4",
+        "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
+        "timestamp": 1794934658402
+      },
+      {
+        "executionId": "80f644f9-05fb-4aa0-9c3c-2af30e2285e4",
+        "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
+        "timestamp": 1794934660039
+      }
+    ],
+    "9. Routes": [
+      {
+        "executionId": "80f644f9-05fb-4aa0-9c3c-2af30e2285e4",
+        "chatSessionId": "sess_b6caa6df-8e35-419e-b7bc-344dbd192c90",
+        "timestamp": 1794934660182
+      }
     ]
   }
 }
