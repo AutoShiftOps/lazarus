@@ -55,10 +55,10 @@ Build the fake SOAP bank bottom-up: money, seed, XML helpers, pure handler, WSDL
     - _Requirements: 1.1–1.6, 1.8_
   - [x] 7.2 Save the output as `fixtures/gravewood.wsdl` and add a test that the live output equals the fixture (endpoint substituted)
 
-- [ ] 8. Store
-  - [ ] 8.1 Implement `lib/gravewood/store.ts` with optimistic versioning and rate limiting
+- [x] 8. Store
+  - [x] 8.1 Implement `lib/gravewood/store.ts` with optimistic versioning and rate limiting
     - _Requirements: 2.2, 2.3, 2.5, 2.6, 6.3_
-  - [ ]* 8.2 Property test 14: sandbox isolation (in-memory fake)
+  - [x]* 8.2 Property test 14: sandbox isolation (in-memory fake)
     - **Property 14**
 
 - [ ] 9. Routes

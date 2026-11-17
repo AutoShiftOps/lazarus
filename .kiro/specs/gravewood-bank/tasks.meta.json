@@ -229,6 +229,37 @@
         "chatSessionId": "sess_0ec5d23c-f76a-4d63-bd64-89be6b6e7041",
         "timestamp": 1794933533940
       }
+    ],
+    "8.1 Implement `lib/gravewood/store.ts` with optimistic versioning and rate limiting": [
+      {
+        "executionId": "b2c66561-aa4e-4dd8-a553-e49a77d2d1da",
+        "chatSessionId": "sess_43effee1-bdcb-40ba-9fa6-be31ac16429f",
+        "timestamp": 1794933710688
+      },
+      {
+        "executionId": "b2c66561-aa4e-4dd8-a553-e49a77d2d1da",
+        "chatSessionId": "sess_43effee1-bdcb-40ba-9fa6-be31ac16429f",
+        "timestamp": 1794934045928
+      }
+    ],
+    "8. Store": [
+      {
+        "executionId": "b2c66561-aa4e-4dd8-a553-e49a77d2d1da",
+        "chatSessionId": "sess_43effee1-bdcb-40ba-9fa6-be31ac16429f",
+        "timestamp": 1794934046117
+      }
+    ],
+    "8.2 Property test 14: sandbox isolation (in-memory fake)": [
+      {
+        "executionId": "b2c66561-aa4e-4dd8-a553-e49a77d2d1da",
+        "chatSessionId": "sess_43effee1-bdcb-40ba-9fa6-be31ac16429f",
+        "timestamp": 1794934046499
+      },
+      {
+        "executionId": "b2c66561-aa4e-4dd8-a553-e49a77d2d1da",
+        "chatSessionId": "sess_43effee1-bdcb-40ba-9fa6-be31ac16429f",
+        "timestamp": 1794934146546
+      }
     ]
   }
 }
