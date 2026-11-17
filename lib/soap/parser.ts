@@ -5,7 +5,15 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { safeFetch } from "./fetcher";
 import type { FetchResult } from "./fetcher";
-import type { LazarusError, Warning } from "./types";
+import type {
+  BindingStyle,
+  LazarusError,
+  OperationSchema,
+  ServiceDefinition,
+  ServicePort,
+  SoapVersion,
+  Warning,
+} from "./types";
 
 const DOCTYPE_PATTERN = /<!\s*DOCTYPE/i;
 
@@ -422,7 +430,6 @@ export function verifyNoLocations(xml: string): LazarusError | null {
   return null;
 }
 
-export type SoapVersion = "1.1" | "1.2";
 export type MessagePart = { name: string; element: string | null; type: string | null };
 export type PortTypeOperation = { name: string; input: string | null; output: string | null };
 export type BindingOperation = {
@@ -578,4 +585,202 @@ export function indexDocument(xml: string): WsdlIndex | LazarusError {
   }
 
   return index;
+}
+
+// ─── Stage 5 part 2: operations and definition ────────────────────────────────
+
+const ACCEPTED_TRANSPORTS = new Set([
+  "http://schemas.xmlsoap.org/soap/http",
+  "http://www.w3.org/2003/05/soap/bindings/HTTP/",
+]);
+
+function classifyStyle(style: string | null, use: string | null): BindingStyle {
+  // WSDL 1.1 says a missing style means "document".
+  const s = style ?? "document";
+  if (s === "document" && use === "literal") return "document/literal";
+  if (s === "rpc" && use === "literal") return "rpc/literal";
+  if (s === "document" && use === "encoded") return "document/encoded";
+  if (s === "rpc" && use === "encoded") return "rpc/encoded";
+  return "unknown";
+}
+
+function schemaElementFormDefault(
+  root: Record<string, unknown>,
+  targetNamespace: string | null,
+): "qualified" | "unqualified" {
+  const schemas = childNodes(root, "types").flatMap((t) => childNodes(t, "schema"));
+  const match =
+    schemas.find((s) => attrOf(s, "targetNamespace") === targetNamespace) ?? schemas[0];
+  return match !== undefined && attrOf(match, "elementFormDefault") === "qualified"
+    ? "qualified"
+    : "unqualified";
+}
+
+type Candidate = {
+  version: SoapVersion;
+  binding: BindingIndex;
+  portName: string;
+  address: string;
+};
+
+/**
+ * Stage 5: build the ServiceDefinition from the assembled, location-free document.
+ * Descriptors are left empty; they are filled by the descriptor builder.
+ */
+export function buildDefinition(
+  xml: string,
+  info: DocumentInfo,
+): ServiceDefinition | LazarusError {
+  const index = indexDocument(xml);
+  if ("code" in index) return index;
+  const tree = parseTree(xml);
+  const rootKey = tree === null ? undefined : Object.keys(tree).find(isElementKey);
+  const rootValue = tree === null || rootKey === undefined ? undefined : tree[rootKey];
+  const root = asRecord(Array.isArray(rootValue) ? rootValue[0] : rootValue) ?? {};
+
+  const serviceNames = Object.keys(index.services);
+  if (serviceNames.length === 0) return parseFailed("No services found in the WSDL.");
+
+  const warnings: Warning[] = [];
+  const accepted = new Set<string>();
+  for (const b of Object.values(index.bindings)) {
+    if (b.soapVersion !== null && b.transport !== null && ACCEPTED_TRANSPORTS.has(b.transport)) {
+      accepted.add(b.name);
+    } else {
+      warnings.push({
+        code: "UNSUPPORTED_BINDING",
+        message: `Binding ${b.name} uses an unsupported transport and was skipped.`,
+      });
+    }
+  }
+
+  // portType -> operation -> candidates (SOAP 1.1 first)
+  const groups = new Map<string, Map<string, Candidate[]>>();
+  for (const service of Object.values(index.services)) {
+    for (const port of service.ports) {
+      const binding = port.binding === null ? undefined : index.bindings[port.binding];
+      if (binding === undefined || !accepted.has(binding.name) || binding.portType === null) continue;
+      const portType = index.portTypes[binding.portType];
+      if (portType === undefined || binding.soapVersion === null) continue;
+      const byOp = groups.get(portType.name) ?? new Map<string, Candidate[]>();
+      groups.set(portType.name, byOp);
+      for (const bop of binding.operations) {
+        const list = byOp.get(bop.name) ?? [];
+        byOp.set(bop.name, list);
+        list.push({
+          version: binding.soapVersion,
+          binding,
+          portName: port.name,
+          address: port.address ?? "",
+        });
+      }
+    }
+  }
+
+  const targetNamespace = info.targetNamespace ?? "";
+  const elementFormDefault = schemaElementFormDefault(root, info.targetNamespace);
+  const ports: ServicePort[] = [];
+
+  for (const [portTypeName, byOp] of groups) {
+    const portType = index.portTypes[portTypeName];
+    const operations: OperationSchema[] = [];
+    let portName = "";
+    let portAddress = "";
+
+    for (const [opName, rawCandidates] of byOp) {
+      const candidates = [...rawCandidates].sort((a, b) => (a.version === b.version ? 0 : a.version === "1.1" ? -1 : 1));
+      const preferred = candidates[0];
+      const ptOp = portType.operations.find((o) => o.name === opName);
+      if (ptOp === undefined) continue;
+      if (portName === "") {
+        portName = preferred.portName;
+        portAddress = preferred.address;
+      }
+      const hasBoth = candidates.some((c) => c.version === "1.1") && candidates.some((c) => c.version === "1.2");
+      const bop = preferred.binding.operations.find((o) => o.name === opName);
+      if (bop === undefined) continue;
+      const style = bop.style ?? preferred.binding.style;
+      const bindingStyle = classifyStyle(style, bop.inputUse ?? bop.outputUse);
+      const isRpc = (style ?? "document") === "rpc";
+      const opWarnings: Warning[] = [];
+      if (bindingStyle === "rpc/encoded") {
+        opWarnings.push({
+          code: "RPC_ENCODED",
+          message: `Operation ${opName} uses rpc/encoded, which is only partly supported.`,
+        });
+      }
+      const messageElement = (msg: string | null): string | null => {
+        const part = msg === null ? undefined : index.messages[msg]?.parts[0];
+        return part?.element ?? null;
+      };
+      operations.push({
+        name: opName,
+        soapVersions: hasBoth ? ["1.1", "1.2"] : [preferred.version],
+        preferredVersion: preferred.version,
+        bindingStyle,
+        soapAction: bop.soapAction ?? "",
+        targetNamespace,
+        inputElementName: isRpc ? opName : (messageElement(ptOp.input) ?? opName),
+        outputElementName:
+          ptOp.output === null
+            ? ""
+            : isRpc
+              ? `${opName}Response`
+              : (messageElement(ptOp.output) ?? `${opName}Response`),
+        endpointAddress: preferred.address,
+        elementFormDefault,
+        inputDescriptor: [],
+        outputDescriptor: [],
+        warnings: opWarnings,
+      });
+    }
+    if (operations.length > 0) {
+      ports.push({ name: portName, address: portAddress, operations });
+    }
+  }
+
+  if (ports.length === 0) {
+    return parseFailed("No operations with a supported SOAP binding were found in the WSDL.");
+  }
+
+  return { name: serviceNames[0], wsdlUrl: "", ports, warnings };
+}
+
+// ─── parseWsdl: Stages 1-5 ────────────────────────────────────────────────────
+
+export type ParseResult =
+  | { ok: true; definition: ServiceDefinition }
+  | { ok: false; error: LazarusError };
+
+export type ParseDeps = {
+  fetch?: SchemaFetchDeps["fetch"];
+  /** URL the WSDL was fetched from; used to resolve relative schemaLocations. */
+  baseUrl?: string;
+};
+
+export async function parseWsdl(xml: string, deps: ParseDeps = {}): Promise<ParseResult> {
+  const guarded = guardXml(xml);
+  if (guarded !== null) return { ok: false, error: guarded };
+
+  const info = inspectDocument(xml);
+  if ("code" in info) return { ok: false, error: info };
+
+  const baseUrl = deps.baseUrl ?? "";
+  const refs = collectSchemaRefs(xml, baseUrl);
+  const inlined = await inlineSchemas(xml, refs, baseUrl, { fetch: deps.fetch ?? safeFetch });
+
+  const leftover = verifyNoLocations(inlined.xml);
+  if (leftover !== null) return { ok: false, error: leftover };
+
+  const definition = buildDefinition(inlined.xml, info);
+  if ("code" in definition) return { ok: false, error: definition };
+
+  return {
+    ok: true,
+    definition: {
+      ...definition,
+      wsdlUrl: baseUrl,
+      warnings: [...inlined.warnings, ...definition.warnings],
+    },
+  };
 }

@@ -74,7 +74,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Index messages, portTypes, bindings (SOAP version from `soap:binding` vs `soap12:binding`, transport, style) and services/ports (address) by local name
     - Export the index builder and verifier for direct tests; no `soap` import anywhere
     - _Requirements: 3.1, 3.5, 13.3, 13.7, 13.10_
-  - [ ] 5.4b Stage 5 part 2: operations and exported `parseWsdl`
+  - [x] 5.4b Stage 5 part 2: operations and exported `parseWsdl`
     - Binding transport filter with `UNSUPPORTED_BINDING` warning, operation dedupe across SOAP 1.1 and 1.2 by `(portTypeName, operationName)`, `bindingStyle` classification, `rpc/encoded` warning
     - `parseWsdl(xml)` runs Stages 1-5 in order and returns `{ ok, definition | error }`
     - Remove `soap` from `package.json` and run `npm install`

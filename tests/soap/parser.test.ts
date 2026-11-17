@@ -8,6 +8,7 @@ import {
   indexDocument,
   inlineSchemas,
   inspectDocument,
+  parseWsdl,
   verifyNoLocations,
 } from "../../lib/soap/parser";
 import type { SchemaFetchDeps, WsdlIndex } from "../../lib/soap/parser";
@@ -464,5 +465,177 @@ describe("indexDocument (Stage 5)", () => {
   it("returns WSDL_PARSE_FAILED for a non-definitions root", () => {
     const r = indexDocument("<root/>");
     expect("code" in r && r.code).toBe("WSDL_PARSE_FAILED");
+  });
+});
+
+// ─── Stage 5 part 2: buildDefinition and parseWsdl ───────────────────────────
+
+type BindingSpec = {
+  name: string;
+  ns: string;
+  transport?: string;
+  style?: string;
+  opStyle?: string;
+  use?: string;
+};
+
+const HTTP_11 = "http://schemas.xmlsoap.org/soap/http";
+const HTTP_12 = "http://www.w3.org/2003/05/soap/bindings/HTTP/";
+
+function multiWsdl(specs: BindingSpec[], extraSchema = ""): string {
+  const bindings = specs
+    .map((s) => {
+      const opAttrs = `soapAction="urn:Add"${s.opStyle ? ` style="${s.opStyle}"` : ""}`;
+      const bAttrs = `transport="${s.transport ?? HTTP_11}"${s.style ? ` style="${s.style}"` : ""}`;
+      const use = s.use ?? "literal";
+      return `<wsdl:binding name="${s.name}" type="tns:PT"><x:binding ${bAttrs}/><wsdl:operation name="Add"><x:operation ${opAttrs}/><wsdl:input><x:body use="${use}"/></wsdl:input><wsdl:output><x:body use="${use}"/></wsdl:output></wsdl:operation></wsdl:binding>`
+        .replace(/x:/g, `${s.name}:`)
+        .replace("<wsdl:binding", `<wsdl:binding xmlns:${s.name}="${s.ns}"`);
+    })
+    .join("");
+  const ports = specs
+    .map(
+      (s) =>
+        `<wsdl:port name="P${s.name}" binding="tns:${s.name}"><${s.name}:address xmlns:${s.name}="${s.ns}" location="http://host.test/svc${s.name}"/></wsdl:port>`,
+    )
+    .join("");
+  return `<wsdl:definitions xmlns:wsdl="${WSDL_NS}" xmlns:xsd="${XSD_NS}" targetNamespace="urn:t"><wsdl:types><xsd:schema targetNamespace="urn:t" elementFormDefault="qualified">${extraSchema}<xsd:element name="Add"/><xsd:element name="AddResponse"/></xsd:schema></wsdl:types><wsdl:message name="AddIn"><wsdl:part name="parameters" element="tns:Add"/></wsdl:message><wsdl:message name="AddOut"><wsdl:part name="parameters" element="tns:AddResponse"/></wsdl:message><wsdl:portType name="PT"><wsdl:operation name="Add"><wsdl:input message="tns:AddIn"/><wsdl:output message="tns:AddOut"/></wsdl:operation></wsdl:portType>${bindings}<wsdl:service name="S">${ports}</wsdl:service></wsdl:definitions>`;
+}
+
+async function parseOk(xml: string, deps?: Parameters<typeof parseWsdl>[1]) {
+  const r = await parseWsdl(xml, deps);
+  if (!r.ok) throw new Error(r.error.message);
+  return r.definition;
+}
+
+describe("parseWsdl (Stage 5 part 2)", () => {
+  it("dedupes SOAP 1.1 and 1.2 bindings into one operation", async () => {
+    const def = await parseOk(
+      multiWsdl([
+        { name: "b12", ns: S12 },
+        { name: "b11", ns: S11 },
+      ]),
+    );
+    const ops = def.ports.flatMap((p) => p.operations);
+    expect(ops).toHaveLength(1);
+    expect(ops[0]).toMatchObject({
+      name: "Add",
+      soapVersions: ["1.1", "1.2"],
+      preferredVersion: "1.1",
+      bindingStyle: "document/literal",
+      soapAction: "urn:Add",
+      targetNamespace: "urn:t",
+      inputElementName: "Add",
+      outputElementName: "AddResponse",
+      endpointAddress: "http://host.test/svcb11",
+      elementFormDefault: "qualified",
+      inputDescriptor: [],
+      outputDescriptor: [],
+    });
+    expect(def.warnings).toEqual([]);
+  });
+
+  it("handles a 1.1-only binding", async () => {
+    const def = await parseOk(multiWsdl([{ name: "b11", ns: S11 }]));
+    const op = def.ports[0].operations[0];
+    expect(op.soapVersions).toEqual(["1.1"]);
+    expect(op.preferredVersion).toBe("1.1");
+  });
+
+  it("handles a 1.2-only binding", async () => {
+    const def = await parseOk(multiWsdl([{ name: "b12", ns: S12, transport: HTTP_12 }]));
+    const op = def.ports[0].operations[0];
+    expect(op.soapVersions).toEqual(["1.2"]);
+    expect(op.preferredVersion).toBe("1.2");
+  });
+
+  it("skips an unsupported transport with a warning", async () => {
+    const def = await parseOk(
+      multiWsdl([
+        { name: "b11", ns: S11 },
+        { name: "bjms", ns: S12, transport: "http://example.org/jms" },
+      ]),
+    );
+    expect(def.warnings).toEqual([
+      {
+        code: "UNSUPPORTED_BINDING",
+        message: "Binding bjms uses an unsupported transport and was skipped.",
+      },
+    ]);
+    expect(def.ports.flatMap((p) => p.operations)[0].soapVersions).toEqual(["1.1"]);
+  });
+
+  it("fails when every binding is unsupported", async () => {
+    const r = await parseWsdl(multiWsdl([{ name: "bjms", ns: S11, transport: "urn:jms" }]));
+    expect(r.ok).toBe(false);
+  });
+
+  it("warns on rpc/encoded and records the style", async () => {
+    const def = await parseOk(multiWsdl([{ name: "b11", ns: S11, style: "rpc", use: "encoded" }]));
+    const op = def.ports[0].operations[0];
+    expect(op.bindingStyle).toBe("rpc/encoded");
+    expect(op.warnings.map((w) => w.code)).toEqual(["RPC_ENCODED"]);
+    expect(op.inputElementName).toBe("Add");
+    expect(op.outputElementName).toBe("AddResponse");
+  });
+
+  it("classifies other styles and lets the operation style override the binding style", async () => {
+    const rpc = await parseOk(multiWsdl([{ name: "b11", ns: S11, style: "rpc" }]));
+    expect(rpc.ports[0].operations[0].bindingStyle).toBe("rpc/literal");
+    const over = await parseOk(multiWsdl([{ name: "b11", ns: S11, style: "rpc", opStyle: "document" }]));
+    expect(over.ports[0].operations[0].bindingStyle).toBe("document/literal");
+    const enc = await parseOk(multiWsdl([{ name: "b11", ns: S11, style: "document", use: "encoded" }]));
+    expect(enc.ports[0].operations[0].bindingStyle).toBe("document/encoded");
+    expect(enc.ports[0].operations[0].warnings).toEqual([]);
+    const unk = await parseOk(multiWsdl([{ name: "b11", ns: S11, style: "weird" }]));
+    expect(unk.ports[0].operations[0].bindingStyle).toBe("unknown");
+  });
+
+  it("parses the calculator fixture with zero warnings", async () => {
+    const def = await parseOk(readFileSync("fixtures/calculator.wsdl", "utf8"));
+    expect(def.name).toBe("Calculator");
+    const ops = def.ports.flatMap((p) => p.operations);
+    expect(ops.map((o) => o.name).sort()).toEqual(["Add", "Divide", "Multiply", "Subtract"]);
+    expect(ops.every((o) => o.soapVersions.length === 2 && o.warnings.length === 0)).toBe(true);
+    expect(def.warnings).toEqual([]);
+  });
+
+  it("parses the countryinfo fixture with zero warnings", async () => {
+    const def = await parseOk(readFileSync("fixtures/countryinfo.wsdl", "utf8"));
+    const ops = def.ports.flatMap((p) => p.operations);
+    expect(ops.map((o) => o.name)).toContain("CapitalCity");
+    expect(ops.every((o) => o.warnings.length === 0)).toBe(true);
+    expect(def.warnings).toEqual([]);
+  });
+
+  it("never touches the network for an import to 127.0.0.1 and still returns a definition", async () => {
+    const f = fakeFetch({});
+    const xml = multiWsdl(
+      [{ name: "b11", ns: S11 }],
+      `<xsd:import namespace="urn:evil" schemaLocation="http://127.0.0.1/evil.xsd"/>`,
+    );
+    const def = await parseOk(xml, { fetch: f.deps.fetch });
+    expect(f.calls).toEqual(["http://127.0.0.1/evil.xsd"]);
+    expect(def.warnings.map((w) => w.code)).toEqual(["SCHEMA_FETCH_FAILED"]);
+    expect(def.ports[0].operations).toHaveLength(1);
+    expect(httpSpy).not.toHaveBeenCalled();
+    expect(httpsSpy).not.toHaveBeenCalled();
+  });
+
+  it("returns WSDL_PARSE_FAILED when a location survives inlining", async () => {
+    // No whitespace between attributes: the strip regexes miss it, the tree verifier must not.
+    const xml = multiWsdl(
+      [{ name: "b11", ns: S11 }],
+      `<xsd:import namespace="urn:x"schemaLocation="http://host.test/a.xsd"/>`,
+    );
+    const r = await parseWsdl(xml, { fetch: fakeFetch({}).deps.fetch });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error.code).toBe("WSDL_PARSE_FAILED");
+  });
+
+  it("returns earlier-stage errors unchanged", async () => {
+    const r = await parseWsdl("<!DOCTYPE x><a/>");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error.code).toBe("WSDL_PARSE_FAILED");
   });
 });
