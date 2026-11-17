@@ -203,6 +203,32 @@
         "chatSessionId": "sess_69e93c2e-2842-4ece-a8a5-05aa587764ea",
         "timestamp": 1794933216924
       }
+    ],
+    "7.1 Implement `lib/gravewood/wsdl.ts`": [
+      {
+        "executionId": "b0b854f6-786c-4395-b662-04a7c7e7b26f",
+        "chatSessionId": "sess_0ec5d23c-f76a-4d63-bd64-89be6b6e7041",
+        "timestamp": 1794933431779
+      },
+      {
+        "executionId": "b0b854f6-786c-4395-b662-04a7c7e7b26f",
+        "chatSessionId": "sess_0ec5d23c-f76a-4d63-bd64-89be6b6e7041",
+        "timestamp": 1794933533199
+      }
+    ],
+    "7.2 Save the output as `fixtures/gravewood.wsdl` and add a test that the live output equals the fixture (endpoint substituted)": [
+      {
+        "executionId": "b0b854f6-786c-4395-b662-04a7c7e7b26f",
+        "chatSessionId": "sess_0ec5d23c-f76a-4d63-bd64-89be6b6e7041",
+        "timestamp": 1794933533812
+      }
+    ],
+    "7. WSDL": [
+      {
+        "executionId": "b0b854f6-786c-4395-b662-04a7c7e7b26f",
+        "chatSessionId": "sess_0ec5d23c-f76a-4d63-bd64-89be6b6e7041",
+        "timestamp": 1794933533940
+      }
     ]
   }
 }

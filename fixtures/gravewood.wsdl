@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="GravewoodBank"
+    targetNamespace="urn:gravewood"
+    xmlns:tns="urn:gravewood"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <wsdl:types>
+    <xsd:schema targetNamespace="urn:gravewood" elementFormDefault="qualified">
+      <xsd:simpleType name="AccountStatus">
+        <xsd:restriction base="xsd:string">
+          <xsd:enumeration value="OPEN"/>
+          <xsd:enumeration value="CLOSED"/>
+        </xsd:restriction>
+      </xsd:simpleType>
+
+      <xsd:element name="ListAccounts">
+        <xsd:complexType/>
+      </xsd:element>
+      <xsd:element name="ListAccountsResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="account" maxOccurs="unbounded">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="id" type="xsd:string"/>
+                  <xsd:element name="name" type="xsd:string"/>
+                  <xsd:element name="balance" type="xsd:decimal"/>
+                  <xsd:element name="status" type="tns:AccountStatus"/>
+                  <xsd:element name="openedOn" type="xsd:date"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetBalance">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="accountId" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="GetBalanceResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="accountId" type="xsd:string"/>
+            <xsd:element name="balance" type="xsd:decimal"/>
+            <xsd:element name="asOf" type="xsd:dateTime"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetStatement">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="accountId" type="xsd:string"/>
+            <xsd:element name="fromDate" type="xsd:date" minOccurs="0"/>
+            <xsd:element name="toDate" type="xsd:date" minOccurs="0"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="GetStatementResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="accountId" type="xsd:string"/>
+            <xsd:element name="transaction" minOccurs="0" maxOccurs="unbounded">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="id" type="xsd:string"/>
+                  <xsd:element name="timestamp" type="xsd:dateTime"/>
+                  <xsd:element name="description" type="xsd:string"/>
+                  <xsd:element name="amount" type="xsd:decimal"/>
+                  <xsd:element name="memo" type="xsd:string" minOccurs="0" nillable="true"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="TransferFunds">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="fromAccount" type="xsd:string"/>
+            <xsd:element name="toAccount" type="xsd:string"/>
+            <xsd:element name="amount" type="xsd:decimal"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="TransferFundsResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="confirmationId" type="xsd:string"/>
+            <xsd:element name="fromBalance" type="xsd:decimal"/>
+            <xsd:element name="toBalance" type="xsd:decimal"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="UpdateAddress">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="accountId" type="xsd:string"/>
+            <xsd:element name="address" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="UpdateAddressResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="updated" type="xsd:boolean"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="CloseAccount">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="accountId" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="CloseAccountResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="closed" type="xsd:boolean"/>
+            <xsd:element name="closedAt" type="xsd:dateTime"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </wsdl:types>
+
+  <wsdl:message name="ListAccountsInput">
+    <wsdl:part name="parameters" element="tns:ListAccounts"/>
+  </wsdl:message>
+  <wsdl:message name="ListAccountsOutput">
+    <wsdl:part name="parameters" element="tns:ListAccountsResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetBalanceInput">
+    <wsdl:part name="parameters" element="tns:GetBalance"/>
+  </wsdl:message>
+  <wsdl:message name="GetBalanceOutput">
+    <wsdl:part name="parameters" element="tns:GetBalanceResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetStatementInput">
+    <wsdl:part name="parameters" element="tns:GetStatement"/>
+  </wsdl:message>
+  <wsdl:message name="GetStatementOutput">
+    <wsdl:part name="parameters" element="tns:GetStatementResponse"/>
+  </wsdl:message>
+  <wsdl:message name="TransferFundsInput">
+    <wsdl:part name="parameters" element="tns:TransferFunds"/>
+  </wsdl:message>
+  <wsdl:message name="TransferFundsOutput">
+    <wsdl:part name="parameters" element="tns:TransferFundsResponse"/>
+  </wsdl:message>
+  <wsdl:message name="UpdateAddressInput">
+    <wsdl:part name="parameters" element="tns:UpdateAddress"/>
+  </wsdl:message>
+  <wsdl:message name="UpdateAddressOutput">
+    <wsdl:part name="parameters" element="tns:UpdateAddressResponse"/>
+  </wsdl:message>
+  <wsdl:message name="CloseAccountInput">
+    <wsdl:part name="parameters" element="tns:CloseAccount"/>
+  </wsdl:message>
+  <wsdl:message name="CloseAccountOutput">
+    <wsdl:part name="parameters" element="tns:CloseAccountResponse"/>
+  </wsdl:message>
+
+  <wsdl:portType name="GravewoodBankPortType">
+    <wsdl:operation name="ListAccounts">
+      <wsdl:documentation>Lists every account with its balance and status. Read-only.</wsdl:documentation>
+      <wsdl:input message="tns:ListAccountsInput"/>
+      <wsdl:output message="tns:ListAccountsOutput"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetBalance">
+      <wsdl:documentation>Returns the current balance of one account. Read-only.</wsdl:documentation>
+      <wsdl:input message="tns:GetBalanceInput"/>
+      <wsdl:output message="tns:GetBalanceOutput"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetStatement">
+      <wsdl:documentation>Returns the transactions of one account, oldest first, optionally between two dates. Read-only.</wsdl:documentation>
+      <wsdl:input message="tns:GetStatementInput"/>
+      <wsdl:output message="tns:GetStatementOutput"/>
+    </wsdl:operation>
+    <wsdl:operation name="TransferFunds">
+      <wsdl:documentation>Moves money from one open account to another. A transfer can only be reversed by making another transfer.</wsdl:documentation>
+      <wsdl:input message="tns:TransferFundsInput"/>
+      <wsdl:output message="tns:TransferFundsOutput"/>
+    </wsdl:operation>
+    <wsdl:operation name="UpdateAddress">
+      <wsdl:documentation>Replaces the mailing address stored on an open account. The previous address is not kept.</wsdl:documentation>
+      <wsdl:input message="tns:UpdateAddressInput"/>
+      <wsdl:output message="tns:UpdateAddressOutput"/>
+    </wsdl:operation>
+    <wsdl:operation name="CloseAccount">
+      <wsdl:documentation>Permanently closes the account. This cannot be undone.</wsdl:documentation>
+      <wsdl:input message="tns:CloseAccountInput"/>
+      <wsdl:output message="tns:CloseAccountOutput"/>
+    </wsdl:operation>
+  </wsdl:portType>
+
+  <wsdl:binding name="GravewoodBankBinding" type="tns:GravewoodBankPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="ListAccounts">
+      <soap:operation soapAction="urn:gravewood:ListAccounts" style="document"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetBalance">
+      <soap:operation soapAction="urn:gravewood:GetBalance" style="document"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetStatement">
+      <soap:operation soapAction="urn:gravewood:GetStatement" style="document"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="TransferFunds">
+      <soap:operation soapAction="urn:gravewood:TransferFunds" style="document"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="UpdateAddress">
+      <soap:operation soapAction="urn:gravewood:UpdateAddress" style="document"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CloseAccount">
+      <soap:operation soapAction="urn:gravewood:CloseAccount" style="document"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+
+  <wsdl:service name="GravewoodBank">
+    <wsdl:port name="GravewoodBankSoap" binding="tns:GravewoodBankBinding">
+      <soap:address location="http://localhost:3000/api/gravewood/SANDBOXID"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

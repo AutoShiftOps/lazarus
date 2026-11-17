@@ -47,13 +47,13 @@ Build the fake SOAP bank bottom-up: money, seed, XML helpers, pure handler, WSDL
     - **Property 15**
     - _Requirements: 5.3_
 
-- [ ] 6. Checkpoint: all tests pass; ask the user if questions arise
+- [x] 6. Checkpoint: all tests pass; ask the user if questions arise
 
-- [ ] 7. WSDL
-  - [ ] 7.1 Implement `lib/gravewood/wsdl.ts`
+- [x] 7. WSDL
+  - [x] 7.1 Implement `lib/gravewood/wsdl.ts`
     - Include documentation text per Req 1.4 and the schema features of Req 1.6
     - _Requirements: 1.1–1.6, 1.8_
-  - [ ] 7.2 Save the output as `fixtures/gravewood.wsdl` and add a test that the live output equals the fixture (endpoint substituted)
+  - [x] 7.2 Save the output as `fixtures/gravewood.wsdl` and add a test that the live output equals the fixture (endpoint substituted)
 
 - [ ] 8. Store
   - [ ] 8.1 Implement `lib/gravewood/store.ts` with optimistic versioning and rate limiting
