@@ -73,6 +73,21 @@ export function handleSoap(
 
 Faults: `fault("Client" | "Server", message)` builds the SOAP 1.1 Fault XML; messages come from a closed set of constants so no internal detail can leak.
 
+### Operation contract (single source of truth for handler, WSDL and tests)
+
+Namespace `urn:gravewood`, document/literal, `elementFormDefault="qualified"`, SOAPAction `urn:gravewood:<Operation>`. Child elements appear in the order listed. Amounts are `xsd:decimal` (requests are parsed with `parseAmountToCents`; responses always have 2 fractional digits). Account ids are `xsd:string`.
+
+| Operation | Request elements | Response element and children |
+|---|---|---|
+| `ListAccounts` | (none) | `ListAccountsResponse` > `account` (1..unbounded) > `id`, `name`, `balance` (decimal), `status` (OPEN or CLOSED), `openedOn` (date) |
+| `GetBalance` | `accountId` | `GetBalanceResponse` > `accountId`, `balance` (decimal), `asOf` (dateTime) |
+| `GetStatement` | `accountId`, `fromDate` (date, optional), `toDate` (date, optional) | `GetStatementResponse` > `accountId`, `transaction` (0..unbounded) > `id`, `timestamp` (dateTime), `description`, `amount` (decimal, signed), `memo` (string, optional, nillable) |
+| `TransferFunds` | `fromAccount`, `toAccount`, `amount` (decimal) | `TransferFundsResponse` > `confirmationId`, `fromBalance` (decimal), `toBalance` (decimal) |
+| `UpdateAddress` | `accountId`, `address` (max 200 chars) | `UpdateAddressResponse` > `updated` (boolean) |
+| `CloseAccount` | `accountId` | `CloseAccountResponse` > `closed` (boolean), `closedAt` (dateTime) |
+
+A null memo is written as `<memo xsi:nil="true"/>`; the Envelope declares `xmlns:xsi`. Faults are SOAP 1.1: `<soap:Fault><faultcode>soap:Client</faultcode><faultstring>...</faultstring></soap:Fault>` (unqualified children), HTTP 500. Fault text never echoes arbitrary input: an account id is echoed only when it matches `^[0-9]{1,12}$`, otherwise the text omits it ("Account not found").
+
 ### `lib/gravewood/wsdl.ts`
 
 `buildWsdl(endpointUrl: string): string`: a template literal with the schema inline. The same output is saved once as `fixtures/gravewood.wsdl` by a test using a placeholder endpoint, and a test asserts the live output equals the fixture after substituting the endpoint.

@@ -6,23 +6,23 @@ Build the fake SOAP bank bottom-up: money, seed, XML helpers, pure handler, WSDL
 
 ## Tasks
 
-- [ ] 1. Dependencies and types
+- [x] 1. Dependencies and types
   - Add `fast-xml-parser` to `dependencies`
   - Create `lib/gravewood/types.ts` (types only)
   - _Requirements: 3, 4_
 
-- [ ] 2. Money helpers
-  - [ ] 2.1 Implement `lib/gravewood/money.ts` (`parseAmountToCents`, `formatCents`)
+- [x] 2. Money helpers
+  - [x] 2.1 Implement `lib/gravewood/money.ts` (`parseAmountToCents`, `formatCents`)
     - _Requirements: 4.1, 4.2, 4.6_
-  - [ ] 2.2 Unit tests for edge cases (`"0"`, `"-1"`, `"1.234"`, `"1e3"`, `" 5"`, `"00012.50"`)
-  - [ ]* 2.3 Property test 13: amount parsing round-trip
+  - [x] 2.2 Unit tests for edge cases (`"0"`, `"-1"`, `"1.234"`, `"1e3"`, `" 5"`, `"00012.50"`)
+  - [x]* 2.3 Property test 13: amount parsing round-trip
     - **Property 13**
     - _Requirements: 4.1, 4.2_
 
-- [ ] 3. Seed data
-  - [ ] 3.1 Implement `lib/gravewood/seed.ts` with the four accounts and 6 fixed transactions each
+- [x] 3. Seed data
+  - [x] 3.1 Implement `lib/gravewood/seed.ts` with the four accounts and 6 fixed transactions each
     - _Requirements: 3.1, 3.2, 3.3_
-  - [ ] 3.2 Unit test: sum of seed balances is 63650.00; all timestamps are fixed strings
+  - [x] 3.2 Unit test: sum of seed balances is 63650.00; all timestamps are fixed strings
 
 - [ ] 4. XML helpers
   - [ ] 4.1 Implement `lib/gravewood/xml.ts` (parse envelope, build envelope, build fault)

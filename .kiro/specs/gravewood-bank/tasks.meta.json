@@ -1,0 +1,96 @@
+{
+  "pbtResults": {
+    "2.3 Property test 13: amount parsing round-trip": {
+      "status": "passed",
+      "lastRunTimestamp": 1794929505515
+    }
+  },
+  "executionHistory": {
+    "1. Dependencies and types": [
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929129207
+      },
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929162138
+      }
+    ],
+    "2.1 Implement `lib/gravewood/money.ts` (`parseAmountToCents`, `formatCents`)": [
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929164997
+      },
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929388604
+      }
+    ],
+    "2.2 Unit tests for edge cases (`\"0\"`, `\"-1\"`, `\"1.234\"`, `\"1e3\"`, `\" 5\"`, `\"00012.50\"`)": [
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929392163
+      },
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929463278
+      }
+    ],
+    "2. Money helpers": [
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929463416
+      }
+    ],
+    "2.3 Property test 13: amount parsing round-trip": [
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929466654
+      },
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929519811
+      }
+    ],
+    "3.1 Implement `lib/gravewood/seed.ts` with the four accounts and 6 fixed transactions each": [
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929520285
+      },
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929563748
+      }
+    ],
+    "3.2 Unit test: sum of seed balances is 63650.00; all timestamps are fixed strings": [
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929565654
+      },
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929716745
+      }
+    ],
+    "3. Seed data": [
+      {
+        "executionId": "7f3a8487-f9e6-42c9-9d91-cb3b31f5f889",
+        "chatSessionId": "sess_5baa987e-7379-4c0b-b313-f9b0f734d490",
+        "timestamp": 1794929716850
+      }
+    ]
+  }
+}
