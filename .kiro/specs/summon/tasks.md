@@ -195,8 +195,8 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - All tests read files via `fs.readFileSync`; no outbound network requests
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-- [ ] 12. Summon API route
-  - [ ] 12.1 Implement `app/api/summon/route.ts`
+- [x] 12. Summon API route
+  - [x] 12.1 Implement `app/api/summon/route.ts`
     - Export `runtime = "nodejs"` at module scope
     - Define `SummonRequestSchema = z.object({ wsdlUrl: z.string().url() })`
     - POST handler: parse body → validate schema (400 `INVALID_REQUEST`) → URL length ≤ 2048 (400 `INVALID_REQUEST`) → `fetchWsdl` → `parseWsdl` → `generateSchemas` → `upsertService` → build `mcpUrl` from request origin → return 200 with `{ id, name, operations[0..499], wsdlUrl, mcpUrl, warnings[0..49] }`
