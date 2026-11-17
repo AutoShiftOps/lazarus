@@ -56,8 +56,60 @@ const ERROR_MAP: Record<ErrorCode, { status: number; code: ErrorCode }> = {
   INTERNAL_ERROR: { status: 500, code: "INTERNAL_ERROR" },
 };
 
+const URL_PATTERN = /https?:\/\/\S+/gi;
+// Private-use characters delimit URL placeholders. They are removed from input so user text cannot collide.
+const PH_OPEN = "\uE000";
+const PH_CLOSE = "\uE001";
+const PH_STRIP = /[\uE000\uE001]/g;
+const PH_RESTORE = /\uE000(\d+)\uE001/g;
+// A filesystem path ending in a source extension. The leading class also covers placeholders,
+// so a path fragment glued to a URL placeholder is removed together with it.
+const SOURCE_PATH = /[^\s"'<>()[\]]*[\\/][\w.-]+\.(?:ts|js|mjs|cjs)\b(?::\d+)*/gi;
+const NODE_MODULES_PATH = /[^\s"'<>()[\]]*node_modules[^\s"'<>()[\]]*/g;
+const STACK_TAIL = /(?:^|\r?\n)[ \t]*at\s[\s\S]*$|[ \t]{4}at\s[\s\S]*$/;
+
+/** One pass: mask URLs, strip unsafe text from the masked text, restore URLs, collapse, truncate. */
+function sanitisePass(input: string): string {
+  const urls: string[] = [];
+  const masked = input
+    .replace(PH_STRIP, "")
+    .replace(URL_PATTERN, (url) => `${PH_OPEN}${urls.push(url) - 1}${PH_CLOSE}`);
+  const stripped = masked
+    .replace(STACK_TAIL, "")
+    .replace(NODE_MODULES_PATH, "")
+    .replace(SOURCE_PATH, "")
+    .replace(/node_modules/g, "");
+  const restored = stripped.replace(PH_RESTORE, (_m, i: string) => urls[Number(i)] ?? "");
+  return restored
+    .replace(/node_modules/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_ERROR_LENGTH);
+}
+
+/** True when the text satisfies the safety rules (URLs may contain paths). */
+function isSafe(text: string): boolean {
+  return (
+    text.length <= MAX_ERROR_LENGTH &&
+    !text.includes("    at ") &&
+    !text.includes("node_modules") &&
+    !/[\\/][\w.-]+\.(?:ts|js|mjs|cjs)\b/.test(text.replace(URL_PATTERN, ""))
+  );
+}
+
+/** Removes stack frames and source paths, repeating until stable so removal cannot create new matches. */
+function sanitiseMessage(message: string): string {
+  let current = message;
+  for (let i = 0; i < 5; i++) {
+    const next = sanitisePass(current);
+    if (next === current) break;
+    current = next;
+  }
+  return isSafe(current) ? current : "";
+}
+
 function errorResponse(status: number, code: ErrorCode, message: string): SummonResponse {
-  const error = message.trim().slice(0, MAX_ERROR_LENGTH) || MSG_INTERNAL;
+  const error = sanitiseMessage(message) || MSG_INTERNAL;
   return { status, body: { error, code } };
 }
 
@@ -154,7 +206,7 @@ export async function summon(
       },
     };
   } catch (e) {
-    console.error("summon failed:", e instanceof Error ? e.message : "unknown error");
+    console.error("summon failed:", e instanceof Error ? e.name : "unknown error");
     return errorResponse(500, "INTERNAL_ERROR", MSG_INTERNAL);
   }
 }
@@ -184,7 +236,7 @@ export async function summonFromBody(
     }
     return await summon(parsed.data.wsdlUrl, origin, deps);
   } catch (e) {
-    console.error("summon request failed:", e instanceof Error ? e.message : "unknown error");
+    console.error("summon request failed:", e instanceof Error ? e.name : "unknown error");
     return errorResponse(500, "INTERNAL_ERROR", MSG_INTERNAL);
   }
 }

@@ -204,13 +204,13 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Wrap entire handler in `try/catch`; log full error server-side; return `{ error: "An unexpected error occurred.", code: "INTERNAL_ERROR" }` with HTTP 500
     - All error responses include `error` (≤ 500 chars, no stack traces/paths) and `code`
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 9.1, 9.2, 9.3_
-  - [ ]* 12.2 Write unit tests for the API route in `tests/api/summon.test.ts`
+  - [x]* 12.2 Write unit tests for the API route in `tests/api/summon.test.ts`
     - Mock `fetchWsdl`, `parseWsdl`, `generateSchemas`, `upsertService`
     - Test each HTTP status path: 200, 400 (invalid body, bad URL, URL too long), 400 (SSRF), 422 (parse fail), 422 (too large), 502 (fetch fail), 503 (registry error), 500 (unexpected throw)
     - Assert `error` field ≤ 500 chars and contains no stack-trace patterns on all error responses
     - Assert `warnings` array is present (possibly empty) on 200 responses
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 9.1, 9.2, 9.3_
-  - [ ]* 12.3 Write property test for error response safety — Property 10
+  - [x]* 12.3 Write property test for error response safety — Property 10
     - **Property 10: Error responses never exceed 500 characters and contain no stack traces**
     - For any simulated error condition, assert `error` field is ≤ 500 chars, does not contain `"    at "`, `node_modules` path segments, or filesystem path segments with `.ts`/`.js`/`.mjs`/`.cjs` extensions
     - HTTP/HTTPS URLs in the message are permitted

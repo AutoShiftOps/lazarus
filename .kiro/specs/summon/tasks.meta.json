@@ -400,6 +400,40 @@
         "chatSessionId": "sess_d1c0e7d5-6b74-4bf0-8db7-2d096019fccd",
         "timestamp": 1794924622852
       }
+    ],
+    "12.2 Write unit tests for the API route in `tests/api/summon.test.ts`": [
+      {
+        "executionId": "ba276e04-cf9c-4137-b4aa-1581578dce39",
+        "chatSessionId": "sess_6925cff5-f31c-4939-a96b-4ae45b8921e8",
+        "timestamp": 1794925508908
+      },
+      {
+        "executionId": "ba276e04-cf9c-4137-b4aa-1581578dce39",
+        "chatSessionId": "sess_6925cff5-f31c-4939-a96b-4ae45b8921e8",
+        "timestamp": 1794925583229
+      }
+    ],
+    "12.3 Write property test for error response safety — Property 10": [
+      {
+        "executionId": "ba276e04-cf9c-4137-b4aa-1581578dce39",
+        "chatSessionId": "sess_6925cff5-f31c-4939-a96b-4ae45b8921e8",
+        "timestamp": 1794925583609
+      },
+      {
+        "executionId": "ba276e04-cf9c-4137-b4aa-1581578dce39",
+        "chatSessionId": "sess_6925cff5-f31c-4939-a96b-4ae45b8921e8",
+        "timestamp": 1794925961221
+      },
+      {
+        "executionId": "8b4337d3-2c82-4e62-bed2-cb25b23029bd",
+        "chatSessionId": "sess_6925cff5-f31c-4939-a96b-4ae45b8921e8",
+        "timestamp": 1794926107611
+      },
+      {
+        "executionId": "8b4337d3-2c82-4e62-bed2-cb25b23029bd",
+        "chatSessionId": "sess_6925cff5-f31c-4939-a96b-4ae45b8921e8",
+        "timestamp": 1794926690073
+      }
     ]
   }
 }
