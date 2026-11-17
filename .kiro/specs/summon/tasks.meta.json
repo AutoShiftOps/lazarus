@@ -171,6 +171,28 @@
         "chatSessionId": "sess_678d921a-a84e-4f39-a20e-b0fd31248ea7",
         "timestamp": 1794846872928
       }
+    ],
+    "5.3 Implement Stage 3 `collectSchemaRefs` and Stage 4 `inlineSchemas`": [
+      {
+        "executionId": "2311f752-786b-4b91-8aaf-099450545768",
+        "chatSessionId": "sess_84e532d8-1c31-4750-9b4d-773df5235356",
+        "timestamp": 1794847040440
+      },
+      {
+        "executionId": "2311f752-786b-4b91-8aaf-099450545768",
+        "chatSessionId": "sess_84e532d8-1c31-4750-9b4d-773df5235356",
+        "timestamp": 1794847501440
+      },
+      {
+        "executionId": "132dab83-5e4a-49bc-9700-52107ca2c15a",
+        "chatSessionId": "sess_84e532d8-1c31-4750-9b4d-773df5235356",
+        "timestamp": 1794848474231
+      },
+      {
+        "executionId": "132dab83-5e4a-49bc-9700-52107ca2c15a",
+        "chatSessionId": "sess_84e532d8-1c31-4750-9b4d-773df5235356",
+        "timestamp": 1794848558464
+      }
     ]
   }
 }

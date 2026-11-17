@@ -1,8 +1,11 @@
 // lib/soap/parser.ts
 // WSDL parser pipeline. Stage 1: guardXml. Stage 2: inspectDocument.
+// Stage 3: collectSchemaRefs. Stage 4: inlineSchemas.
 
 import { XMLParser, XMLValidator } from "fast-xml-parser";
-import type { LazarusError } from "./types";
+import { safeFetch } from "./fetcher";
+import type { FetchResult } from "./fetcher";
+import type { LazarusError, Warning } from "./types";
 
 const DOCTYPE_PATTERN = /<!\s*DOCTYPE/i;
 
@@ -123,4 +126,219 @@ export function inspectDocument(xml: string): DocumentInfo | LazarusError {
     serviceCount,
     targetNamespace: typeof tns === "string" ? tns : null,
   };
+}
+
+// ─── Stage 3 & 4: schema references and inlining ──────────────────────────────
+
+const COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
+// Matches <import|include|redefine ...> with any prefix. Group 1: qualified name, group 2: attributes.
+const REF_TAG_PATTERN =
+  /<((?:[^\s<>\/=:"']+:)?(?:import|include|redefine))(?=[\s/>])((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+const QUOTED_LOCATION_ATTR =
+  /\s+(?:schemaLocation|location)\s*=\s*(?:"[^"]*"|'[^']*')/g;
+const ANY_SCHEMA_LOCATION_ATTR =
+  /\s+(?:[^\s<>\/=:"']+:)?(?:schemaLocation|noNamespaceSchemaLocation)\s*=\s*(?:"[^"]*"|'[^']*')/g;
+
+const SCHEMA_FETCH_TIMEOUT_MS = 10_000;
+const SCHEMA_MAX_BYTES = 2_097_152;
+const MAX_SCHEMA_FETCHES = 20;
+const MAX_URL_IN_MESSAGE = 120;
+const SCHEMA_TOTAL_BUDGET_MS = 25_000;
+
+export type SchemaFetchDeps = {
+  fetch: (
+    url: string,
+    opts: { timeoutMs: number; maxBytes: number },
+  ) => Promise<FetchResult>;
+};
+
+type RefTag = {
+  local: string;
+  schemaLocation: string | null;
+  location: string | null;
+};
+
+function getAttr(attrs: string, name: string): string | null {
+  const m = new RegExp(`(?:^|\\s)${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`).exec(attrs);
+  if (m === null) return null;
+  return (m[1] ?? m[2] ?? "").replace(/&amp;/g, "&").trim();
+}
+
+function scanRefTags(xml: string): RefTag[] {
+  const tags: RefTag[] = [];
+  for (const m of xml.replace(COMMENT_PATTERN, "").matchAll(REF_TAG_PATTERN)) {
+    tags.push({
+      local: splitName(m[1]).local,
+      schemaLocation: getAttr(m[2], "schemaLocation"),
+      location: getAttr(m[2], "location"),
+    });
+  }
+  return tags;
+}
+
+/** Removes every location-bearing attribute so the soap library has nothing to fetch. */
+function stripLocations(xml: string): string {
+  return xml
+    .replace(COMMENT_PATTERN, "")
+    .replace(REF_TAG_PATTERN, (_all, name: string, attrs: string) => {
+      const cleaned = attrs.replace(QUOTED_LOCATION_ATTR, "");
+      return `<${name}${cleaned}>`;
+    })
+    .replace(ANY_SCHEMA_LOCATION_ATTR, "");
+}
+
+/**
+ * Stage 3: absolute URLs of every xsd:import / xsd:include that has a
+ * schemaLocation, de-duplicated, in document order. A value that cannot be
+ * resolved against baseUrl is returned as its raw string.
+ */
+export function collectSchemaRefs(xml: string, baseUrl: string): string[] {
+  const seen = new Set<string>();
+  const refs: string[] = [];
+  for (const tag of scanRefTags(xml)) {
+    if (tag.local !== "import" && tag.local !== "include") continue;
+    if (tag.schemaLocation === null || tag.schemaLocation === "") continue;
+    let href: string;
+    try {
+      href = new URL(tag.schemaLocation, baseUrl).href;
+    } catch {
+      // Unresolvable: keep the raw value so inlineSchemas reports it as SCHEMA_FETCH_FAILED.
+      href = tag.schemaLocation;
+    }
+    if (!seen.has(href)) {
+      seen.add(href);
+      refs.push(href);
+    }
+  }
+  return refs;
+}
+
+function shortUrl(url: string): string {
+  return url.length > MAX_URL_IN_MESSAGE ? `${url.slice(0, MAX_URL_IN_MESSAGE)}...` : url;
+}
+
+function fetchFailed(url: string): Warning {
+  return { code: "SCHEMA_FETCH_FAILED", message: `Could not fetch schema at ${shortUrl(url)}.` };
+}
+
+function extractSchemaElement(xml: string): string | null {
+  const m = /<((?:[^\s<>\/=:"']+:)?schema)(?=[\s/>])[\s\S]*<\/\1\s*>/.exec(xml.replace(COMMENT_PATTERN, ""));
+  return m === null ? null : m[0];
+}
+
+function spliceIntoTypes(wsdl: string, schemas: string[]): string {
+  if (schemas.length === 0) return wsdl;
+  const body = schemas.join("");
+  const selfClosing = /<((?:[^\s<>\/=:"']+:)?)types(\s[^>]*)?\s*\/>/;
+  const out = wsdl.replace(selfClosing, (_all, prefix: string, attrs: string | undefined) =>
+    `<${prefix}types${attrs ?? ""}></${prefix}types>`,
+  );
+  const close = /<\/((?:[^\s<>\/=:"']+:)?)types\s*>/.exec(out);
+  if (close !== null) {
+    return out.slice(0, close.index) + body + out.slice(close.index);
+  }
+  const root = /<((?:[^\s<>\/=:"']+:)?)definitions(?=[\s>])(?:"[^"]*"|'[^']*'|[^>"'])*>/.exec(out);
+  if (root === null) return out;
+  const at = root.index + root[0].length;
+  return `${out.slice(0, at)}<types xmlns="${WSDL_11_NS}">${body}</types>${out.slice(at)}`;
+}
+
+/**
+ * Stage 4: fetch referenced schemas (following their own imports), splice them
+ * into the WSDL's <types>, and strip every location attribute from the result.
+ * All network access goes through deps.fetch.
+ */
+export async function inlineSchemas(
+  xml: string,
+  refs: string[],
+  baseUrl: string,
+  deps: SchemaFetchDeps = { fetch: safeFetch },
+): Promise<{ xml: string; warnings: Warning[] }> {
+  void baseUrl; // refs are already absolute; nested refs resolve against their own schema URL.
+  const warnings: Warning[] = [];
+  if (scanRefTags(xml).some((t) => t.schemaLocation === null && t.location !== null)) {
+    warnings.push({
+      code: "WSDL_IMPORT_NOT_SUPPORTED",
+      message: "wsdl:import is not supported; the imported document was ignored.",
+    });
+  }
+
+  const queue: string[] = [...refs];
+  const visited = new Set<string>();
+  const schemas: string[] = [];
+  let fetches = 0;
+  let limitWarned = false;
+  const deadline = Date.now() + SCHEMA_TOTAL_BUDGET_MS;
+
+  while (queue.length > 0) {
+    const ref = queue.shift() as string;
+    let url: URL;
+    try {
+      url = new URL(ref);
+    } catch {
+      if (!visited.has(ref)) {
+        visited.add(ref);
+        warnings.push(fetchFailed(ref));
+      }
+      continue;
+    }
+    const href = url.href;
+    if (visited.has(href)) continue;
+    visited.add(href);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      warnings.push(fetchFailed(href));
+      continue;
+    }
+    if (fetches >= MAX_SCHEMA_FETCHES) {
+      if (!limitWarned) {
+        limitWarned = true;
+        warnings.push({
+          code: "SCHEMA_LIMIT_REACHED",
+          message: `Schema import limit reached; only ${MAX_SCHEMA_FETCHES} schemas were fetched.`,
+        });
+      }
+      break;
+    }
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      warnings.push({
+        code: "SCHEMA_TIME_BUDGET_EXCEEDED",
+        message: "Schema fetching stopped: the time limit was reached.",
+      });
+      break;
+    }
+    fetches += 1;
+
+    let result: FetchResult;
+    try {
+      result = await deps.fetch(href, {
+        timeoutMs: Math.min(SCHEMA_FETCH_TIMEOUT_MS, remaining),
+        maxBytes: SCHEMA_MAX_BYTES,
+      });
+    } catch {
+      warnings.push(fetchFailed(href));
+      continue;
+    }
+    if (!result.ok) {
+      warnings.push(
+        result.error.code === "WSDL_TOO_LARGE"
+          ? { code: "SCHEMA_TOO_LARGE", message: `Schema at ${shortUrl(href)} is too large.` }
+          : fetchFailed(href),
+      );
+      continue;
+    }
+    if (guardXml(result.xml) !== null) {
+      warnings.push(fetchFailed(href));
+      continue;
+    }
+    const schema = extractSchemaElement(result.xml);
+    if (schema === null) {
+      warnings.push(fetchFailed(href));
+      continue;
+    }
+    schemas.push(stripLocations(schema));
+    queue.push(...collectSchemaRefs(schema, href));
+  }
+
+  return { xml: spliceIntoTypes(stripLocations(xml), schemas), warnings };
 }

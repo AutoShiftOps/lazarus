@@ -62,16 +62,18 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Root namespace and local name dispatch per the design table; count `<service>` elements
     - Returns `DocumentInfo | LazarusError`
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 13.2_
-  - [ ] 5.3 Implement Stage 3 `collectSchemaRefs` and Stage 4 `inlineSchemas`
+  - [x] 5.3 Implement Stage 3 `collectSchemaRefs` and Stage 4 `inlineSchemas`
     - Resolve relative `schemaLocation` against the WSDL base URL
     - Fetch only through an injected fetch function defaulting to `safeFetch`, 10 s each
     - Cycle guard, 20-document limit, 2 MB per document, run `guardXml` over every fetched schema
-    - Warnings: `SCHEMA_FETCH_FAILED`, `SCHEMA_TOO_LARGE`, `SCHEMA_LIMIT_REACHED`
-    - _Requirements: 2.5, 2.6, 13.3, 13.4, 13.5, 13.6_
+    - Warnings: `SCHEMA_FETCH_FAILED`, `SCHEMA_TOO_LARGE`, `SCHEMA_LIMIT_REACHED`, `SCHEMA_TIME_BUDGET_EXCEEDED`
+    - Total 25 s budget across all fetches; strip location attributes for any element prefix, leaving `soap:address` alone
+    - _Requirements: 2.5, 2.6, 13.3, 13.4, 13.5, 13.6, 13.8, 13.9_
   - [ ] 5.4 Implement Stage 5 `buildDefinition` and the exported `parseWsdl`
     - Import the `WSDL` class from `soap` only; do not import `open_wsdl`, `createClient` or `createClientAsync`
+    - Before constructing `WSDL`, run a tree-based verifier (XMLParser, not regex) that fails closed if any import/include/redefine element, any prefix, still has `schemaLocation` or `location`
     - Binding transport filter, operation deduplication across SOAP 1.1 and 1.2, `bindingStyle` classification
-    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 13.3, 13.7_
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 13.3, 13.7, 13.10_
   - [x] 5.5 Write unit tests for the parser in `tests/soap/parser.test.ts`
     - Stage 1: DOCTYPE rejected in several forms, including one preceded by a 5 000-character XML comment; a billion-laughs sample rejected
     - Stage 2: WSDL 1.1 accepted; WSDL 2.0 rejected with its own message; non-WSDL XML rejected; malformed XML reports line and column; no-service error

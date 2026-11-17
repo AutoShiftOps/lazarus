@@ -210,6 +210,13 @@ order, subject to the limits in Requirement 13:
   same way as the WSDL.
 - Splice the schema's `<xsd:schema>` element into the WSDL's `<types>` element, replacing the `import`
   element that referenced it.
+- Enforce a total 25 s budget: each fetch receives the lesser of 10 s and the time remaining. This keeps the
+  worst case (20 schemas, each slow) inside the serverless function limit instead of 20 × 10 s.
+- **Strip every location reference from the output.** The `soap` library's `WSDL` constructor reads each
+  `import`/`include` location and opens it itself, over HTTP or, for a non-HTTP document URI, as a local
+  file path. Any location left in the XML is therefore both an SSRF bypass and a local-file read. Element
+  matching for the strip must not assume an ASCII prefix: XML names allow other characters, and the library
+  matches on the local name.
 
 `deps` carries the fetch function so tests inject a fake and assert zero real network calls.
 

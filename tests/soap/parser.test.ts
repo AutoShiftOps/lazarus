@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
-import { guardXml, inspectDocument } from "../../lib/soap/parser";
+import http from "node:http";
+import https from "node:https";
+import { afterAll, describe, expect, it, vi } from "vitest";
+import { collectSchemaRefs, guardXml, inlineSchemas, inspectDocument } from "../../lib/soap/parser";
+import type { SchemaFetchDeps } from "../../lib/soap/parser";
+import type { FetchResult } from "../../lib/soap/fetcher";
 import type { DocumentInfo } from "../../lib/soap/parser";
 import type { LazarusError } from "../../lib/soap/types";
 
@@ -106,5 +110,246 @@ describe("guardXml (Stage 1)", () => {
 
   it("accepts the calculator fixture", () => {
     expect(guardXml(readFileSync("fixtures/calculator.wsdl", "utf8"))).toBeNull();
+  });
+});
+
+// ─── Stages 3 & 4 ─────────────────────────────────────────────────────────────
+
+const httpSpy = vi.spyOn(http, "request").mockImplementation(() => {
+  throw new Error("real network access attempted");
+});
+const httpsSpy = vi.spyOn(https, "request").mockImplementation(() => {
+  throw new Error("real network access attempted");
+});
+afterAll(() => {
+  expect(httpSpy).not.toHaveBeenCalled();
+  expect(httpsSpy).not.toHaveBeenCalled();
+});
+
+const XSD_NS = "http://www.w3.org/2001/XMLSchema";
+const BASE = "http://host.test/dir/service.wsdl";
+
+function schemaDoc(ns: string, imports: string[] = []): string {
+  const body = imports
+    .map((l) => `<xsd:import namespace="urn:dep" schemaLocation="${l}"/>`)
+    .join("");
+  return `<?xml version="1.0"?><xsd:schema xmlns:xsd="${XSD_NS}" targetNamespace="${ns}">${body}</xsd:schema>`;
+}
+
+function wsdlWith(types: string, extra = ""): string {
+  return `<wsdl:definitions xmlns:wsdl="${WSDL_NS}" targetNamespace="urn:t">${extra}<wsdl:types>${types}</wsdl:types><wsdl:service name="S"/></wsdl:definitions>`;
+}
+
+type FetchOpts = { timeoutMs: number; maxBytes: number };
+
+function fakeFetch(responses: Record<string, FetchResult | string>): {
+  deps: SchemaFetchDeps;
+  calls: string[];
+  opts: FetchOpts[];
+} {
+  const calls: string[] = [];
+  const opts: FetchOpts[] = [];
+  const deps: SchemaFetchDeps = {
+    fetch: (url, o) => {
+      calls.push(url);
+      opts.push(o);
+      const r = responses[url];
+      if (r === undefined) {
+        return Promise.resolve({
+          ok: false,
+          error: { code: "WSDL_FETCH_FAILED", message: "nope" },
+        });
+      }
+      return Promise.resolve(
+        typeof r === "string" ? { ok: true, xml: r, finalUrl: url } : r,
+      );
+    },
+  };
+  return { deps, calls, opts };
+}
+
+describe("collectSchemaRefs (Stage 3)", () => {
+  it("resolves relative and absolute refs in document order and de-duplicates", () => {
+    const xml = wsdlWith(
+      `<xsd:schema xmlns:xsd="${XSD_NS}"><xsd:import schemaLocation="a.xsd"/><xs:include xmlns:xs="${XSD_NS}" schemaLocation="../b.xsd"/><xsd:import schemaLocation="http://other.test/c.xsd"/><xsd:import schemaLocation="a.xsd"/><xsd:import namespace="urn:none"/></xsd:schema>`,
+    );
+    expect(collectSchemaRefs(xml, BASE)).toEqual([
+      "http://host.test/dir/a.xsd",
+      "http://host.test/b.xsd",
+      "http://other.test/c.xsd",
+    ]);
+  });
+});
+
+describe("inlineSchemas (Stage 4)", () => {
+  it("fetches with the required limits and splices the schema into types", async () => {
+    const f = fakeFetch({ "http://host.test/a.xsd": schemaDoc("urn:a") });
+    const r = await inlineSchemas(wsdlWith(""), ["http://host.test/a.xsd"], BASE, f.deps);
+    expect(f.opts[0]).toEqual({ timeoutMs: 10000, maxBytes: 2_097_152 });
+    expect(r.warnings).toEqual([]);
+    expect(r.xml).toContain('targetNamespace="urn:a"');
+    expect(r.xml.indexOf("urn:a")).toBeLessThan(r.xml.indexOf("</wsdl:types>"));
+  });
+
+  it("follows a nested import resolved against the importing schema", async () => {
+    const f = fakeFetch({
+      "http://host.test/x/a.xsd": schemaDoc("urn:a", ["../y/b.xsd"]),
+      "http://host.test/y/b.xsd": schemaDoc("urn:b"),
+    });
+    const r = await inlineSchemas(wsdlWith(""), ["http://host.test/x/a.xsd"], BASE, f.deps);
+    expect(f.calls).toEqual(["http://host.test/x/a.xsd", "http://host.test/y/b.xsd"]);
+    expect(r.xml).toContain("urn:b");
+  });
+
+  it("terminates on a cycle, fetching each URL once", async () => {
+    const f = fakeFetch({
+      "http://host.test/a.xsd": schemaDoc("urn:a", ["b.xsd"]),
+      "http://host.test/b.xsd": schemaDoc("urn:b", ["a.xsd"]),
+    });
+    await inlineSchemas(wsdlWith(""), ["http://host.test/a.xsd"], BASE, f.deps);
+    expect(f.calls).toEqual(["http://host.test/a.xsd", "http://host.test/b.xsd"]);
+  });
+
+  it("fetches exactly 20 of 25 refs and warns once", async () => {
+    const refs = Array.from({ length: 25 }, (_, i) => `http://host.test/s${i}.xsd`);
+    const responses: Record<string, string> = {};
+    for (const u of refs) responses[u] = schemaDoc(`urn:${u}`);
+    const f = fakeFetch(responses);
+    const r = await inlineSchemas(wsdlWith(""), refs, BASE, f.deps);
+    expect(f.calls).toHaveLength(20);
+    expect(r.warnings.filter((w) => w.code === "SCHEMA_LIMIT_REACHED")).toHaveLength(1);
+  });
+
+  it("warns on a failing fetch and continues", async () => {
+    const f = fakeFetch({ "http://host.test/ok.xsd": schemaDoc("urn:ok") });
+    const r = await inlineSchemas(
+      wsdlWith(""),
+      ["http://host.test/bad.xsd", "http://host.test/ok.xsd"],
+      BASE,
+      f.deps,
+    );
+    expect(r.warnings).toEqual([
+      { code: "SCHEMA_FETCH_FAILED", message: "Could not fetch schema at http://host.test/bad.xsd." },
+    ]);
+    expect(r.xml).toContain("urn:ok");
+  });
+
+  it("maps WSDL_TOO_LARGE to SCHEMA_TOO_LARGE", async () => {
+    const f = fakeFetch({
+      "http://host.test/big.xsd": { ok: false, error: { code: "WSDL_TOO_LARGE", message: "big" } },
+    });
+    const r = await inlineSchemas(wsdlWith(""), ["http://host.test/big.xsd"], BASE, f.deps);
+    expect(r.warnings.map((w) => w.code)).toEqual(["SCHEMA_TOO_LARGE"]);
+  });
+
+  it("never passes non-http refs to fetch", async () => {
+    const f = fakeFetch({});
+    const r = await inlineSchemas(
+      wsdlWith(""),
+      ["file:///etc/passwd", "../../.env", "ftp://host.test/a.xsd"],
+      BASE,
+      f.deps,
+    );
+    expect(f.calls).toEqual([]);
+    expect(r.warnings.map((w) => w.code)).toEqual([
+      "SCHEMA_FETCH_FAILED",
+      "SCHEMA_FETCH_FAILED",
+      "SCHEMA_FETCH_FAILED",
+    ]);
+  });
+
+  it("skips a fetched schema containing a DOCTYPE", async () => {
+    const f = fakeFetch({
+      "http://host.test/evil.xsd": `<!DOCTYPE x [<!ENTITY e "boom">]>${schemaDoc("urn:evil")}`,
+    });
+    const r = await inlineSchemas(wsdlWith(""), ["http://host.test/evil.xsd"], BASE, f.deps);
+    expect(r.warnings.map((w) => w.code)).toEqual(["SCHEMA_FETCH_FAILED"]);
+    expect(r.xml).not.toContain("urn:evil");
+  });
+
+  it("strips every location attribute and warns on wsdl:import", async () => {
+    const types = `<xsd:schema xmlns:xsd="${XSD_NS}"><xsd:import schemaLocation="ok.xsd"/><xsd:import schemaLocation="missing.xsd"/><xsd:include schemaLocation='file:///etc/passwd'/><xsd:import namespace="urn:n" schemaLocation="nested.xsd"/></xsd:schema>`;
+    const xml = wsdlWith(types, `<wsdl:import namespace="urn:w" location="http://host.test/other.wsdl"/>`);
+    const refs = collectSchemaRefs(xml, BASE);
+    const f = fakeFetch({
+      "http://host.test/dir/ok.xsd": schemaDoc("urn:ok", ["deep.xsd"]),
+      "http://host.test/dir/nested.xsd": schemaDoc("urn:nested"),
+    });
+    const r = await inlineSchemas(xml, [...refs, "file:///etc/passwd"], BASE, f.deps);
+    expect(f.calls).not.toContain("http://host.test/other.wsdl");
+    expect(f.calls.some((c) => c.startsWith("file:"))).toBe(false);
+    expect(r.warnings.map((w) => w.code)).toContain("WSDL_IMPORT_NOT_SUPPORTED");
+    expect(r.warnings.map((w) => w.code)).toContain("SCHEMA_FETCH_FAILED");
+    expect(r.xml).toContain("urn:ok");
+    expect(r.xml).not.toContain("schemaLocation=");
+    expect(r.xml).not.toMatch(/\blocation\s*=/);
+  });
+
+  it("strips locations from non-ASCII prefixed import tags but keeps soap:address", async () => {
+    const xml = wsdlWith(
+      `<xsd:schema xmlns:xsd="${XSD_NS}"><é:import namespace="urn:x" schemaLocation="http://host.test/a.xsd"/></xsd:schema>`,
+      `<é:import location="http://host.test/o.wsdl"/><soap:address location="http://host.test/svc"/>`,
+    );
+    const refs = collectSchemaRefs(xml, BASE);
+    expect(refs).toEqual(["http://host.test/a.xsd"]);
+    const f = fakeFetch({ "http://host.test/a.xsd": schemaDoc("urn:a") });
+    const r = await inlineSchemas(xml, refs, BASE, f.deps);
+    expect(r.xml).not.toContain("schemaLocation=");
+    expect(r.xml).toContain('<é:import namespace="urn:x"/>');
+    expect(r.xml).toContain("<é:import/>");
+    expect(r.xml).not.toContain('location="http://host.test/o.wsdl"');
+    expect(r.xml).toContain('<soap:address location="http://host.test/svc"/>');
+  });
+
+  it("stops fetching when the 25 s total budget is spent", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(0);
+      const refs = Array.from({ length: 6 }, (_, i) => `http://host.test/t${i}.xsd`);
+      const timeouts: number[] = [];
+      const deps: SchemaFetchDeps = {
+        fetch: (url, o) => {
+          timeouts.push(o.timeoutMs);
+          vi.setSystemTime(Date.now() + 9000);
+          return Promise.resolve({ ok: true, xml: schemaDoc(`urn:${url}`), finalUrl: url });
+        },
+      };
+      const r = await inlineSchemas(wsdlWith(""), refs, BASE, deps);
+      expect(timeouts).toEqual([10000, 10000, 7000]);
+      expect(r.warnings).toEqual([
+        {
+          code: "SCHEMA_TIME_BUDGET_EXCEEDED",
+          message: "Schema fetching stopped: the time limit was reached.",
+        },
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("splices into a self-closing <types/>", async () => {
+    const xml = `<wsdl:definitions xmlns:wsdl="${WSDL_NS}" targetNamespace="urn:t"><wsdl:types/><wsdl:service name="S"/></wsdl:definitions>`;
+    const f = fakeFetch({ "http://host.test/a.xsd": schemaDoc("urn:a") });
+    const r = await inlineSchemas(xml, ["http://host.test/a.xsd"], BASE, f.deps);
+    expect(r.xml).toContain('targetNamespace="urn:a"');
+    expect(isError(inspectDocument(r.xml))).toBe(false);
+  });
+
+  it("adds a <types> element when the WSDL has none", async () => {
+    const xml = `<wsdl:definitions xmlns:wsdl="${WSDL_NS}" targetNamespace="urn:t"><wsdl:service name="S"/></wsdl:definitions>`;
+    const f = fakeFetch({ "http://host.test/a.xsd": schemaDoc("urn:a") });
+    const r = await inlineSchemas(xml, ["http://host.test/a.xsd"], BASE, f.deps);
+    expect(r.xml).toContain('targetNamespace="urn:a"');
+    expect(isError(inspectDocument(r.xml))).toBe(false);
+  });
+
+  it("reports an unresolvable schemaLocation as SCHEMA_FETCH_FAILED without fetching", async () => {
+    const xml = wsdlWith(`<xsd:schema xmlns:xsd="${XSD_NS}"><xsd:import schemaLocation="a.xsd"/><xsd:import schemaLocation="a.xsd"/></xsd:schema>`);
+    const refs = collectSchemaRefs(xml, "");
+    expect(refs).toEqual(["a.xsd"]);
+    const f = fakeFetch({});
+    const r = await inlineSchemas(xml, refs, "", f.deps);
+    expect(f.calls).toEqual([]);
+    expect(r.warnings.map((w) => w.code)).toEqual(["SCHEMA_FETCH_FAILED"]);
   });
 });
