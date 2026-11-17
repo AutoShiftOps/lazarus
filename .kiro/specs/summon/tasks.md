@@ -97,7 +97,7 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - Minimum 100 iterations each
     - **Validates: Requirements 13.1, 13.5, 13.6, 13.7**
 
-- [ ] 6. JSON Schema generator
+- [x] 6. JSON Schema generator
   - [x] 6.1 Implement `lib/soap/schema-generator.ts` — `xsdTypeToZod`
     - Pure function mapping each XSD primitive (`string`, `int`, `integer`, `long`, `short`, `decimal`, `float`, `double`, `boolean`, `dateTime`, `date`) to the correct zod type per the design table
     - Fall through to `z.unknown()` for unmapped types; push warning
@@ -109,12 +109,12 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
   - [x]* 6.3 Write unit tests for `xsdTypeToZod` and `buildZodSchema` in `tests/soap/schema-generator.test.ts`
     - Each XSD type mapping; each modifier combination; `z.unknown()` fallback
     - _Requirements: 4.3, 4.4, 4.5, 4.6_
-  - [ ] 6.4 Write property test for `xsdTypeToZod` — Property 8
+  - [x] 6.4 Write property test for `xsdTypeToZod` — Property 8
     - **Property 8: XSD type mapping completeness**
     - For each supported XSD type name, assert `xsdTypeToZod` produces a schema whose `safeParse` succeeds on a valid value and never returns a `z.unknown()` instance
     - Minimum 100 iterations
     - **Validates: Requirements 4.3**
-  - [ ] 6.5 Write property test for modifier combinations — Property 9
+  - [x] 6.5 Write property test for modifier combinations — Property 9
     - **Property 9: Schema modifiers preserve value semantics**
     - For all `(minOccurs, nillable, maxOccurs)` combinations, assert the produced zod schema accepts exactly the right value set
     - Minimum 100 iterations

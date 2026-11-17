@@ -6,7 +6,7 @@ import type { FieldDescriptor, OperationSchema, ServiceDefinition } from "./type
 
 export type OperationSchemaMap = Map<string, OperationSchema>;
 
-const STRING_TYPES = new Set([
+export const STRING_TYPES: ReadonlySet<string> = new Set([
   "string",
   "normalizedString",
   "token",
@@ -24,7 +24,7 @@ const STRING_TYPES = new Set([
 
 // Note: JSON numbers lose precision above 2^53, so large `long` values
 // (and unsignedLong) are not guaranteed to round-trip exactly.
-const INTEGER_TYPES = new Set([
+export const INTEGER_TYPES: ReadonlySet<string> = new Set([
   "int",
   "integer",
   "long",
@@ -40,7 +40,7 @@ const INTEGER_TYPES = new Set([
   "negativeInteger",
 ]);
 
-const NUMBER_TYPES = new Set(["decimal", "float", "double"]);
+export const NUMBER_TYPES: ReadonlySet<string> = new Set(["decimal", "float", "double"]);
 
 /** Types the parser has already warned about; map to unknown silently. */
 const SILENT_UNKNOWN_TYPES = new Set(["anyType", "complexType", "unknown"]);
