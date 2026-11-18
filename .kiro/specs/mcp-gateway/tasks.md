@@ -42,13 +42,13 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
 
 - [x] 5. Checkpoint: all tests pass; ask the user if questions arise
 
-- [ ] 6. Owner authentication
-  - [ ] 6.1 Implement `lib/auth/owner.ts` as a thin module (`authorizeOwner`, `isDemoService`); reuse `verifyOwnerToken` from `lib/owner-token.ts`, do not reimplement hashing
+- [x] 6. Owner authentication
+  - [x] 6.1 Implement `lib/auth/owner.ts` as a thin module (`authorizeOwner`, `isDemoService`); reuse `verifyOwnerToken` from `lib/owner-token.ts`, do not reimplement hashing
     - _Requirements: 6.1, 6.2, 6.3_
-  - [ ] 6.2 Unit tests: hash is stable, verify is constant-time path, wrong token fails, demo detection rejects look-alike hosts (`gravewood.evil.com`)
+  - [x] 6.2 Unit tests: hash is stable, verify is constant-time path, wrong token fails, demo detection rejects look-alike hosts (`gravewood.evil.com`)
 
 - [ ] 7. Storage
-  - [ ] 7.1 Implement `lib/safety/approvals.ts` (Lua compare-and-set, `HSETNX` claim)
+  - [x] 7.1 Implement `lib/safety/approvals.ts` (Lua compare-and-set, `HSETNX` claim)
     - _Requirements: 5.1, 5.6, 5.7, 5.9_
   - [ ] 7.2 Implement `lib/safety/transcript.ts`
     - _Requirements: 8.1, 8.2, 8.4_

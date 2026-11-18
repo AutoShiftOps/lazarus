@@ -21,7 +21,7 @@ This spec depends on `summon` (ServiceDefinition, Translator, safeFetch, Registr
 - **Ghost_Mode**: A per-service setting under which write and destructive calls are simulated and never sent upstream.
 - **Transcript**: The ordered log of calls for a service ("Ouija transcript").
 - **Owner_Token**: A secret returned once at summon time, authorising changes to a service's rules, mode and approvals.
-- **Demo_Service**: A service whose WSDL URL is on this app's own `/api/gravewood/` path; its approvals are public.
+- **Demo_Service**: A service whose WSDL URL host equals the configured Gravewood host (`LAZARUS_GRAVEWOOD_HOST`) AND whose path starts with `/api/gravewood/`; its approvals are public.
 
 ---
 

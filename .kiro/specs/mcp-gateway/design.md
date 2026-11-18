@@ -98,15 +98,35 @@ export function truncate(s: string, max: number): string;
 | `approval:{svc}:{id}` | Hash (Approval JSON, `claimed`) | 900 s |
 | `approvals:{svc}` | List of ids (LPUSH, LTRIM 0 49) | 30 d |
 
+No global Redis client: the module exports a factory that takes an injected client (same style as `lib/registry/index.ts`).
+
 ```typescript
-export async function createApproval(svc: string, a: Omit<Approval,"id"|"status"|"createdAt"|"expiresAt">): Promise<Approval>;
-export async function getApproval(svc: string, id: string): Promise<Approval | null>;   // applies expiry
-export async function resolveApproval(svc: string, id: string, d: "approve"|"deny", note?: string): Promise<"ok"|"not_found"|"conflict">;
-export async function claimExecution(svc: string, id: string): Promise<boolean>;        // HSETNX claimed 1 → true only for first caller
-export async function listApprovals(svc: string): Promise<Approval[]>;
+export interface ApprovalsRedis {  // subset of the @upstash/redis client
+  hset(key: string, fields: Record<string, string | number>): Promise<unknown>;
+  hgetall(key: string): Promise<Record<string, unknown> | null>;
+  expire(key: string, seconds: number): Promise<unknown>;
+  eval(script: string, keys: string[], args: string[]): Promise<unknown>;
+  lpush(key: string, ...elements: string[]): Promise<unknown>;
+  ltrim(key: string, start: number, stop: number): Promise<unknown>;
+  lrange(key: string, start: number, stop: number): Promise<unknown[]>;
+}
+export function createApprovals(redis: ApprovalsRedis, options?: { now?: () => number }): {
+  createApproval(svc: string, a: Omit<Approval,"id"|"status"|"createdAt"|"expiresAt">): Promise<Approval>; // nanoid id (21 chars)
+  getApproval(svc: string, id: string): Promise<Approval | null>;   // pending past expiresAt reads "expired"
+  resolveApproval(svc: string, id: string, d: "approve"|"deny", note?: string): Promise<"ok"|"not_found"|"conflict">;
+  claimExecution(svc: string, id: string): Promise<boolean>;        // true only for the first caller, only when approved and unexpired
+  markExecuted(svc: string, id: string): Promise<void>;
+  listApprovals(svc: string): Promise<Approval[]>;
+};
 ```
 
-`resolveApproval` is a compare-and-set: Lua script sets `status` only when it currently equals `pending`. `claimExecution` uses `HSETNX`; after success the pipeline sets status `executed`.
+The hash holds `data` (immutable Approval JSON), `status`, `expiresAtMs`, `resolvedAt`, `note`, `claimed`. Three Lua scripts keep every transition atomic:
+
+- `resolveApproval` is a compare-and-set: it sets `status` only when it equals `pending` and the approval has not expired; otherwise `conflict` (`not_found` for an unknown id).
+- `claimExecution` runs `HSETNX claimed` inside one script that first checks `status == approved` and not expired, so a concurrent deny cannot interleave. The pipeline then calls `markExecuted` (status `executed`, only if the hash still exists).
+- Any Redis error is rethrown as a plain `Error("Approval store unavailable.")` (no upstream text); callers map it to a 503 / tool error and fail closed.
+
+`tests/helpers/fake-approvals-redis.ts` runs a JS translation of each script.
 
 ### `lib/safety/ghost.ts` (pure)
 
@@ -159,9 +179,11 @@ export async function runCall(ctx: {
 Thin module. Token generation, hashing and constant-time verification already exist in `lib/owner-token.ts` (`generateOwnerToken`, `hashOwnerToken`, `verifyOwnerToken`, `publicDefinition`); do not reimplement them.
 
 ```typescript
-export async function authorizeOwner(service: ServiceDefinition, presented: string | null): Promise<boolean>; // verifyOwnerToken against service.ownerTokenHash; false when no hash or no token
-export function isDemoService(wsdlUrl: string, ownOrigin: string): boolean;
+export async function authorizeOwner(service: Pick<ServiceDefinition, "ownerTokenHash"> | null | undefined, presented: unknown): Promise<boolean>; // verifyOwnerToken against service.ownerTokenHash; false (never throws) on no/invalid hash or any non-string, empty or oversized token
+export function isDemoService(service: Pick<ServiceDefinition, "wsdlUrl"> | null | undefined): boolean;
 ```
+
+`isDemoService` is true only when the parsed hostname of `service.wsdlUrl` (http/https only) equals the host configured in the optional env var `LAZARUS_GRAVEWOOD_HOST` (`host` or `host:port`, read through `gravewoodHost()` in `lib/env.ts`), compared after lowercasing, AND the parsed URL pathname (dot segments normalised by `new URL`) starts with `/api/gravewood/`. A port is compared (with scheme defaults 80/443) only when the configured value has one. Unset or blank config means no service is a demo service. Look-alikes (`gravewood.evil.com`, `gravewood.app.evil.com`, `gravewood.app@evil.com`, trailing-dot hosts) and invalid URLs return false.
 
 ### Routes
 

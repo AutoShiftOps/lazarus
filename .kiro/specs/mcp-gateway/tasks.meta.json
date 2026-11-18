@@ -237,6 +237,91 @@
         "chatSessionId": "sess_35097e3a-ec77-4550-b7ba-db22e47bd90f",
         "timestamp": 1794966413482
       }
+    ],
+    "6.1 Implement `lib/auth/owner.ts` as a thin module (`authorizeOwner`, `isDemoService`); reuse `verifyOwnerToken` from `lib/owner-token.ts`, do not reimplement hashing": [
+      {
+        "executionId": "3b1d984e-ad0c-43a5-9511-f6387cd6df91",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794966755720
+      },
+      {
+        "executionId": "3b1d984e-ad0c-43a5-9511-f6387cd6df91",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794966981209
+      },
+      {
+        "executionId": "60d116b8-855d-40d1-8f1d-2b205f8353f5",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794967210766
+      },
+      {
+        "executionId": "60d116b8-855d-40d1-8f1d-2b205f8353f5",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794967483440
+      },
+      {
+        "executionId": "092872bf-2fc5-437c-aaee-3892047da481",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1795006370428
+      },
+      {
+        "executionId": "092872bf-2fc5-437c-aaee-3892047da481",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1795008766905
+      }
+    ],
+    "7.1 Implement `lib/safety/approvals.ts` (Lua compare-and-set, `HSETNX` claim)": [
+      {
+        "executionId": "3b1d984e-ad0c-43a5-9511-f6387cd6df91",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794966755865
+      },
+      {
+        "executionId": "3b1d984e-ad0c-43a5-9511-f6387cd6df91",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794966981060
+      }
+    ],
+    "6.2 Unit tests: hash is stable, verify is constant-time path, wrong token fails, demo detection rejects look-alike hosts (`gravewood.evil.com`)": [
+      {
+        "executionId": "3b1d984e-ad0c-43a5-9511-f6387cd6df91",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794966759751
+      },
+      {
+        "executionId": "3b1d984e-ad0c-43a5-9511-f6387cd6df91",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794966981597
+      },
+      {
+        "executionId": "60d116b8-855d-40d1-8f1d-2b205f8353f5",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794967210869
+      },
+      {
+        "executionId": "60d116b8-855d-40d1-8f1d-2b205f8353f5",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794967483790
+      }
+    ],
+    "7.4 Provide in-memory fakes in `tests/helpers/` implementing the same interfaces": [
+      {
+        "executionId": "3b1d984e-ad0c-43a5-9511-f6387cd6df91",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794966759834
+      },
+      {
+        "executionId": "60d116b8-855d-40d1-8f1d-2b205f8353f5",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794967210632
+      }
+    ],
+    "6. Owner authentication": [
+      {
+        "executionId": "60d116b8-855d-40d1-8f1d-2b205f8353f5",
+        "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
+        "timestamp": 1794967483886
+      }
     ]
   }
 }

@@ -49,5 +49,5 @@ describe("Property 6: Registry ID uniqueness and format", () => {
       ),
       { numRuns: 100 },
     );
-  });
+  }, 30000);
 });

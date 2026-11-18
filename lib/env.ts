@@ -32,6 +32,22 @@ export function devAllowLoopback(): boolean {
   return DevAllowLoopbackSchema.parse(process.env.LAZARUS_DEV_ALLOW_LOOPBACK);
 }
 
+const GravewoodHostSchema = z
+  .string()
+  .optional()
+  .transform((v) => {
+    const s = v?.trim().toLowerCase();
+    return s ? s : undefined;
+  });
+
+/**
+ * Configured Gravewood demo host, as `host` or `host:port` (LAZARUS_GRAVEWOOD_HOST).
+ * Unset or blank means no service is a demo service. Read on every call (not cached).
+ */
+export function gravewoodHost(): string | undefined {
+  return GravewoodHostSchema.parse(process.env.LAZARUS_GRAVEWOOD_HOST);
+}
+
 export function getEnv(): Env {
   return EnvSchema.parse(process.env);
 }
