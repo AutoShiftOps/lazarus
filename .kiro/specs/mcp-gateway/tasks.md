@@ -47,14 +47,14 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
     - _Requirements: 6.1, 6.2, 6.3_
   - [x] 6.2 Unit tests: hash is stable, verify is constant-time path, wrong token fails, demo detection rejects look-alike hosts (`gravewood.evil.com`)
 
-- [ ] 7. Storage
+- [x] 7. Storage
   - [x] 7.1 Implement `lib/safety/approvals.ts` (Lua compare-and-set, `HSETNX` claim)
     - _Requirements: 5.1, 5.6, 5.7, 5.9_
-  - [ ] 7.2 Implement `lib/safety/transcript.ts`
+  - [x] 7.2 Implement `lib/safety/transcript.ts`
     - _Requirements: 8.1, 8.2, 8.4_
-  - [ ] 7.3 Add rules and settings accessors to `lib/registry/index.ts` (stored under separate keys, not by rewriting the service JSON; `RedisLike` gains only what is needed; `getService` keeps returning `{ ok, value }`)
+  - [x] 7.3 Add rules and settings accessors to `lib/registry/index.ts` (stored under separate keys, not by rewriting the service JSON; `RedisLike` gains only what is needed; `getService` keeps returning `{ ok, value }`)
     - _Requirements: 4.8, 10.2, 10.3_
-  - [ ] 7.4 Provide in-memory fakes in `tests/helpers/` implementing the same interfaces
+  - [x] 7.4 Provide in-memory fakes in `tests/helpers/` implementing the same interfaces
 
 - [ ] 8. Tool generation
   - [ ] 8.1 Implement `lib/mcp/tools.ts` (`buildTools`, `sanitizeToolName`)

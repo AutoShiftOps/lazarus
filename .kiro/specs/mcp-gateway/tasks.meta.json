@@ -314,6 +314,11 @@
         "executionId": "60d116b8-855d-40d1-8f1d-2b205f8353f5",
         "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
         "timestamp": 1794967210632
+      },
+      {
+        "executionId": "3cf7fb23-8e6d-4fb0-81d7-05962a684638",
+        "chatSessionId": "sess_3d341a35-232e-452f-b429-733e5f8cd314",
+        "timestamp": 1795010494253
       }
     ],
     "6. Owner authentication": [
@@ -321,6 +326,32 @@
         "executionId": "60d116b8-855d-40d1-8f1d-2b205f8353f5",
         "chatSessionId": "sess_94800695-36b7-4260-9f6f-75c31c89a38d",
         "timestamp": 1794967483886
+      }
+    ],
+    "7.2 Implement `lib/safety/transcript.ts`": [
+      {
+        "executionId": "3cf7fb23-8e6d-4fb0-81d7-05962a684638",
+        "chatSessionId": "sess_3d341a35-232e-452f-b429-733e5f8cd314",
+        "timestamp": 1795010130363
+      },
+      {
+        "executionId": "3cf7fb23-8e6d-4fb0-81d7-05962a684638",
+        "chatSessionId": "sess_3d341a35-232e-452f-b429-733e5f8cd314",
+        "timestamp": 1795010487770
+      }
+    ],
+    "7.3 Add rules and settings accessors to `lib/registry/index.ts` (stored under separate keys, not by rewriting the service JSON; `RedisLike` gains only what is needed; `getService` keeps returning `{ ok, value }`)": [
+      {
+        "executionId": "3cf7fb23-8e6d-4fb0-81d7-05962a684638",
+        "chatSessionId": "sess_3d341a35-232e-452f-b429-733e5f8cd314",
+        "timestamp": 1795010491170
+      }
+    ],
+    "7. Storage": [
+      {
+        "executionId": "3cf7fb23-8e6d-4fb0-81d7-05962a684638",
+        "chatSessionId": "sess_3d341a35-232e-452f-b429-733e5f8cd314",
+        "timestamp": 1795010494432
       }
     ]
   }
