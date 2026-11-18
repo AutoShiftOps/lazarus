@@ -103,9 +103,9 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
     - **Property 24**
     - _Requirements: 6.4_
 
-- [ ] 13. End-to-end
-  - [ ] 13.1 Playwright: summon Gravewood, `tools/list`, call `GetBalance` (allowed), call `CloseAccount` (held), approve via API, confirm closed; second run with ghost mode confirms the account is unchanged
+- [x] 13. End-to-end
+  - [x] 13.1 Playwright: summon Gravewood, `tools/list`, call `GetBalance` (allowed), call `CloseAccount` (held), approve via API, confirm closed; second run with ghost mode confirms the account is unchanged
   - _Requirements: all_
 
-- [ ] 14. Final checkpoint
+- [x] 14. Final checkpoint
   - Run `npm test` and `npm run e2e`; update `KIRO_LOG.md`

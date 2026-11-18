@@ -24,3 +24,5 @@ One line per notable Kiro moment. This becomes the hackathon write-up.
 - 2026-11-18: Kiro silently skipped task 6 (owner auth) and narrowed my Demo_Service rule from host+path to host only. Caught in review; both fixed.
 - 2026-11-18: Added a tool-poisoning defence the spec lacked: WSDL documentation is untrusted text agents read, so descriptions lead with our own Risk line and the doc is sanitised and capped.
 - 2026-11-18: Went beyond the spec on approvals: execution re-runs the policy, so a rule changed to block (or ghost switched on) after a human approved still wins; failed approved calls are never retried.
+- 2026-11-18: Hardened beyond the spec: approvals and transcripts of non-demo services need the owner token; the owner-token check returns one identical 401 for missing and wrong tokens.
+- 2026-11-18: Transcript summaries are built only from fixed strings, the operation name and counts, never argument values or upstream text, so a secret in an argument or a fault cannot leak through the one-line summary (arguments themselves are stored redacted).

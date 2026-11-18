@@ -588,6 +588,37 @@
         "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
         "timestamp": 1795037428668
       }
+    ],
+    "13.1 Playwright: summon Gravewood, `tools/list`, call `GetBalance` (allowed), call `CloseAccount` (held), approve via API, confirm closed; second run with ghost mode confirms the account is unchanged": [
+      {
+        "executionId": "2280c030-8415-4a5d-9555-3f2074f52479",
+        "chatSessionId": "sess_4b3012ff-fd64-4db5-811c-c9e72645b114",
+        "timestamp": 1795040913403
+      },
+      {
+        "executionId": "2280c030-8415-4a5d-9555-3f2074f52479",
+        "chatSessionId": "sess_4b3012ff-fd64-4db5-811c-c9e72645b114",
+        "timestamp": 1795041143287
+      }
+    ],
+    "13. End-to-end": [
+      {
+        "executionId": "2280c030-8415-4a5d-9555-3f2074f52479",
+        "chatSessionId": "sess_4b3012ff-fd64-4db5-811c-c9e72645b114",
+        "timestamp": 1795041143396
+      }
+    ],
+    "14. Final checkpoint": [
+      {
+        "executionId": "2280c030-8415-4a5d-9555-3f2074f52479",
+        "chatSessionId": "sess_4b3012ff-fd64-4db5-811c-c9e72645b114",
+        "timestamp": 1795041143621
+      },
+      {
+        "executionId": "2280c030-8415-4a5d-9555-3f2074f52479",
+        "chatSessionId": "sess_4b3012ff-fd64-4db5-811c-c9e72645b114",
+        "timestamp": 1795041967321
+      }
     ]
   }
 }
