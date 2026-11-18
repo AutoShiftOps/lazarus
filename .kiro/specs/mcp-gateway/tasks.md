@@ -62,12 +62,12 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
   - [x]* 8.2 Property test 23
     - **Property 23**
 
-- [ ] 9. Call pipeline
+- [x] 9. Call pipeline
   - [x] 9.1 Implement `lib/mcp/pipeline.ts` for validate → decide → allow path → transcript
     - _Requirements: 3.1–3.7_
-  - [ ] 9.2 Add hold path: create approval, poll up to 20 s, approved/denied/pending results
+  - [x] 9.2 Add hold path: create approval, poll up to 20 s, approved/denied/pending results
     - _Requirements: 5.1–5.5, 5.8_
-  - [ ] 9.3 Add `check_approval` execution with atomic claim
+  - [x] 9.3 Add `check_approval` execution with atomic claim
     - _Requirements: 5.6, 5.7, 5.8, 5.9_
   - [x] 9.4 Add ghost and block paths
     - _Requirements: 4.3, 7.1–7.5_

@@ -435,6 +435,37 @@
         "chatSessionId": "sess_4a6c3f3f-15b8-423b-a510-c14ea9a15f17",
         "timestamp": 1795014095973
       }
+    ],
+    "9.2 Add hold path: create approval, poll up to 20 s, approved/denied/pending results": [
+      {
+        "executionId": "5c06aacc-7690-4ea4-b748-adde34287995",
+        "chatSessionId": "sess_528eac2b-ed10-46d5-bc1d-a368708788a5",
+        "timestamp": 1795014688174
+      },
+      {
+        "executionId": "5c06aacc-7690-4ea4-b748-adde34287995",
+        "chatSessionId": "sess_528eac2b-ed10-46d5-bc1d-a368708788a5",
+        "timestamp": 1795015708873
+      }
+    ],
+    "9.3 Add `check_approval` execution with atomic claim": [
+      {
+        "executionId": "5c06aacc-7690-4ea4-b748-adde34287995",
+        "chatSessionId": "sess_528eac2b-ed10-46d5-bc1d-a368708788a5",
+        "timestamp": 1795015709104
+      },
+      {
+        "executionId": "5c06aacc-7690-4ea4-b748-adde34287995",
+        "chatSessionId": "sess_528eac2b-ed10-46d5-bc1d-a368708788a5",
+        "timestamp": 1795016276019
+      }
+    ],
+    "9. Call pipeline": [
+      {
+        "executionId": "5c06aacc-7690-4ea4-b748-adde34287995",
+        "chatSessionId": "sess_528eac2b-ed10-46d5-bc1d-a368708788a5",
+        "timestamp": 1795016276123
+      }
     ]
   }
 }

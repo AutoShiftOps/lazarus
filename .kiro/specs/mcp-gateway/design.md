@@ -251,6 +251,15 @@ For any list of operation names (including duplicates, unicode and very long nam
 ### Property 24: Owner token never leaks
 For any sequence of API calls, no response body or transcript entry contains the plaintext token or its hash.
 
+## Deviations from the original design (task 9.2, hold path)
+
+- **Re-deciding at execution.** `executeApproved` (in `lib/mcp/pipeline.ts`, shared with `check_approval` in 9.3) reloads rules and settings (fail closed) and runs `decide` again with the stored arguments. A rule changed to `block`, or ghost mode switched on, after approval wins over the approval: nothing is sent. A fresh `hold` is not asked again; the human already approved this exact call. In that case the approval is still consumed (claimed and marked executed).
+- **`claimed` status.** If `claimExecution` returns false, the call returns a non-error result `{ status: "claimed", approvalId }` telling the agent to call `check_approval` again later. The upstream is not called by that caller.
+- **Execute once, never retry.** After any successful claim, `markExecuted` runs whether the upstream call succeeded, failed, was blocked or was ghosted. An approved call is attempted at most once and never retried automatically; a retry needs a new call and a new approval.
+- **Raw arguments in the Approval.** The parsed (unredacted) arguments are stored because they are what gets executed; the UI-facing API redacts. Requirement 5.1 says "redacted arguments" and should be read as "redacted when shown".
+- **Outcomes.** Denied: `blocked`. Expired, approval store failure, vanished approval: `error`. Still pending after 20 s, or `claimed`: `held`. Transcript entries for these carry `approvalId`; summaries are fixed strings.
+- **`Deps.sleep`.** The wait uses injected `now` and `sleep` (polling every 500 ms, deadline `now() + 20 000`), so tests run on a fake clock.
+
 ## Error Handling
 
 - Domain errors become MCP tool results with `isError: true` and short sentences; internals are logged server-side only (Property 10 from `summon` applies: ≤ 500 chars, no stack traces).

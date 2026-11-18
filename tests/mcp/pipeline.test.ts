@@ -6,7 +6,7 @@ import { ghostResponse } from "../../lib/safety/ghost";
 import { createPipeline, truncateUtf8, type McpToolResult } from "../../lib/mcp/pipeline";
 import { buildTools, type ToolDef } from "../../lib/mcp/tools";
 import { createRegistry } from "../../lib/registry";
-import { createApprovals } from "../../lib/safety/approvals";
+import { createApprovals, type ApprovalsRedis } from "../../lib/safety/approvals";
 import { createTranscripts } from "../../lib/safety/transcript";
 import type { Rule, TranscriptEntry } from "../../lib/safety/types";
 import type { safePost } from "../../lib/soap/fetcher";
@@ -51,7 +51,12 @@ function tool(name: string): ToolDef {
 type PostFn = typeof safePost;
 type PostCall = { url: string; body: string; headers: Record<string, string>; timeoutMs?: number };
 
-function setup(customPost?: PostFn) {
+type SetupOpts = {
+  /** Scripted "human": runs after every fake sleep, with the 1-based sleep count. */
+  human?: (sleepCount: number) => Promise<void>;
+};
+
+function setup(customPost?: PostFn, opts: SetupOpts = {}) {
   const registryRedis = createFakeRegistryRedis();
   const transcriptRedis = createFakeTranscriptRedis();
   let clock = NOW_MS;
@@ -73,6 +78,22 @@ function setup(customPost?: PostFn) {
     : undefined;
 
   const rateRedis = createFakeRateRedis(() => clock);
+  const approvalsFake = createFakeApprovalsRedis();
+  const flags = { failCreate: false, failPoll: false };
+  const approvalsRedis: ApprovalsRedis = {
+    ...approvalsFake,
+    hset: async (key, fields) => {
+      if (flags.failCreate) throw new Error("approval store down at 10.1.2.3");
+      return approvalsFake.hset(key, fields);
+    },
+    hgetall: async (key) => {
+      if (flags.failPoll) throw new Error("approval store down at 10.1.2.3");
+      return approvalsFake.hgetall(key);
+    },
+  };
+  const approvals = createApprovals(approvalsRedis, { now: () => clock });
+  let sleeps = 0;
+  const sleepLog: number[] = [];
   const innerRegistry = createRegistry(registryRedis);
   const registryReads = { count: 0 };
   const pipeline = createPipeline({
@@ -87,10 +108,16 @@ function setup(customPost?: PostFn) {
       },
     },
     transcripts: createTranscripts(transcriptRedis),
-    approvals: createApprovals(createFakeApprovalsRedis()),
+    approvals,
     post: recordingCustom ?? bankPost,
     rateRedis,
     now: () => clock++,
+    sleep: async (ms) => {
+      sleepLog.push(ms);
+      clock += ms;
+      sleeps++;
+      if (opts.human) await opts.human(sleeps);
+    },
     newId: () => `id-${++n}`,
   });
 
@@ -103,6 +130,10 @@ function setup(customPost?: PostFn) {
     transcriptRedis,
     bank: () => bank,
     rateRedis,
+    approvals,
+    flags,
+    sleepLog,
+    now: (): number => clock,
     registryReads,
     advance: (ms: number): void => {
       clock += ms;
@@ -226,17 +257,6 @@ describe("pipeline: validation", () => {
 });
 
 describe("pipeline: policy and failure modes", () => {
-  it("holds a destructive call by default and does not call the upstream", async () => {
-    const t = setup();
-    const res = await t.run("CloseAccount", { accountId: "4471" });
-
-    expect(res.isError).toBe(true);
-    expect(textOf(res)).toBe("Approval flow is not available.");
-    expect(t.calls).toHaveLength(0);
-    expect(t.bank().accounts.find((a) => a.id === "4471")?.status).toBe("OPEN");
-    expect(t.entries()[0]).toMatchObject({ decision: "hold", outcome: "held" });
-  });
-
   it("fails closed when the registry is unavailable", async () => {
     const t = setup();
     t.registryRedis.failWith = new Error("redis exploded at 10.1.2.3");
@@ -291,7 +311,8 @@ describe("pipeline: policy and failure modes", () => {
     await t.run("GetBalance", { accountId: "9999" });
 
     expect(blocked.isError).toBe(true);
-    expect(held.isError).toBe(true);
+    expect(held.isError).toBeUndefined();
+    expect(held.structuredContent).toMatchObject({ status: "held" });
     expect(allowed.isError).toBeUndefined();
 
     const entries = t.entries();
@@ -606,5 +627,442 @@ describe("pipeline: rate limiting", () => {
     const evil = `1.2.3.4:x\r\n*${"z".repeat(5000)}`;
     for (let i = 0; i < 10; i++) expect((await t.runFrom(evil, "GetBalance", READ)).isError).toBeUndefined();
     expect(textOf(await t.runFrom(evil, "GetBalance", READ))).toBe("Too many calls");
+  });
+});
+
+type Harness = ReturnType<typeof setup>;
+const CLOSE = { accountId: "4471" };
+const HELD_AFTER_MS = 20_000;
+
+async function onlyApproval(t: Harness) {
+  const list = await t.approvals.listApprovals(SERVICE_ID);
+  expect(list).toHaveLength(1);
+  return list[0];
+}
+
+async function decideOnly(t: Harness, d: "approve" | "deny", note?: string): Promise<void> {
+  const a = await onlyApproval(t);
+  expect(await t.approvals.resolveApproval(SERVICE_ID, a.id, d, note)).toBe("ok");
+}
+
+describe("pipeline: hold path", () => {
+  it("creates a pending approval with the parsed args, then reports held after 20 s", async () => {
+    const t: Harness = setup();
+    const start = t.now();
+    const res = await t.run("CloseAccount", CLOSE);
+
+    const a = await onlyApproval(t);
+    expect(a).toMatchObject({
+      tool: "CloseAccount",
+      args: CLOSE,
+      risk: tool("CloseAccount").op.risk,
+      status: "pending",
+      serviceId: SERVICE_ID,
+    });
+    expect(a.reason.length).toBeGreaterThan(0);
+    expect(a.reason.length).toBeLessThanOrEqual(200);
+
+    expect(res.isError).toBeUndefined();
+    expect(res.structuredContent).toEqual({ status: "held", approvalId: a.id, expiresAt: a.expiresAt });
+    expect(textOf(res)).toContain("check_approval");
+    expect(textOf(res)).toContain(a.id);
+    // Polled every 500 ms on the fake clock, and the wait covered 20 s of fake time.
+    expect(t.sleepLog.length).toBeGreaterThanOrEqual(39);
+    expect(new Set(t.sleepLog)).toEqual(new Set([500]));
+    expect(t.now() - start).toBeGreaterThanOrEqual(HELD_AFTER_MS);
+    expect(t.now() - start).toBeLessThan(HELD_AFTER_MS + 1000);
+    expect(t.calls).toHaveLength(0);
+    expect(t.bank().accounts.find((x) => x.id === "4471")?.status).toBe("OPEN");
+
+    const [entry] = t.entries();
+    expect(t.entries()).toHaveLength(1);
+    expect(entry).toMatchObject({ decision: "hold", outcome: "held", approvalId: a.id });
+  });
+
+  it("runs the call when a human approves during the wait and returns the real result", async () => {
+    const t: Harness = setup(undefined, {
+      human: async (n) => {
+        if (n === 3) await decideOnly(t, "approve");
+      },
+    });
+    const res = await t.run("CloseAccount", CLOSE);
+
+    expect(res.isError).toBeUndefined();
+    expect(res.structuredContent).toMatchObject({ closed: true });
+    expect(t.sleepLog).toHaveLength(3);
+    expect(t.calls).toHaveLength(1);
+    expect(t.calls[0].body).toContain("4471");
+    expect(t.bank().accounts.find((x) => x.id === "4471")?.status).toBe("CLOSED");
+
+    const a = await onlyApproval(t);
+    expect(a.status).toBe("executed");
+    const [entry] = t.entries();
+    expect(entry).toMatchObject({ outcome: "ok", approvalId: a.id });
+    expect(entry.soapRequest).toContain("CloseAccount");
+  });
+
+  it("returns a refusal with the note when a human denies, and touches nothing", async () => {
+    const t: Harness = setup(undefined, {
+      human: async (n) => {
+        if (n === 2) await decideOnly(t, "deny", "Not today\u200b");
+      },
+    });
+    const before = JSON.stringify(t.bank());
+    const res = await t.run("CloseAccount", CLOSE);
+
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).toBe("A human refused this call. Not today");
+    expect(t.calls).toHaveLength(0);
+    expect(JSON.stringify(t.bank())).toBe(before);
+    const a = await onlyApproval(t);
+    expect(t.entries()[0]).toMatchObject({ decision: "hold", outcome: "blocked", approvalId: a.id });
+  });
+
+  it("returns the plain refusal when there is no note", async () => {
+    const t: Harness = setup(undefined, {
+      human: async (n) => {
+        if (n === 1) await decideOnly(t, "deny");
+      },
+    });
+    const res = await t.run("CloseAccount", CLOSE);
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).toBe("A human refused this call.");
+  });
+
+  it("fails closed when the approval store fails on create", async () => {
+    const t = setup();
+    t.flags.failCreate = true;
+    const res = await t.run("CloseAccount", CLOSE);
+
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).not.toContain("10.1.2.3");
+    expect(t.calls).toHaveLength(0);
+    expect(t.sleepLog).toHaveLength(0);
+    expect(t.bank().accounts.find((x) => x.id === "4471")?.status).toBe("OPEN");
+    const [entry] = t.entries();
+    expect(entry).toMatchObject({ decision: "hold", outcome: "error" });
+    expect(entry.approvalId).toBeUndefined();
+  });
+
+  it("fails closed when the approval store fails while polling", async () => {
+    const t = setup();
+    t.flags.failPoll = true;
+    const res = await t.run("CloseAccount", CLOSE);
+
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).not.toContain("10.1.2.3");
+    expect(t.calls).toHaveLength(0);
+    expect(t.entries()[0]).toMatchObject({ decision: "hold", outcome: "error" });
+    expect(t.entries()[0].approvalId).toBeDefined();
+  });
+
+  it("reports an expired approval and sends nothing", async () => {
+    const t: Harness = setup(undefined, {
+      human: async (n) => {
+        if (n === 1) t.advance(15 * 60_000);
+      },
+    });
+    const res = await t.run("CloseAccount", CLOSE);
+
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).toBe("This approval expired. Nothing was sent.");
+    expect(t.calls).toHaveLength(0);
+  });
+
+  it("does not execute when a rule turns to block after approval", async () => {
+    const t: Harness = setup(undefined, {
+      human: async (n) => {
+        if (n !== 2) return;
+        await decideOnly(t, "approve");
+        const rule: Rule = {
+          id: "late-block",
+          operation: "CloseAccount",
+          effect: "block",
+          reason: "Closures are frozen",
+        };
+        expect((await t.registry.putRules(SERVICE_ID, [rule])).ok).toBe(true);
+      },
+    });
+    const res = await t.run("CloseAccount", CLOSE);
+
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).toBe("Closures are frozen");
+    expect(t.calls).toHaveLength(0);
+    expect(t.bank().accounts.find((x) => x.id === "4471")?.status).toBe("OPEN");
+    const a = await onlyApproval(t);
+    expect(a.status).toBe("executed"); // claimed and consumed, never retried
+    expect(t.entries()[0]).toMatchObject({ decision: "block", outcome: "blocked", ruleId: "late-block", approvalId: a.id });
+  });
+
+  it("returns the ghost result when ghost mode is switched on after approval", async () => {
+    const t: Harness = setup(undefined, {
+      human: async (n) => {
+        if (n !== 2) return;
+        await decideOnly(t, "approve");
+        await enableGhost(t);
+      },
+    });
+    const res = await t.run("CloseAccount", CLOSE);
+
+    expect(res.isError).toBeUndefined();
+    expect(textOf(res).startsWith(GHOST_PREFIX)).toBe(true);
+    expect(res.structuredContent?.ghost).toBe(true);
+    expect(t.calls).toHaveLength(0);
+    expect(t.bank().accounts.find((x) => x.id === "4471")?.status).toBe("OPEN");
+    expect(t.entries()[0]).toMatchObject({ decision: "ghost", outcome: "ghost" });
+  });
+
+  it("attempts an approved call once: an upstream failure is returned and the approval is executed", async () => {
+    const t: Harness = setup(
+      async () => ({ ok: false, error: { code: "TIMEOUT", message: "detail xyz" } }),
+      {
+        human: async (n) => {
+          if (n === 1) await decideOnly(t, "approve");
+        },
+      },
+    );
+    const res = await t.run("CloseAccount", CLOSE);
+
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).toBe("The spirit did not answer.");
+    expect(t.calls).toHaveLength(1);
+    const a = await onlyApproval(t);
+    expect(a.status).toBe("executed");
+    expect(await t.approvals.claimExecution(SERVICE_ID, a.id)).toBe(false);
+    expect(t.entries()[0]).toMatchObject({ outcome: "error", approvalId: a.id });
+  });
+
+  it("returns a claimed result without calling upstream when the claim is already taken", async () => {
+    const t: Harness = setup(undefined, {
+      human: async (n) => {
+        if (n !== 1) return;
+        await decideOnly(t, "approve");
+        const a = await onlyApproval(t);
+        expect(await t.approvals.claimExecution(SERVICE_ID, a.id)).toBe(true); // another caller wins
+      },
+    });
+    const res = await t.run("CloseAccount", CLOSE);
+
+    const a = await onlyApproval(t);
+    expect(res.isError).toBeUndefined();
+    expect(res.structuredContent).toEqual({ status: "claimed", approvalId: a.id });
+    expect(textOf(res)).toContain("check_approval");
+    expect(t.calls).toHaveLength(0);
+    expect(t.entries()[0]).toMatchObject({ outcome: "held", approvalId: a.id });
+  });
+
+  it("keeps argument values and upstream text out of every hold-path summary", async () => {
+    const rule: Rule = {
+      id: "big-transfer",
+      operation: "TransferFunds",
+      when: { field: "amount", op: "gt", value: 50 },
+      effect: "hold",
+      reason: "held by test",
+    };
+    const t: Harness = setup(undefined, {
+      human: async (n) => {
+        if (n === 1) await decideOnly(t, "approve");
+      },
+    });
+    expect((await t.registry.putRules(SERVICE_ID, [rule])).ok).toBe(true);
+    const res = await t.run("TransferFunds", { fromAccount: "4471", toAccount: "5530", amount: 987654 });
+    expect(res.isError).toBe(true); // "Insufficient funds" fault, produced by the real handler
+
+    const a = await onlyApproval(t);
+    const [entry] = t.entries();
+    expect(entry.approvalId).toBe(a.id);
+    expect(entry.outcome).toBe("fault");
+    expect(entry.summary).toBe("TransferFunds: the service returned a fault");
+    for (const e of t.entries()) {
+      expect(e.summary).not.toContain("987654");
+      expect(e.summary).not.toContain("4471");
+      expect(e.summary).not.toContain("Insufficient");
+    }
+  });
+});
+
+describe("pipeline: check_approval", () => {
+  const ALL_TOOLS: ToolDef[] = [];
+  beforeAll(() => {
+    ALL_TOOLS.push(...tools.values());
+  });
+  const check = (t: Harness, approvalId: unknown, svc: ServiceDefinition = service, ip = "203.0.113.9") =>
+    t.pipeline.runCheckApproval({ service: svc, tools: ALL_TOOLS, approvalId, clientIp: ip });
+  const closedStatus = (t: Harness) => t.bank().accounts.find((x) => x.id === "4471")?.status;
+
+  /** Holds a CloseAccount call (no decision within 20 s) and returns its approval id. */
+  async function held(t: Harness): Promise<string> {
+    const res = await t.run("CloseAccount", CLOSE);
+    expect(res.structuredContent?.status).toBe("held");
+    return (await onlyApproval(t)).id;
+  }
+
+  it("executes once after a late approval, then reports already executed without a second call", async () => {
+    const t = setup();
+    const id = await held(t);
+    expect(t.calls).toHaveLength(0);
+    await decideOnly(t, "approve");
+
+    const first = await check(t, id);
+    expect(first.isError).toBeUndefined();
+    expect(first.structuredContent).toMatchObject({ closed: true });
+    expect(t.calls).toHaveLength(1);
+    expect(t.calls[0].body).toContain("4471");
+    expect(closedStatus(t)).toBe("CLOSED");
+
+    const second = await check(t, id);
+    expect(second.isError).toBeUndefined();
+    expect(textOf(second)).toBe("This call was already executed.");
+    expect(t.calls).toHaveLength(1);
+  });
+
+  it("returns the held result again while the approval is pending", async () => {
+    const t = setup();
+    const id = await held(t);
+    const a = await onlyApproval(t);
+
+    const res = await check(t, id);
+    expect(res.isError).toBeUndefined();
+    expect(res.structuredContent).toEqual({ status: "held", approvalId: id, expiresAt: a.expiresAt });
+    expect(t.calls).toHaveLength(0);
+  });
+
+  it("returns the refusal with the sanitized note when denied", async () => {
+    const t = setup();
+    const id = await held(t);
+    await decideOnly(t, "deny", "Not today\u200b");
+
+    const res = await check(t, id);
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).toBe("A human refused this call. Not today");
+    expect(t.calls).toHaveLength(0);
+  });
+
+  it("reports an approval that passed its 15 minute expiry and never sends", async () => {
+    const t = setup();
+    const id = await held(t);
+    t.advance(15 * 60_000);
+
+    const res = await check(t, id);
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).toBe("This approval expired. Nothing was sent.");
+    expect(t.calls).toHaveLength(0);
+    expect(closedStatus(t)).toBe("OPEN");
+  });
+
+  it("treats another service's approval id exactly like an unknown id", async () => {
+    const t = setup();
+    const id = await held(t);
+    await decideOnly(t, "approve");
+    const other: ServiceDefinition = { ...service, id: "Zzzz9999" };
+
+    const cross = await check(t, id, other);
+    const unknown = await check(t, "does-not-exist", other);
+    expect(cross.isError).toBe(true);
+    expect(textOf(cross)).toBe("Approval not found.");
+    expect(cross).toEqual(unknown);
+    expect(t.calls).toHaveLength(0);
+    expect(closedStatus(t)).toBe("OPEN");
+  });
+
+  it("rejects malformed approval ids without touching the store or upstream", async () => {
+    const t = setup();
+    const id = await held(t);
+    await decideOnly(t, "approve");
+    const bad: unknown[] = ["", "a".repeat(65), "has space", "a/b", `${id}\n`, "é", 123, null, undefined, {}, [id]];
+    for (const [i, b] of bad.entries()) {
+      const res = await check(t, b, service, `198.51.100.${i + 1}`); // distinct IPs: stay under the rate limit
+      expect(res.isError).toBe(true);
+      expect(textOf(res)).toBe("Invalid approvalId.");
+    }
+    expect(t.calls).toHaveLength(0);
+    expect((await t.approvals.getApproval(SERVICE_ID, id))?.status).toBe("approved");
+  });
+
+  it("does not execute when a rule turns to block after approval", async () => {
+    const t = setup();
+    const id = await held(t);
+    await decideOnly(t, "approve");
+    const rule: Rule = { id: "late-block", operation: "CloseAccount", effect: "block", reason: "Closures are frozen" };
+    expect((await t.registry.putRules(SERVICE_ID, [rule])).ok).toBe(true);
+
+    const res = await check(t, id);
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).toBe("Closures are frozen");
+    expect(t.calls).toHaveLength(0);
+    expect(closedStatus(t)).toBe("OPEN");
+  });
+
+  it("returns the ghost result when ghost mode is on after approval", async () => {
+    const t = setup();
+    const id = await held(t);
+    await decideOnly(t, "approve");
+    await enableGhost(t);
+
+    const res = await check(t, id);
+    expect(res.isError).toBeUndefined();
+    expect(textOf(res).startsWith(GHOST_PREFIX)).toBe(true);
+    expect(res.structuredContent?.ghost).toBe(true);
+    expect(t.calls).toHaveLength(0);
+    expect(closedStatus(t)).toBe("OPEN");
+  });
+
+  it("attempts an approved call once: an upstream failure is returned and a second check does not retry", async () => {
+    const t = setup(async () => ({ ok: false, error: { code: "TIMEOUT", message: "detail xyz" } }));
+    const id = await held(t);
+    await decideOnly(t, "approve");
+
+    const first = await check(t, id);
+    expect(first.isError).toBe(true);
+    expect(textOf(first)).toBe("The spirit did not answer.");
+    expect(t.calls).toHaveLength(1);
+    expect((await t.approvals.getApproval(SERVICE_ID, id))?.status).toBe("executed");
+
+    const second = await check(t, id);
+    expect(textOf(second)).toBe("This call was already executed.");
+    expect(t.calls).toHaveLength(1);
+  });
+
+  it("returns a tool error and sends nothing when the approval store fails", async () => {
+    const t = setup();
+    const id = await held(t);
+    await decideOnly(t, "approve");
+    t.flags.failPoll = true;
+
+    const res = await check(t, id);
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).not.toContain("10.1.2.3");
+    expect(t.calls).toHaveLength(0);
+  });
+
+  it("rate limits check_approval per client IP like runCall", async () => {
+    const t = setup();
+    for (let i = 0; i < 10; i++) expect(textOf(await check(t, "nope", service, "198.51.100.7"))).toBe("Approval not found.");
+    const res = await check(t, "nope", service, "198.51.100.7");
+    expect(res.isError).toBe(true);
+    expect(textOf(res)).toBe("Too many calls");
+  });
+
+  it("records every check with approvalId and tool check_approval, and no argument values", async () => {
+    const t = setup();
+    const id = await held(t);
+    await decideOnly(t, "approve");
+    await check(t, id);
+    await check(t, id);
+    await check(t, "unknown-id");
+
+    const checks = t.entries().filter((e) => e.tool === "check_approval");
+    expect(checks).toHaveLength(3);
+    // The transcript list is newest first.
+    expect(checks.map((e) => e.approvalId)).toEqual(["unknown-id", id, id]);
+    for (const e of checks) {
+      expect(e.args).toBeNull();
+      expect(e.summary).not.toContain("4471");
+      expect(e.summary).not.toContain(id);
+    }
+    expect(checks[2]).toMatchObject({ outcome: "ok", decision: "hold", summary: "CloseAccount: ok" });
+    expect(checks[1].summary).toBe("check_approval: already executed, nothing was sent by this call");
+    expect(checks[0].summary).toBe("check_approval: approval not found, nothing was sent");
+    expect(checks[1]).toMatchObject({ outcome: "held", decision: "hold" });
   });
 });

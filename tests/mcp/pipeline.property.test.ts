@@ -7,6 +7,7 @@ import { createApprovals } from "../../lib/safety/approvals";
 import { createTranscripts } from "../../lib/safety/transcript";
 import type { Rule } from "../../lib/safety/types";
 import type { safePost } from "../../lib/soap/fetcher";
+import { toEnvelope } from "../../lib/soap/translator";
 import type {
   BindingStyle,
   FieldDescriptor,
@@ -218,6 +219,7 @@ async function runOnce(
     post: opts.post,
     rateRedis: createFakeRateRedis(() => clock),
     now: () => clock++,
+    sleep: async () => undefined,
     newId: () => `id-${++n}`,
   });
   return pipeline.runCall({ service, tool, args, clientIp: "203.0.113.9" });
@@ -265,6 +267,112 @@ describe("Property 20: ghost never calls upstream", () => {
         },
       ),
       { numRuns: 100 },
+    );
+  });
+});
+
+/** A pipeline with one approved (not yet executed) approval holding `args`, and a recording post. */
+async function approvedHarness(op: OperationSchema, args: unknown) {
+  const service: ServiceDefinition = {
+    id: SERVICE_ID,
+    name: "Svc",
+    wsdlUrl: "https://example.test/svc?wsdl",
+    warnings: [],
+    ports: [{ name: "P", address: op.endpointAddress, operations: [op] }],
+  };
+  const tools = buildTools(service);
+  const tool = tools[0];
+  if (!tool) throw new Error("no tool built");
+
+  const registry = createRegistry(createFakeRegistryRedis());
+  expect((await registry.putSettings(SERVICE_ID, { ghost: false })).ok).toBe(true);
+  expect((await registry.putRules(SERVICE_ID, [])).ok).toBe(true);
+
+  let clock = NOW_MS;
+  let n = 0;
+  const bodies: string[] = [];
+  const post: PostFn = async (_url, req) => {
+    bodies.push(req.body);
+    const body =
+      '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body>' +
+      `<${OP_NAME}Response xmlns="urn:test"/></soap:Body></soap:Envelope>`;
+    return { ok: true, status: 200, body };
+  };
+  const approvals = createApprovals(createFakeApprovalsRedis(), { now: () => clock });
+  const pipeline = createPipeline({
+    registry,
+    transcripts: createTranscripts(createFakeTranscriptRedis()),
+    approvals,
+    post,
+    rateRedis: createFakeRateRedis(() => clock),
+    now: () => clock++,
+    sleep: async () => undefined,
+    newId: () => `id-${++n}`,
+  });
+  const created = await approvals.createApproval(SERVICE_ID, {
+    serviceId: SERVICE_ID,
+    tool: tool.name,
+    args,
+    risk: op.risk,
+    reason: "test",
+  });
+  expect(await approvals.resolveApproval(SERVICE_ID, created.id, "approve")).toBe("ok");
+  return { pipeline, service, tools, approvalId: created.id, bodies, approvals };
+}
+
+describe("Property 21: approvals execute at most once", () => {
+  it("**Validates: Requirements 5.7** N concurrent check_approval calls send exactly one upstream request", async () => {
+    await fc.assert(
+      fc.asyncProperty(opCaseArb(["write"]), fc.integer({ min: 1, max: 20 }), async ({ op, args }, count) => {
+        const h = await approvedHarness(op, args);
+        // Distinct IPs so the per-IP rate limit never hides a call from the claim.
+        const results = await Promise.all(
+          Array.from({ length: count }, (_, i) =>
+            h.pipeline.runCheckApproval({
+              service: h.service,
+              tools: h.tools,
+              approvalId: h.approvalId,
+              clientIp: `203.0.113.${i + 1}`,
+            }),
+          ),
+        );
+        expect(results).toHaveLength(count);
+        expect(h.bodies).toHaveLength(1);
+        // Every caller got a non-limited answer, so the claim really was contended.
+        for (const r of results) expect(r.content[0].text).not.toBe("Too many calls");
+        expect((await h.approvals.getApproval(SERVICE_ID, h.approvalId))?.status).toBe("executed");
+      }),
+      { numRuns: 60 },
+    );
+  });
+});
+
+describe("Property 22: stored arguments win", () => {
+  it("**Validates: Requirements 5.8** extra call input never changes the body sent upstream", async () => {
+    const extraKey = fc.stringMatching(/^extra_[A-Za-z0-9_]{0,10}$/);
+    await fc.assert(
+      fc.asyncProperty(
+        opCaseArb(["write"]),
+        fc.dictionary(extraKey, fc.anything(), { minKeys: 1, maxKeys: 5 }),
+        async ({ op, args }, extras) => {
+          const h = await approvedHarness(op, args);
+          const input = {
+            service: h.service,
+            tools: h.tools,
+            approvalId: h.approvalId,
+            clientIp: "203.0.113.9",
+            args: extras,
+            ...extras,
+          };
+          await h.pipeline.runCheckApproval(input);
+
+          const expected = toEnvelope(args, op);
+          expect(expected.ok).toBe(true);
+          if (!expected.ok) return;
+          expect(h.bodies).toEqual([expected.xml]);
+        },
+      ),
+      { numRuns: 60 },
     );
   });
 });
