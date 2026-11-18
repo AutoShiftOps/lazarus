@@ -80,14 +80,14 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
   - [ ]* 9.8 Property test 22: stored arguments win
     - **Property 22**
 
-- [ ] 10. Checkpoint: pipeline tests pass with fakes; ask the user if questions arise
+- [x] 10. Checkpoint: pipeline tests pass with fakes; ask the user if questions arise
 
-- [ ] 11. MCP server and route
-  - [ ] 11.1 Implement `lib/mcp/server.ts` (`createServerFor`)
+- [x] 11. MCP server and route
+  - [x] 11.1 Implement `lib/mcp/server.ts` (`createServerFor`)
     - _Requirements: 1.5, 2_
-  - [ ] 11.2 Implement `app/api/mcp/[id]/route.ts` (POST, OPTIONS, 405s, 256 KB cap, `maxDuration` only, no `runtime` export)
+  - [x] 11.2 Implement `app/api/mcp/[id]/route.ts` (POST, OPTIONS, 405s, 256 KB cap, `maxDuration` only, no `runtime` export)
     - _Requirements: 1.1–1.4, 1.6, 9.3_
-  - [ ] 11.3 Integration test with the MCP SDK `Client` against the handler, using the Gravewood handler as upstream
+  - [x] 11.3 Integration test with the MCP SDK `Client` against the handler, using the Gravewood handler as upstream
     - _Requirements: 1, 3_
 
 - [ ] 12. Management APIs

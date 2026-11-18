@@ -22,6 +22,9 @@ export type ToolDef = {
   annotations: ToolAnnotations;
 };
 
+/** Name of the built-in tool that collects the result of a held call. Reserved in buildTools. */
+export const CHECK_APPROVAL_TOOL = "check_approval";
+
 const MAX_NAME = 64;
 const MAX_DOC = 400;
 const MAX_REASON = 120;
@@ -79,7 +82,8 @@ function describe(op: OperationSchema): string {
 
 /** One tool per operation across all ports (Requirements 2.1–2.5). */
 export function buildTools(service: ServiceDefinition): ToolDef[] {
-  const taken = new Set<string>();
+  // The built-in check_approval tool owns its name; an operation with that name is renamed (check_approval_2).
+  const taken = new Set<string>([CHECK_APPROVAL_TOOL]);
   const tools: ToolDef[] = [];
   for (const port of service.ports) {
     for (const op of port.operations) {

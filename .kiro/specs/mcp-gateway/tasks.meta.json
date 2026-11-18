@@ -466,6 +466,61 @@
         "chatSessionId": "sess_528eac2b-ed10-46d5-bc1d-a368708788a5",
         "timestamp": 1795016276123
       }
+    ],
+    "10. Checkpoint: pipeline tests pass with fakes; ask the user if questions arise": [
+      {
+        "executionId": "83bce818-4036-474f-83b3-7a3cf9ecf0a5",
+        "chatSessionId": "sess_d6366d51-4e5d-4885-9d78-ec4f1c9b5ca5",
+        "timestamp": 1795021233986
+      },
+      {
+        "executionId": "83bce818-4036-474f-83b3-7a3cf9ecf0a5",
+        "chatSessionId": "sess_d6366d51-4e5d-4885-9d78-ec4f1c9b5ca5",
+        "timestamp": 1795021269424
+      }
+    ],
+    "11.1 Implement `lib/mcp/server.ts` (`createServerFor`)": [
+      {
+        "executionId": "83bce818-4036-474f-83b3-7a3cf9ecf0a5",
+        "chatSessionId": "sess_d6366d51-4e5d-4885-9d78-ec4f1c9b5ca5",
+        "timestamp": 1795021272418
+      },
+      {
+        "executionId": "83bce818-4036-474f-83b3-7a3cf9ecf0a5",
+        "chatSessionId": "sess_d6366d51-4e5d-4885-9d78-ec4f1c9b5ca5",
+        "timestamp": 1795022345403
+      }
+    ],
+    "11.2 Implement `app/api/mcp/[id]/route.ts` (POST, OPTIONS, 405s, 256 KB cap, `maxDuration` only, no `runtime` export)": [
+      {
+        "executionId": "83bce818-4036-474f-83b3-7a3cf9ecf0a5",
+        "chatSessionId": "sess_d6366d51-4e5d-4885-9d78-ec4f1c9b5ca5",
+        "timestamp": 1795022347226
+      },
+      {
+        "executionId": "83bce818-4036-474f-83b3-7a3cf9ecf0a5",
+        "chatSessionId": "sess_d6366d51-4e5d-4885-9d78-ec4f1c9b5ca5",
+        "timestamp": 1795028161181
+      }
+    ],
+    "11.3 Integration test with the MCP SDK `Client` against the handler, using the Gravewood handler as upstream": [
+      {
+        "executionId": "83bce818-4036-474f-83b3-7a3cf9ecf0a5",
+        "chatSessionId": "sess_d6366d51-4e5d-4885-9d78-ec4f1c9b5ca5",
+        "timestamp": 1795028161566
+      },
+      {
+        "executionId": "83bce818-4036-474f-83b3-7a3cf9ecf0a5",
+        "chatSessionId": "sess_d6366d51-4e5d-4885-9d78-ec4f1c9b5ca5",
+        "timestamp": 1795035487739
+      }
+    ],
+    "11. MCP server and route": [
+      {
+        "executionId": "83bce818-4036-474f-83b3-7a3cf9ecf0a5",
+        "chatSessionId": "sess_d6366d51-4e5d-4885-9d78-ec4f1c9b5ca5",
+        "timestamp": 1795035487868
+      }
     ]
   }
 }

@@ -15,6 +15,11 @@ const ID_PATTERN = /^[A-Za-z0-9]{8,12}$/;
 
 const newId = customAlphabet(ID_ALPHABET, ID_LENGTH);
 
+/** True when `id` has the shape of a registry service id. Does not touch Redis. */
+export function isServiceId(id: string): boolean {
+  return ID_PATTERN.test(id);
+}
+
 /** Minimal Redis surface used by the registry. */
 export interface RedisLike {
   get(key: string): Promise<unknown>;

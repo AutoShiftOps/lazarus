@@ -156,6 +156,17 @@ function oneTool(op: Partial<OperationSchema>, name?: string): ToolDef {
   return buildTools(svcWith(op, name))[0];
 }
 
+describe("reserved tool name", () => {
+  it("renames an operation called check_approval to check_approval_2", () => {
+    expect(oneTool({}, "check_approval").name).toBe("check_approval_2");
+  });
+
+  it("renames a name that sanitises to check_approval and leaves similar names alone", () => {
+    expect(oneTool({}, "check approval").name).toBe("check_approval_2");
+    expect(oneTool({}, "check_approval_x").name).toBe("check_approval_x");
+  });
+});
+
 describe("tool-poisoning defence", () => {
   const expectedRisk = "Risk: write — Changes data\n\n";
 

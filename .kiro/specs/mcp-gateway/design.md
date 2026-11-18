@@ -26,7 +26,7 @@ flowchart TD
 
 ## Dependencies
 
-- `@modelcontextprotocol/sdk`: `McpServer` and `WebStandardStreamableHTTPServerTransport` (stateless: `sessionIdGenerator: undefined`, `enableJsonResponse: true`).
+- `@modelcontextprotocol/sdk` (1.32.2): low-level `Server` and `WebStandardStreamableHTTPServerTransport` (stateless: `sessionIdGenerator: undefined`, `enableJsonResponse: true`).
 - Reuses from `summon`: `buildZodSchema`, `toEnvelope` (returns `{ ok, xml, headers }`), `fromEnvelope`, `getService` (returns `{ ok, value }`), and `generateOwnerToken`/`verifyOwnerToken`/`publicDefinition` from `lib/owner-token.ts`.
 - New in this spec: `safePost` in `lib/soap/fetcher.ts` (below). `safeFetch` is GET-only and rejects every non-200, so it cannot carry a SOAP call.
 
@@ -197,7 +197,13 @@ The upstream is contacted only in the `allow` branch of step 5.
 
 ### `lib/mcp/server.ts`
 
-`createServerFor(service, deps): McpServer` registers each ToolDef with `server.registerTool(...)` using a raw JSON-schema-compatible zod shape, and registers `check_approval` (`{ approvalId: string }`).
+`createServerFor(service, deps, ctx: { clientIp }): Server` uses the SDK's low-level `Server` (not `McpServer.registerTool`) with request handlers for `tools/list` and `tools/call`. Reasons: (a) `tools/list` returns each `ToolDef.inputSchema` exactly as `buildTools` built it, and (b) argument validation stays in our pipeline and returns tool errors, not SDK protocol errors.
+
+- `tools/list`: one tool per `ToolDef` (name, description, inputSchema, annotations) plus the built-in `check_approval` (`{ approvalId: string }`; annotations `readOnlyHint: false`, `destructiveHint: false`, `openWorldHint: true`).
+- `tools/call`: `check_approval` goes to `pipeline.runCheckApproval`; a known tool goes to `pipeline.runCall`; any other name returns the tool error "Unknown tool." and nothing else runs (the upstream is never called, Requirement 3.7). A thrown error becomes a fixed tool error with no message or stack text.
+- `buildTools` reserves the name `check_approval` (seeds the taken set), so an operation with that name becomes `check_approval_2`.
+
+`lib/mcp/deps.ts` is the composition root: `defaultDeps()` builds `Deps` lazily on each call (no env or Redis at import time), reusing `getEnv()` and the Upstash client settings used by the registry, through a thin typed adapter (`adaptRedis`) that pins the Upstash methods to `ApprovalsRedis`, `TranscriptRedis` and `RateRedis`.
 
 ### `lib/auth/owner.ts`
 
