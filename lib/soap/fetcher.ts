@@ -4,6 +4,8 @@
 // Exports:
 //   isBlockedIp(ip)       — pure, no I/O, property-testable
 //   safeFetch(url, opts)  — shared HTTP primitive (SSRF gate, timeout, size cap, redirects)
+//   safePost(url, req)    — SSRF-safe SOAP POST: same gate as safeFetch, header allowlist,
+//                           256 KB request cap, no redirects, any HTTP status returned
 //   fetchWsdl(rawUrl)     — validates the URL, delegates to safeFetch
 
 import dns from "node:dns";
@@ -249,72 +251,167 @@ type HopOutcome =
   | { kind: "redirect"; location: string }
   | { kind: "error"; result: FetchResult };
 
+/** Resolve the effective loopback flag. Always false in production. */
+function resolveAllowLoopback(option: boolean | undefined): boolean {
+  return (
+    (option ?? devAllowLoopback()) === true &&
+    process.env.NODE_ENV !== "production"
+  );
+}
+
 /**
- * Perform one HTTP(S) GET. The custom `lookup` validates every resolved
- * address and hands the validated one to Node, which dials it directly; the
- * hostname is unchanged so TLS still verifies the certificate against it.
+ * Node skips `lookup` for IP literals, so they must be checked explicitly.
+ * Returns true when the hostname is a blocked IP literal.
  */
-function requestOnce(
+function isBlockedLiteralHost(url: URL, allowLoopback: boolean): boolean {
+  const host = bareHostname(url.hostname);
+  return (
+    net.isIP(host) !== 0 &&
+    isBlockedIp(host) &&
+    !(allowLoopback && isLoopbackV4(host))
+  );
+}
+
+/**
+ * Build the DNS-pinning `lookup`: every resolved address is validated and the
+ * validated one is handed to Node, which dials it directly. `onBlocked` is
+ * called when any resolved address is blocked.
+ */
+function createPinnedLookup(
+  allowLoopback: boolean,
+  onBlocked: () => void,
+): net.LookupFunction {
+  return (hostname, options, callback) => {
+    dns.lookup(
+      hostname,
+      { all: true, family: options.family, hints: options.hints },
+      (lookupErr, addresses) => {
+        if (lookupErr) {
+          callback(lookupErr, "", 0);
+          return;
+        }
+        if (
+          addresses.length === 0 ||
+          addresses.some(
+            (a) =>
+              isBlockedIp(a.address) &&
+              !(allowLoopback && isLoopbackV4(a.address)),
+          )
+        ) {
+          onBlocked();
+          callback(new BlockedAddressError(), "", 0);
+          return;
+        }
+        if (options.all) {
+          callback(null, addresses);
+        } else {
+          callback(null, addresses[0].address, addresses[0].family);
+        }
+      },
+    );
+  };
+}
+
+type PinnedInit = {
+  method: "GET" | "POST";
+  headers: Record<string, string | number>;
+  body?: string;
+};
+
+type PinnedHandlers<T> = {
+  /** Handle the response; call `settle` with the result or `err` on failure. */
+  onResponse: (
+    res: http.IncomingMessage,
+    req: http.ClientRequest,
+    settle: (value: T) => void,
+    err: (code: ErrorCode, message: string, detail?: unknown) => void,
+  ) => void;
+  /** Wrap a failure into the caller's outcome type. */
+  toError: (result: FetchResult) => T;
+};
+
+/**
+ * Perform one HTTP(S) request with the SSRF machinery shared by GET and POST:
+ * pinned lookup, blocked-address mapping, abort/timeout handling. The hostname
+ * is unchanged so TLS still verifies the certificate against it.
+ */
+function pinnedRequest<T>(
   url: URL,
-  maxBytes: number,
+  init: PinnedInit,
   signal: AbortSignal,
   allowLoopback: boolean,
-): Promise<HopOutcome> {
-  return new Promise<HopOutcome>((resolve) => {
+  handlers: PinnedHandlers<T>,
+): Promise<T> {
+  return new Promise<T>((resolve) => {
     let blocked = false;
     let settled = false;
-    const settle = (outcome: HopOutcome): void => {
+    const settle = (outcome: T): void => {
       if (settled) return;
       settled = true;
       signal.removeEventListener("abort", onAbort);
       resolve(outcome);
     };
     const err = (code: ErrorCode, message: string, detail?: unknown): void =>
-      settle({ kind: "error", result: fail(code, message, detail) });
+      settle(handlers.toError(fail(code, message, detail)));
 
-    const lookup: net.LookupFunction = (hostname, options, callback) => {
-      dns.lookup(
-        hostname,
-        { all: true, family: options.family, hints: options.hints },
-        (lookupErr, addresses) => {
-          if (lookupErr) {
-            callback(lookupErr, "", 0);
-            return;
-          }
-          if (
-            addresses.length === 0 ||
-            addresses.some(
-              (a) =>
-                isBlockedIp(a.address) &&
-                !(allowLoopback && isLoopbackV4(a.address)),
-            )
-          ) {
-            blocked = true;
-            callback(new BlockedAddressError(), "", 0);
-            return;
-          }
-          if (options.all) {
-            callback(null, addresses);
-          } else {
-            callback(null, addresses[0].address, addresses[0].family);
-          }
-        },
-      );
-    };
+    const lookup = createPinnedLookup(allowLoopback, () => {
+      blocked = true;
+    });
 
     const transport = url.protocol === "https:" ? https : http;
     const req = transport.request(
       url,
-      {
-        method: "GET",
-        lookup,
-        agent: false,
-        headers: {
-          Accept: "text/xml, application/xml, application/wsdl+xml, */*",
-          "User-Agent": "Lazarus/1.0",
-        },
+      { method: init.method, lookup, agent: false, headers: init.headers },
+      (res) => handlers.onResponse(res, req, settle, err),
+    );
+
+    const onAbort = (): void => {
+      req.destroy();
+      err("TIMEOUT", MSG_TIMEOUT);
+    };
+    if (signal.aborted) {
+      onAbort();
+      return;
+    }
+    signal.addEventListener("abort", onAbort, { once: true });
+
+    req.on("error", (e) => {
+      if (blocked || e instanceof BlockedAddressError) {
+        err("SSRF_BLOCKED", MSG_BLOCKED);
+        return;
+      }
+      err(
+        "WSDL_FETCH_FAILED",
+        "The endpoint is unreachable or rejected the request.",
+        e,
+      );
+    });
+    if (init.body !== undefined) req.write(init.body);
+    req.end();
+  });
+}
+
+/** One HTTP(S) GET for `safeFetch`. */
+function requestOnce(
+  url: URL,
+  maxBytes: number,
+  signal: AbortSignal,
+  allowLoopback: boolean,
+): Promise<HopOutcome> {
+  return pinnedRequest<HopOutcome>(
+    url,
+    {
+      method: "GET",
+      headers: {
+        Accept: "text/xml, application/xml, application/wsdl+xml, */*",
+        "User-Agent": "Lazarus/1.0",
       },
-      (res) => {
+    },
+    signal,
+    allowLoopback,
+    {
+      toError: (result) => ({ kind: "error", result }),
+      onResponse: (res, req, settle, err) => {
         const status = res.statusCode ?? 0;
         if (status >= 300 && status < 400 && res.headers.location) {
           res.resume();
@@ -361,31 +458,8 @@ function requestOnce(
           err("WSDL_FETCH_FAILED", "The connection was interrupted.", e),
         );
       },
-    );
-
-    const onAbort = (): void => {
-      req.destroy();
-      err("TIMEOUT", MSG_TIMEOUT);
-    };
-    if (signal.aborted) {
-      onAbort();
-      return;
-    }
-    signal.addEventListener("abort", onAbort, { once: true });
-
-    req.on("error", (e) => {
-      if (blocked || e instanceof BlockedAddressError) {
-        err("SSRF_BLOCKED", MSG_BLOCKED);
-        return;
-      }
-      err(
-        "WSDL_FETCH_FAILED",
-        "The endpoint is unreachable or rejected the request.",
-        e,
-      );
-    });
-    req.end();
-  });
+    },
+  );
 }
 
 /**
@@ -400,9 +474,7 @@ export async function safeFetch(
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
   let remainingHops = options.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
-  const allowLoopback =
-    (options.allowLoopback ?? devAllowLoopback()) === true &&
-    process.env.NODE_ENV !== "production";
+  const allowLoopback = resolveAllowLoopback(options.allowLoopback);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -418,13 +490,7 @@ export async function safeFetch(
       if (current.protocol !== "http:" && current.protocol !== "https:") {
         return fail("INVALID_REQUEST", MSG_INVALID_URL);
       }
-      // Node skips `lookup` for IP literals, so check them explicitly.
-      const host = bareHostname(current.hostname);
-      if (
-        net.isIP(host) !== 0 &&
-        isBlockedIp(host) &&
-        !(allowLoopback && isLoopbackV4(host))
-      ) {
+      if (isBlockedLiteralHost(current, allowLoopback)) {
         return fail("SSRF_BLOCKED", MSG_BLOCKED);
       }
 
@@ -457,6 +523,160 @@ export async function safeFetch(
     }
   } finally {
     clearTimeout(timer);
+  }
+}
+
+// ─── safePost ─────────────────────────────────────────────────────────────────
+
+export type SafePostRequest = {
+  body: string;
+  headers: Record<string, string>;
+  /** Total time budget. Default 25 000 ms. */
+  timeoutMs?: number;
+  /** Maximum response body size in bytes. Default 5 242 880 (5 MB). */
+  maxBytes?: number;
+  /** TEST-ONLY. Same semantics as `SafeFetchOptions.allowLoopback`. */
+  allowLoopback?: boolean;
+};
+
+export type SafePostResult =
+  | { ok: true; status: number; body: string }
+  | { ok: false; error: LazarusError };
+
+type PostOutcome =
+  | { kind: "done"; status: number; body: string }
+  | { kind: "error"; result: FetchResult };
+
+const POST_DEFAULT_TIMEOUT_MS = 25_000;
+const POST_MAX_REQUEST_BYTES = 262_144;
+const POST_ALLOWED_HEADERS: ReadonlyMap<string, string> = new Map([
+  ["content-type", "Content-Type"],
+  ["soapaction", "SOAPAction"],
+]);
+
+const MSG_REQUEST_TOO_LARGE = "The request body is too large (limit: 256 KB).";
+const MSG_RESPONSE_TOO_LARGE = "The service response is too large (limit: 5 MB).";
+const MSG_POST_REDIRECT = "The service tried to redirect the call; redirects are not followed.";
+const MSG_POST_INVALID_URL = MSG_INVALID_URL;
+
+/** Keep only allowlisted headers (case-insensitive), canonically named. */
+function filterPostHeaders(
+  headers: Record<string, string>,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [name, value] of Object.entries(headers)) {
+    const canonical = POST_ALLOWED_HEADERS.get(name.toLowerCase());
+    if (canonical !== undefined && typeof value === "string") {
+      out[canonical] = value;
+    }
+  }
+  return out;
+}
+
+/**
+ * SSRF-safe POST for SOAP calls. Same lookup pinning, blocked-IP and loopback
+ * rules as `safeFetch`. Never follows redirects, returns every HTTP status
+ * with its body, and never throws. Error messages never include upstream text.
+ */
+export async function safePost(
+  url: string,
+  req: SafePostRequest,
+): Promise<SafePostResult> {
+  const timeoutMs = req.timeoutMs ?? POST_DEFAULT_TIMEOUT_MS;
+  const maxBytes = req.maxBytes ?? DEFAULT_MAX_BYTES;
+  const toFail = (r: FetchResult): SafePostResult =>
+    r.ok ? { ok: false, error: { code: "INTERNAL_ERROR", message: "Unexpected result." } } : r;
+
+  try {
+    let target: URL;
+    try {
+      target = new URL(url);
+    } catch {
+      return toFail(fail("INVALID_REQUEST", MSG_POST_INVALID_URL));
+    }
+    if (target.protocol !== "http:" && target.protocol !== "https:") {
+      return toFail(fail("INVALID_REQUEST", MSG_POST_INVALID_URL));
+    }
+    if (typeof req.body !== "string") {
+      return toFail(fail("INVALID_REQUEST", "The request body must be a string."));
+    }
+    const bodyBytes = Buffer.byteLength(req.body, "utf8");
+    if (bodyBytes > POST_MAX_REQUEST_BYTES) {
+      return toFail(fail("INVALID_REQUEST", MSG_REQUEST_TOO_LARGE));
+    }
+    const allowLoopback = resolveAllowLoopback(req.allowLoopback);
+    if (isBlockedLiteralHost(target, allowLoopback)) {
+      return toFail(fail("SSRF_BLOCKED", MSG_BLOCKED));
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const outcome = await pinnedRequest<PostOutcome>(
+        target,
+        {
+          method: "POST",
+          headers: {
+            ...filterPostHeaders(req.headers),
+            "User-Agent": "Lazarus/1.0",
+            "Content-Length": bodyBytes,
+          },
+          body: req.body,
+        },
+        controller.signal,
+        allowLoopback,
+        {
+          toError: (result) => ({ kind: "error", result }),
+          onResponse: (res, request, settle, err) => {
+            const status = res.statusCode ?? 0;
+            if (status >= 300 && status < 400) {
+              res.resume();
+              request.destroy();
+              err("WSDL_FETCH_FAILED", MSG_POST_REDIRECT);
+              return;
+            }
+            const declared = Number(res.headers["content-length"]);
+            if (
+              res.headers["content-length"] !== undefined &&
+              declared > maxBytes
+            ) {
+              request.destroy();
+              err("WSDL_TOO_LARGE", MSG_RESPONSE_TOO_LARGE);
+              return;
+            }
+            const chunks: Buffer[] = [];
+            let total = 0;
+            res.on("data", (chunk: Buffer) => {
+              total += chunk.length;
+              if (total > maxBytes) {
+                request.destroy();
+                err("WSDL_TOO_LARGE", MSG_RESPONSE_TOO_LARGE);
+                return;
+              }
+              chunks.push(chunk);
+            });
+            res.on("end", () =>
+              settle({
+                kind: "done",
+                status,
+                body: Buffer.concat(chunks).toString("utf8"),
+              }),
+            );
+            res.on("error", (e) =>
+              err("WSDL_FETCH_FAILED", "The connection was interrupted.", e),
+            );
+          },
+        },
+      );
+      if (outcome.kind === "error") return toFail(outcome.result);
+      return { ok: true, status: outcome.status, body: outcome.body };
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch (e) {
+    return toFail(
+      fail("INTERNAL_ERROR", "The request could not be completed.", e),
+    );
   }
 }
 
