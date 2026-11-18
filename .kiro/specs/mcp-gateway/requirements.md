@@ -82,9 +82,9 @@ This spec depends on `summon` (ServiceDefinition, Translator, safeFetch, Registr
 2. THE Policy_Engine SHALL evaluate every Rule whose `operation` equals the tool's operation or `"*"` and whose `when` condition is satisfied or absent.
 3. WHEN several Rules match, THE Policy_Engine SHALL apply the most restrictive effect (`block` over `hold` over `allow`).
 4. A condition SHALL be `{ field, op, value }` where `field` is a dot-path into the arguments (for example `amount` or `transfer.amount`) and `op` is one of `gt gte lt lte eq neq contains`.
-5. FOR numeric operators, THE Policy_Engine SHALL compare values parsed as finite numbers; IF either side is not a finite number THEN the condition SHALL be treated as satisfied (fail closed).
-6. IF a Rule can never be evaluated (unknown operator, malformed path) THEN THE Policy_Engine SHALL treat it as matching and take its effect (fail closed).
-7. A Rule with effect `allow` SHALL NOT downgrade a `destructive` default hold unless it names that operation explicitly.
+5. FOR numeric operators, THE Policy_Engine SHALL compare values parsed as finite numbers; IF either side is not a finite number THEN the condition SHALL be unevaluable (see 4.6).
+6. IF a Rule's condition is unevaluable (unknown operator, malformed or forbidden path, absent field, type mismatch, or evaluation throws) THEN THE Policy_Engine SHALL treat a `block` or `hold` Rule as matching and take its effect (fail closed), and SHALL treat an `allow` Rule as not matching.
+7. A Rule with effect `allow` SHALL NOT downgrade a `destructive` default hold unless it names that operation explicitly and its condition evaluates to satisfied; an unevaluable condition never downgrades it.
 8. THE Gateway SHALL store Rules per service in the Registry, at most 25 Rules per service.
 
 ---

@@ -73,7 +73,7 @@ export function decide(input: {
 ```
 
 Algorithm:
-1. `matching` = rules where `(rule.operation === op.name || rule.operation === "*")` and `holds(rule.when, args)`. A condition that throws or cannot be evaluated counts as holding (fail closed).
+1. `matching` = rules where `(rule.operation === op.name || rule.operation === "*")` and its condition matches. `evaluate(condition, args)` returns `true`, `false` or `"unknown"` (absent field, type mismatch, unknown operator, rejected path, or a throw). A rule matches when there is no condition, when `evaluate` is `true`, or when it is `"unknown"` and the effect is not `allow` (fail closed: `block` and `hold` match, `allow` does not).
 2. If any matching rule has `block` → `{ block, ruleId, reason }`.
 3. If `ghost && risk !== "read"` → `{ ghost }`.
 4. If any matching rule has `hold` → `{ hold, ruleId }`.
@@ -184,7 +184,7 @@ For any destructive operation, any arguments, and any rule set with no explicit 
 For any set of matching rules, the decision's strictness (`block > ghost > hold > allow`) is ≥ the strictness of each matching rule's effect, except where ghost mode replaces hold.
 
 ### Property 18: Fail closed on bad conditions
-For any rule whose condition has a non-numeric value compared with `gt/gte/lt/lte` against any argument, the rule is treated as matching.
+For any rule whose condition has a non-numeric value compared with `gt/gte/lt/lte` against any argument, a `block` or `hold` rule is treated as matching. An `allow` rule with an unevaluable condition never matches: the decision equals the decision without that rule, and a destructive operation is never allowed through it.
 
 ### Property 19: Redaction removes every sensitive value
 For any JSON object containing keys matching `SENSITIVE` at any depth with random string values, `JSON.stringify(redactJson(obj))` contains none of those values.

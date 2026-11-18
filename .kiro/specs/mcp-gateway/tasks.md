@@ -14,25 +14,25 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
   - [x] 1.3 Tests in `tests/soap/safepost.test.ts` against a local `node:http` server: body and allowed headers arrive; a disallowed header is dropped; HTTP 500 with an XML body is returned as ok with status 500; a redirect is NOT followed (no second request, failure result); 169.254.169.254, 10.0.0.1 and public-name-resolving-to-private are blocked with zero sockets opened; request over 256 KB rejected before any socket; response over the cap and timeout fail cleanly; production ignores the loopback flag
     - _Requirements: 3.3, 3.5, 3.6_
 
-- [ ] 2. Redaction
-  - [ ] 2.1 Implement `lib/safety/redact.ts` (`redactJson`, `redactXml`, `truncate`)
+- [x] 2. Redaction
+  - [x] 2.1 Implement `lib/safety/redact.ts` (`redactJson`, `redactXml`, `truncate`)
     - _Requirements: 8.3_
-  - [ ] 2.2 Unit tests: nested keys, arrays, XML with namespace prefixes, values containing `<`/`&`
-  - [ ]* 2.3 Property test 19
+  - [x] 2.2 Unit tests: nested keys, arrays, XML with namespace prefixes, values containing `<`/`&`
+  - [x]* 2.3 Property test 19
     - **Property 19**
     - _Requirements: 8.3_
 
-- [ ] 3. Policy engine
-  - [ ] 3.1 Implement `getPath` with prototype-pollution guard and `holds(condition, args)`
+- [x] 3. Policy engine
+  - [x] 3.1 Implement `getPath` with prototype-pollution guard and `holds(condition, args)`
     - _Requirements: 4.4, 4.5, 4.6_
-  - [ ] 3.2 Implement `decide`
+  - [x] 3.2 Implement `decide`
     - _Requirements: 4.1, 4.2, 4.3, 4.7, 7.1_
-  - [ ] 3.3 Unit tests: default by risk, amount threshold hold, block over hold, ghost over hold, explicit allow vs wildcard allow, `__proto__` path
-  - [ ]* 3.4 Property test 16
+  - [x] 3.3 Unit tests: default by risk, amount threshold hold, block over hold, ghost over hold, explicit allow vs wildcard allow, `__proto__` path
+  - [x]* 3.4 Property test 16
     - **Property 16**
-  - [ ]* 3.5 Property test 17
+  - [x]* 3.5 Property test 17
     - **Property 17**
-  - [ ]* 3.6 Property test 18
+  - [x]* 3.6 Property test 18
     - **Property 18**
 
 - [ ] 4. Ghost responses

@@ -1,5 +1,14 @@
 {
-  "pbtResults": {},
+  "pbtResults": {
+    "2.3 Property test 19": {
+      "status": "passed",
+      "lastRunTimestamp": 1794963877652
+    },
+    "3.4 Property test 16": {
+      "status": "passed",
+      "lastRunTimestamp": 1794964231517
+    }
+  },
   "executionHistory": {
     "1.1 Create `lib/safety/types.ts` (types from the design; import `Risk` from `lib/soap/types`) and `lib/safety/schemas.ts` (zod for `Rule`, `Condition`, settings, approval decision)": [
       {
@@ -42,6 +51,148 @@
         "executionId": "74acb313-5255-4274-b874-8e66bd5b76b7",
         "chatSessionId": "sess_83ea4f56-8b6b-41c5-b873-eb004e75b837",
         "timestamp": 1794959388579
+      }
+    ],
+    "2.1 Implement `lib/safety/redact.ts` (`redactJson`, `redactXml`, `truncate`)": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794963032421
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794963572518
+      }
+    ],
+    "2.2 Unit tests: nested keys, arrays, XML with namespace prefixes, values containing `<`/`&`": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794963574089
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794963831067
+      }
+    ],
+    "2. Redaction": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794963831140
+      }
+    ],
+    "2.3 Property test 19": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794963835276
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794963891223
+      }
+    ],
+    "3.1 Implement `getPath` with prototype-pollution guard and `holds(condition, args)`": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794963891626
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964040340
+      }
+    ],
+    "3.2 Implement `decide`": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964043300
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964104787
+      },
+      {
+        "executionId": "ba9d9cce-845e-458a-862a-0e52018a496b",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964828285
+      },
+      {
+        "executionId": "ba9d9cce-845e-458a-862a-0e52018a496b",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794965168665
+      }
+    ],
+    "3.3 Unit tests: default by risk, amount threshold hold, block over hold, ghost over hold, explicit allow vs wildcard allow, `__proto__` path": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964104909
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964197655
+      }
+    ],
+    "3. Policy engine": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964197711
+      }
+    ],
+    "3.4 Property test 16": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964197952
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964284778
+      }
+    ],
+    "3.5 Property test 17": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964284900
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964339557
+      }
+    ],
+    "3.6 Property test 18": [
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964339990
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964383098
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964402509
+      },
+      {
+        "executionId": "2e13874c-e98f-4aac-b0c8-6f5de8db341c",
+        "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
+        "timestamp": 1794964442120
       }
     ]
   }
