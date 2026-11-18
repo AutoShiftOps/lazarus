@@ -73,10 +73,11 @@ Depends on: `summon`, `gravewood-bank`, `mcp-gateway` (APIs only; this spec adds
 
 #### Acceptance Criteria
 
-1. THE Commune_Form SHALL render one input per top-level field of the operation's `inputDescriptor`, typed by `xsdType` (text, number, checkbox, `datetime-local`), nested complex types as grouped fields, and repeating fields as add/remove lists.
+1. THE Commune_Form SHALL render one input per top-level field of the operation's `inputDescriptor`, typed by `xsdType` (text, number, checkbox, `datetime-local`) and nested complex types as grouped fields. Repeating fields are entered as a JSON array in a textarea (an add/remove list UI is a stretch goal).
 2. THE Commune_Form SHALL mark required fields and validate on submit with the same zod schema used by the Gateway, showing errors next to the field.
 3. WHEN submitted, THE Commune_Form SHALL call the service through the same MCP endpoint as an agent would (JSON-RPC `tools/call`), so it is subject to the same safety rules.
 4. THE Commune_Form SHALL show the result as formatted JSON, or the decision (held / blocked / ghost) as a clear message with a link to the Inbox or Transcript.
+5. A held call blocks the MCP request for up to 20 seconds (Gateway Requirement 5.2). WHILE waiting, THE Commune_Form SHALL show a "Waiting for a human to release this call" state and SHALL NOT block the page, so the Inbox stays usable; IF the call is released within the wait THEN THE form SHALL show the real result.
 
 ---
 
@@ -92,6 +93,7 @@ Depends on: `summon`, `gravewood-bank`, `mcp-gateway` (APIs only; this spec adds
 4. THE Transcript_Panel SHALL show `[redacted]` values exactly as returned and SHALL never attempt to reveal them.
 5. WHEN no entries exist, THE panel SHALL show "No one has called this spirit yet."
 6. NEW entries SHALL be announced to screen readers through an `aria-live="polite"` region, at most one announcement per poll.
+7. FOR a non-demo service, THE Transcript_Panel SHALL send the Owner_Token from the Token_Store as `x-lazarus-owner`; IF absent THEN it SHALL show "Only the owner can read this transcript".
 
 ---
 
@@ -111,7 +113,7 @@ Depends on: `summon`, `gravewood-bank`, `mcp-gateway` (APIs only; this spec adds
 8. WHERE `prefers-reduced-motion` is set, THE Candle_Hold SHALL replace flame animation with a text countdown ("Hold… 1.5 s") while keeping the 2000 ms requirement.
 9. THE Candle_Hold SHALL prevent the context menu and text selection on touch devices.
 10. IF the request fails (409, 403, network) THEN THE Inbox SHALL show a clear message and re-enable the control; for 409 it SHALL say the call was already resolved.
-11. FOR a non-demo service, THE Inbox SHALL send the Owner_Token from the Token_Store; IF absent THEN it SHALL show "Only the owner can release calls" and hide the approve controls.
+11. FOR a non-demo service, THE Inbox SHALL send the Owner_Token from the Token_Store (listing and resolving both require it); IF absent THEN it SHALL show "Only the owner can release calls" and hide the approve controls.
 12. FOR `read` and `write` risk Approvals triggered by amount rules, THE Candle_Hold SHALL still require the full 2000 ms.
 
 ---
@@ -125,8 +127,8 @@ Depends on: `summon`, `gravewood-bank`, `mcp-gateway` (APIs only; this spec adds
 1. THE Service_Page SHALL show a "Ghost mode" switch with the explanation "Dangerous calls are rehearsed, never sent." The switch SHALL require the Owner_Token and send `PATCH settings`.
 2. WHEN Ghost_Mode is on, THE page SHALL show a persistent banner "Ghost mode: nothing dangerous reaches the real service."
 3. THE Rules panel SHALL list current Rules in plain English (for example "Hold TransferFunds when amount is greater than 1000").
-4. THE Rules panel SHALL provide an "Add rule" form with: operation (dropdown of operations or "any"), optional condition (field dropdown from the operation's input fields, operator, value), effect (Hold / Block / Allow) and reason.
-5. THE form SHALL warn when an Allow rule is chosen for a destructive operation ("This lets a vengeful spirit act without a human.") and require a confirm checkbox.
+4. WHERE time allows (stretch goal), THE Rules panel SHALL provide an "Add rule" form with: operation (dropdown of operations or "any"), optional condition (field dropdown from the operation's input fields, operator, value), effect (Hold / Block / Allow) and reason.
+5. WHERE the add-rule form exists, THE form SHALL warn when an Allow rule is chosen for a destructive operation ("This lets a vengeful spirit act without a human.") and require a confirm checkbox.
 6. WHEN the Owner_Token is absent, THE Rules panel SHALL be read-only.
 7. THE panel SHALL suggest one-click starter rules: "Hold transfers over 1000", "Block all destructive calls".
 

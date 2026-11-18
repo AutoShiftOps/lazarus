@@ -4,17 +4,19 @@
 
 Pure helpers first (testable, no browser), then components, then pages, then end-to-end. Prerequisites: `summon`, `gravewood-bank`, `mcp-gateway` complete. One task at a time, Autopilot off. Consult `.kiro/steering/ui-seance.md` for every component.
 
+Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4, 5, 6 (raise the demo, see spirits; deploy to Vercel after this slice to catch environment problems early); **B** = tasks 2.3-2.7, 7, 8, 9 (commune, transcript, inbox, candle: the demo core); **C** = tasks 10, 11, 13 (ghost, starter rules, metadata, e2e and axe).
+
 ## Tasks
 
-- [ ] 1. Shared summon function and demo bootstrap
-  - [ ] 1.1 Extract the summon pipeline from `app/api/summon/route.ts` into `lib/summon/index.ts` (no behaviour change; existing tests still pass)
-  - [ ] 1.2 Implement `app/api/demo/route.ts` with rate limits
+- [x] 1. Shared summon function and demo bootstrap
+  - [x] 1.1 Extract the summon pipeline from `app/api/summon/route.ts` into `lib/summon/index.ts` (already done in the summon spec: `summonFromBody`)
+  - [x] 1.2 Implement `app/api/demo/route.ts` with rate limits
     - _Requirements: 2.1, 2.2, 2.3_
 
 - [ ] 2. Pure UI helpers
-  - [ ] 2.1 `lib/ui/hold-machine.ts` (state machine)
+  - [x] 2.1 `lib/ui/hold-machine.ts` (state machine)
     - _Requirements: 6.3, 6.4, 6.5, 6.6_
-  - [ ]* 2.2 Property tests 28, 29, 30
+  - [x]* 2.2 Property tests 28, 29, 30
     - **Properties 28, 29, 30**
   - [ ] 2.3 `lib/ui/form-model.ts`
     - _Requirements: 4.1, 4.2_
@@ -67,8 +69,10 @@ Pure helpers first (testable, no browser), then components, then pages, then end
 - [ ] 10. Rules and ghost mode
   - [ ] 10.1 `GhostSwitch` and banner
     - _Requirements: 7.1, 7.2_
-  - [ ] 10.2 `RulesPanel` list, add form, destructive-allow warning, starter rules, read-only state
-    - _Requirements: 7.3–7.7_
+  - [ ] 10.2 `RulesPanel`: plain-English list, one-click starter rules, read-only state
+    - _Requirements: 7.3, 7.6, 7.7_
+  - [ ]* 10.3 (stretch) Add-rule form with destructive-allow warning and confirm checkbox
+    - _Requirements: 7.4, 7.5_
 
 - [ ] 11. Metadata and assets
   - [ ] 11.1 Open Graph/Twitter metadata using the thumbnail in `public/`

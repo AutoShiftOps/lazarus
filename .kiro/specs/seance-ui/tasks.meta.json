@@ -1,0 +1,48 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.2 Implement `app/api/demo/route.ts` with rate limits": [
+      {
+        "executionId": "c81b1fef-f72e-4e0f-a731-7f7577a381be",
+        "chatSessionId": "sess_61ca3038-3896-4645-bd6d-573ff94cd990",
+        "timestamp": 1795042496531
+      },
+      {
+        "executionId": "c81b1fef-f72e-4e0f-a731-7f7577a381be",
+        "chatSessionId": "sess_61ca3038-3896-4645-bd6d-573ff94cd990",
+        "timestamp": 1795043097545
+      }
+    ],
+    "2.1 `lib/ui/hold-machine.ts` (state machine)": [
+      {
+        "executionId": "c81b1fef-f72e-4e0f-a731-7f7577a381be",
+        "chatSessionId": "sess_61ca3038-3896-4645-bd6d-573ff94cd990",
+        "timestamp": 1795042497191
+      },
+      {
+        "executionId": "c81b1fef-f72e-4e0f-a731-7f7577a381be",
+        "chatSessionId": "sess_61ca3038-3896-4645-bd6d-573ff94cd990",
+        "timestamp": 1795043097311
+      }
+    ],
+    "2.2 Property tests 28, 29, 30": [
+      {
+        "executionId": "c81b1fef-f72e-4e0f-a731-7f7577a381be",
+        "chatSessionId": "sess_61ca3038-3896-4645-bd6d-573ff94cd990",
+        "timestamp": 1795042497373
+      },
+      {
+        "executionId": "c81b1fef-f72e-4e0f-a731-7f7577a381be",
+        "chatSessionId": "sess_61ca3038-3896-4645-bd6d-573ff94cd990",
+        "timestamp": 1795043250076
+      }
+    ],
+    "1. Shared summon function and demo bootstrap": [
+      {
+        "executionId": "c81b1fef-f72e-4e0f-a731-7f7577a381be",
+        "chatSessionId": "sess_61ca3038-3896-4645-bd6d-573ff94cd990",
+        "timestamp": 1795043097597
+      }
+    ]
+  }
+}

@@ -85,6 +85,7 @@ A checkbox + "Approve" button path calls the same `send` function with no timer.
 export type FormField =
   | { kind: "text" | "number" | "boolean" | "datetime"; name: string; required: boolean; nillable: boolean; list: boolean }
   | { kind: "group"; name: string; required: boolean; list: boolean; children: FormField[] };
+// Fields with list: true are edited as a JSON array in a textarea (parsed and validated on submit).
 export function toFormModel(desc: FieldDescriptor[]): FormField[];
 export function toArguments(model: FormField[], values: unknown): unknown; // drops empty optionals, converts numbers
 ```
