@@ -11,5 +11,5 @@ fileMatchPattern: "lib/soap/**"
 - Nulls: map `xsi:nil="true"` to JSON `null`, and back.
 - Types: string -> string; int/long -> integer; decimal/double/float -> number; boolean -> boolean; dateTime -> string with format date-time.
 - Faults: map SOAP faults (faultcode, faultstring, detail) to an MCP tool error with a readable message.
-- Timeouts: 10 seconds per call, reported as their own error type.
+- Timeouts: 25 seconds per call, reported as their own error type.
 - Round-trip property: for any valid JSON input, building the SOAP envelope and parsing it back must return the same JSON. Keep translator functions pure so this can be property-tested.

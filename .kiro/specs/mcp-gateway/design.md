@@ -168,13 +168,32 @@ Annotations: `openWorldHint: true` always; `readOnlyHint: true` for read; `destr
 ### `lib/mcp/pipeline.ts`
 
 ```typescript
-export async function runCall(ctx: {
-  service: ServiceDefinition; tool: ToolDef; args: unknown; clientIp: string;
-  deps: Deps;   // registry, approvals, transcript, fetch, clock — all injectable
-}): Promise<McpToolResult>;
+export type Deps = {
+  registry: Pick<Registry, "getRules" | "getSettings">;
+  transcripts: Pick<Transcripts, "appendTranscript">;
+  approvals: Approvals;
+  post: typeof safePost;
+  rateRedis: RateRedis;          // used by hit() for rate limiting
+  now: () => number;
+  newId: () => string;
+};
+export function createPipeline(deps: Deps): {
+  runCall(ctx: { service: ServiceDefinition; tool: ToolDef; args: unknown; clientIp: string }): Promise<McpToolResult>;
+};
 ```
 
-`Deps` makes the pipeline testable with in-memory fakes. The pipeline never imports Redis directly.
+`Deps` makes the pipeline testable with in-memory fakes. The pipeline never imports Redis, env or global state.
+
+Step order of `runCall`:
+
+1. **Rate limit.** Deliberate deviation from the order in Requirement 3.1: it runs first because it is cheap and protects every step after it.
+2. **Rules and settings** from the registry. If either fails, return a tool error and execute nothing (fail closed).
+3. **Validate** with `buildZodSchema` (strict). Errors list the field path and message only, never values. Later steps use the parsed value, not the raw arguments.
+4. **Decide** with `decide`.
+5. **Act:** `block` returns a tool error, `ghost` returns the simulated response, `allow` runs `toEnvelope` → `post` → `fromEnvelope`, `hold` creates an approval (until the approval flow lands, `hold` returns the tool error "Approval flow is not available.").
+6. **Transcript**, always, for every outcome. A transcript failure is logged and never changes or fails the call. Summaries use only fixed strings, the operation name and counts, never argument values or upstream text.
+
+The upstream is contacted only in the `allow` branch of step 5.
 
 ### `lib/mcp/server.ts`
 

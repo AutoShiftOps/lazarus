@@ -16,7 +16,7 @@ inclusion: always
 ## Conventions
 - No `any`. Use explicit types or zod-inferred types.
 - Every SOAP call goes through `lib/soap/translator.ts`. No direct SOAP calls anywhere else.
-- Every outbound SOAP call has a 10-second timeout.
+- Every outbound SOAP call has a 25-second timeout.
 - Keep JSON <-> XML translation in pure functions so they can be property-tested.
 - Read environment variables only through a typed `lib/env.ts`; never hard-code secrets.
 - Small, focused modules with one responsibility per file.

@@ -63,17 +63,17 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
     - **Property 23**
 
 - [ ] 9. Call pipeline
-  - [ ] 9.1 Implement `lib/mcp/pipeline.ts` for validate → decide → allow path → transcript
+  - [x] 9.1 Implement `lib/mcp/pipeline.ts` for validate → decide → allow path → transcript
     - _Requirements: 3.1–3.7_
   - [ ] 9.2 Add hold path: create approval, poll up to 20 s, approved/denied/pending results
     - _Requirements: 5.1–5.5, 5.8_
   - [ ] 9.3 Add `check_approval` execution with atomic claim
     - _Requirements: 5.6, 5.7, 5.8, 5.9_
-  - [ ] 9.4 Add ghost and block paths
+  - [x] 9.4 Add ghost and block paths
     - _Requirements: 4.3, 7.1–7.5_
-  - [ ] 9.5 Add rate limiting
+  - [x] 9.5 Add rate limiting
     - _Requirements: 9.1_
-  - [ ]* 9.6 Property test 20: ghost never calls upstream
+  - [x]* 9.6 Property test 20: ghost never calls upstream
     - **Property 20**
   - [ ]* 9.7 Property test 21: approvals execute at most once
     - **Property 21**

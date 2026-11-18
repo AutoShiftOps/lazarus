@@ -11,6 +11,10 @@
     "8.2 Property test 23": {
       "status": "passed",
       "lastRunTimestamp": 1795010973747
+    },
+    "9.6 Property test 20: ghost never calls upstream": {
+      "status": "passed",
+      "lastRunTimestamp": 1795014076336
     }
   },
   "executionHistory": {
@@ -382,6 +386,54 @@
         "executionId": "82e291a7-a300-4d3b-adfa-649bd9c9eed2",
         "chatSessionId": "sess_1c408edf-58a3-46d3-bc60-e2356f130c6a",
         "timestamp": 1795010990147
+      }
+    ],
+    "9.1 Implement `lib/mcp/pipeline.ts` for validate → decide → allow path → transcript": [
+      {
+        "executionId": "5003c1a7-15b7-4338-a342-c7d8f2733b5f",
+        "chatSessionId": "sess_4a6c3f3f-15b8-423b-a510-c14ea9a15f17",
+        "timestamp": 1795012648969
+      },
+      {
+        "executionId": "5003c1a7-15b7-4338-a342-c7d8f2733b5f",
+        "chatSessionId": "sess_4a6c3f3f-15b8-423b-a510-c14ea9a15f17",
+        "timestamp": 1795013640246
+      }
+    ],
+    "9.4 Add ghost and block paths": [
+      {
+        "executionId": "5003c1a7-15b7-4338-a342-c7d8f2733b5f",
+        "chatSessionId": "sess_4a6c3f3f-15b8-423b-a510-c14ea9a15f17",
+        "timestamp": 1795013644699
+      },
+      {
+        "executionId": "5003c1a7-15b7-4338-a342-c7d8f2733b5f",
+        "chatSessionId": "sess_4a6c3f3f-15b8-423b-a510-c14ea9a15f17",
+        "timestamp": 1795013813222
+      }
+    ],
+    "9.5 Add rate limiting": [
+      {
+        "executionId": "5003c1a7-15b7-4338-a342-c7d8f2733b5f",
+        "chatSessionId": "sess_4a6c3f3f-15b8-423b-a510-c14ea9a15f17",
+        "timestamp": 1795013818041
+      },
+      {
+        "executionId": "5003c1a7-15b7-4338-a342-c7d8f2733b5f",
+        "chatSessionId": "sess_4a6c3f3f-15b8-423b-a510-c14ea9a15f17",
+        "timestamp": 1795013987865
+      }
+    ],
+    "9.6 Property test 20: ghost never calls upstream": [
+      {
+        "executionId": "5003c1a7-15b7-4338-a342-c7d8f2733b5f",
+        "chatSessionId": "sess_4a6c3f3f-15b8-423b-a510-c14ea9a15f17",
+        "timestamp": 1795013990548
+      },
+      {
+        "executionId": "5003c1a7-15b7-4338-a342-c7d8f2733b5f",
+        "chatSessionId": "sess_4a6c3f3f-15b8-423b-a510-c14ea9a15f17",
+        "timestamp": 1795014095973
       }
     ]
   }
