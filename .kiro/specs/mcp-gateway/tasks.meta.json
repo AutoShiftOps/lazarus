@@ -194,6 +194,49 @@
         "chatSessionId": "sess_7a62ba18-f9e9-4a23-9a3b-7ae9193fb350",
         "timestamp": 1794964442120
       }
+    ],
+    "4.1 Implement `lib/safety/ghost.ts`": [
+      {
+        "executionId": "730ea73b-7238-4b1e-a9d8-dc019877bea9",
+        "chatSessionId": "sess_35097e3a-ec77-4550-b7ba-db22e47bd90f",
+        "timestamp": 1794965418074
+      },
+      {
+        "executionId": "730ea73b-7238-4b1e-a9d8-dc019877bea9",
+        "chatSessionId": "sess_35097e3a-ec77-4550-b7ba-db22e47bd90f",
+        "timestamp": 1794965515020
+      }
+    ],
+    "4.2 Unit test: output validates against the output zod schema rebuilt from the descriptor": [
+      {
+        "executionId": "730ea73b-7238-4b1e-a9d8-dc019877bea9",
+        "chatSessionId": "sess_35097e3a-ec77-4550-b7ba-db22e47bd90f",
+        "timestamp": 1794965516533
+      },
+      {
+        "executionId": "8b39121b-5958-4125-970f-c89c7a3e8c38",
+        "chatSessionId": "sess_35097e3a-ec77-4550-b7ba-db22e47bd90f",
+        "timestamp": 1794966362541
+      }
+    ],
+    "4. Ghost responses": [
+      {
+        "executionId": "8b39121b-5958-4125-970f-c89c7a3e8c38",
+        "chatSessionId": "sess_35097e3a-ec77-4550-b7ba-db22e47bd90f",
+        "timestamp": 1794966362617
+      }
+    ],
+    "5. Checkpoint: all tests pass; ask the user if questions arise": [
+      {
+        "executionId": "8b39121b-5958-4125-970f-c89c7a3e8c38",
+        "chatSessionId": "sess_35097e3a-ec77-4550-b7ba-db22e47bd90f",
+        "timestamp": 1794966366634
+      },
+      {
+        "executionId": "8b39121b-5958-4125-970f-c89c7a3e8c38",
+        "chatSessionId": "sess_35097e3a-ec77-4550-b7ba-db22e47bd90f",
+        "timestamp": 1794966413482
+      }
     ]
   }
 }

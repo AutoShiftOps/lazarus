@@ -35,12 +35,12 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
   - [x]* 3.6 Property test 18
     - **Property 18**
 
-- [ ] 4. Ghost responses
-  - [ ] 4.1 Implement `lib/safety/ghost.ts`
+- [x] 4. Ghost responses
+  - [x] 4.1 Implement `lib/safety/ghost.ts`
     - _Requirements: 7.2, 7.3_
-  - [ ] 4.2 Unit test: output validates against the output zod schema rebuilt from the descriptor
+  - [x] 4.2 Unit test: output validates against the output zod schema rebuilt from the descriptor
 
-- [ ] 5. Checkpoint: all tests pass; ask the user if questions arise
+- [x] 5. Checkpoint: all tests pass; ask the user if questions arise
 
 - [ ] 6. Owner authentication
   - [ ] 6.1 Implement `lib/auth/owner.ts` as a thin module (`authorizeOwner`, `isDemoService`); reuse `verifyOwnerToken` from `lib/owner-token.ts`, do not reimplement hashing

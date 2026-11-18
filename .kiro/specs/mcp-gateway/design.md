@@ -110,7 +110,7 @@ export async function listApprovals(svc: string): Promise<Approval[]>;
 
 ### `lib/safety/ghost.ts` (pure)
 
-`ghostResponse(op: OperationSchema): unknown` builds a deterministic sample object from `outputDescriptor`: strings → `"ghost-<fieldName>"`, ints → 1, decimals → `"0.00"`, booleans → true, dateTime → fixed ISO, arrays → one element, optional → omitted, nillable → null.
+`ghostResponse(op: OperationSchema): unknown` builds a deterministic sample object from `outputDescriptor`: strings → `"ghost-<fieldName>"`, ints → 1, decimals/floats/doubles → the number `0`, booleans → true, date → `"2000-01-01"`, dateTime → fixed ISO, arrays → one element, optional → omitted, nillable → null.
 
 ### `lib/safety/transcript.ts`
 
