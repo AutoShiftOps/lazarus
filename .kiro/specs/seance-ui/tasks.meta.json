@@ -43,6 +43,70 @@
         "chatSessionId": "sess_61ca3038-3896-4645-bd6d-573ff94cd990",
         "timestamp": 1795043097597
       }
+    ],
+    "4.1 CSS variables, fonts, base layout, focus ring, reduced-motion rules": [
+      {
+        "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
+        "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
+        "timestamp": 1795043482076
+      },
+      {
+        "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
+        "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
+        "timestamp": 1795043651169
+      }
+    ],
+    "2.5 `lib/ui/rule-text.ts` and `lib/ui/token-store.ts`": [
+      {
+        "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
+        "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
+        "timestamp": 1795043482519
+      }
+    ],
+    "4.2 `RiskBadge` (text + icon + colour)": [
+      {
+        "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
+        "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
+        "timestamp": 1795043651786
+      },
+      {
+        "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
+        "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
+        "timestamp": 1795044091058
+      }
+    ],
+    "5.1 `SummonForm` with staged progress and error display": [
+      {
+        "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
+        "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
+        "timestamp": 1795043652085
+      },
+      {
+        "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
+        "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
+        "timestamp": 1795044091272
+      }
+    ],
+    "4. Theme foundation": [
+      {
+        "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
+        "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
+        "timestamp": 1795044091164
+      }
+    ],
+    "5.2 \"Raise the Gravewood Bank demo\" button and example links": [
+      {
+        "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
+        "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
+        "timestamp": 1795044091486
+      }
+    ],
+    "5. Home page": [
+      {
+        "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
+        "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
+        "timestamp": 1795044091657
+      }
     ]
   }
 }

@@ -22,7 +22,7 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - _Requirements: 4.1, 4.2_
   - [ ]* 2.4 Property test 31
     - **Property 31**
-  - [ ] 2.5 `lib/ui/rule-text.ts` and `lib/ui/token-store.ts`
+  - [-] 2.5 `lib/ui/rule-text.ts` and `lib/ui/token-store.ts`
     - _Requirements: 7.3, 6.11_
   - [ ]* 2.6 Property test 32
     - **Property 32**
@@ -31,16 +31,16 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
 
 - [ ] 3. Checkpoint: all tests pass; ask the user if questions arise
 
-- [ ] 4. Theme foundation
-  - [ ] 4.1 CSS variables, fonts, base layout, focus ring, reduced-motion rules
+- [x] 4. Theme foundation
+  - [x] 4.1 CSS variables, fonts, base layout, focus ring, reduced-motion rules
     - _Requirements: 8.1, 8.2, 8.4_
-  - [ ] 4.2 `RiskBadge` (text + icon + colour)
+  - [x] 4.2 `RiskBadge` (text + icon + colour)
     - _Requirements: 3.2, 3.3_
 
-- [ ] 5. Home page
-  - [ ] 5.1 `SummonForm` with staged progress and error display
+- [x] 5. Home page
+  - [x] 5.1 `SummonForm` with staged progress and error display
     - _Requirements: 1.1, 1.4, 1.5_
-  - [ ] 5.2 "Raise the Gravewood Bank demo" button and example links
+  - [x] 5.2 "Raise the Gravewood Bank demo" button and example links
     - _Requirements: 1.2, 1.3, 1.6_
 
 - [ ] 6. Service page

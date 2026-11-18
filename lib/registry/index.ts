@@ -4,21 +4,14 @@
 import { Redis } from "@upstash/redis";
 import { customAlphabet } from "nanoid";
 import { getEnv } from "../env";
+import { ID_ALPHABET, ID_LENGTH, ID_PATTERN, isServiceId } from "./ids";
 import { RuleSetSchema, SettingsSchema, type RuleSetInput, type Settings } from "../safety/schemas";
 import type { LazarusError, ServiceDefinition } from "../soap/types";
 
 const TTL_SECONDS = 2_592_000; // 30 days
-const ID_ALPHABET =
-  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-const ID_LENGTH = 8;
-const ID_PATTERN = /^[A-Za-z0-9]{8,12}$/;
-
 const newId = customAlphabet(ID_ALPHABET, ID_LENGTH);
 
-/** True when `id` has the shape of a registry service id. Does not touch Redis. */
-export function isServiceId(id: string): boolean {
-  return ID_PATTERN.test(id);
-}
+export { isServiceId };
 
 /** Minimal Redis surface used by the registry. */
 export interface RedisLike {
