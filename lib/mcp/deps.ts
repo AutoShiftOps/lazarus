@@ -8,7 +8,7 @@ import { getEnv } from "../env";
 import type { RateRedis } from "../rate-limit";
 import { registry } from "../registry";
 import { createApprovals, type ApprovalsRedis } from "../safety/approvals";
-import { createTranscripts, type TranscriptRedis } from "../safety/transcript";
+import { createTranscripts, type TranscriptRedis, type Transcripts } from "../safety/transcript";
 import { safePost } from "../soap/fetcher";
 import type { Deps } from "./pipeline";
 
@@ -35,7 +35,10 @@ export function adaptRedis(client: Redis): GatewayRedis {
   };
 }
 
-export function defaultDeps(): Deps {
+/** The pipeline deps, with the full transcript store (the pipeline only needs append; the API also lists). */
+export type DefaultDeps = Deps & { transcripts: Transcripts };
+
+export function defaultDeps(): DefaultDeps {
   const env = getEnv();
   const redis = adaptRedis(new Redis({ url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN }));
   return {

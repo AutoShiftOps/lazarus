@@ -521,6 +521,73 @@
         "chatSessionId": "sess_d6366d51-4e5d-4885-9d78-ec4f1c9b5ca5",
         "timestamp": 1795035487868
       }
+    ],
+    "12.1 `GET /api/services/[id]`": [
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795036299613
+      },
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795036582391
+      }
+    ],
+    "12.2 `PUT rules`, `PATCH settings`": [
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795036582713
+      },
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795036686909
+      }
+    ],
+    "12.3 `GET approvals`, `POST approvals/[aid]`": [
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795036687686
+      },
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795036915499
+      }
+    ],
+    "12.4 `GET transcripts`": [
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795036915834
+      },
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795037146263
+      }
+    ],
+    "12. Management APIs": [
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795037146375
+      }
+    ],
+    "12.5 Property test 24: owner token never leaks": [
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795037146663
+      },
+      {
+        "executionId": "2bdb86d6-f6b8-421b-ac09-c25a55b83e2c",
+        "chatSessionId": "sess_f2a46e95-87e4-48e7-8479-7e308cb602cf",
+        "timestamp": 1795037428668
+      }
     ]
   }
 }

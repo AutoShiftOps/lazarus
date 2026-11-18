@@ -117,6 +117,7 @@ This spec depends on `summon` (ServiceDefinition, Translator, safeFetch, Registr
 2. THE endpoints that resolve Approvals, change Rules, or change settings SHALL require header `x-lazarus-owner: <ownerToken>` and compare hashes in constant time.
 3. FOR a Demo_Service, THE Gateway SHALL allow resolving Approvals without the token, but SHALL still require the token to change Rules or settings.
 4. THE Gateway SHALL never place an Owner_Token in a Transcript, log, error or response other than the one-time summon response.
+5. (Hardening beyond Requirement 10.4.) FOR a service that is not a Demo_Service, `GET /api/services/{id}/approvals` SHALL also require the owner token, with the same HTTP 401 for a missing, malformed or wrong token; for a Demo_Service it SHALL stay public. Approval arguments are always returned redacted, for every caller.
 
 ---
 
@@ -145,6 +146,7 @@ This spec depends on `summon` (ServiceDefinition, Translator, safeFetch, Registr
 3. THE Gateway SHALL redact any JSON key or XML element whose local name matches `/pass(word)?|secret|token|api[-_]?key|authorization|credential|ssn/i`, replacing its value with `[redacted]`, before storing or returning it.
 4. THE Registry SHALL keep the latest 200 entries per service, expiring after 30 days.
 5. THE Gateway SHALL expose `GET /api/services/{id}/transcripts?since=<ISO>` returning entries newest first, capped at 100.
+6. THE `since` parameter SHALL be exclusive: only entries strictly newer than it are returned. IF `since` is present but is not a valid ISO 8601 date THEN THE Gateway SHALL return HTTP 400 with a fixed message. FOR a Demo_Service the endpoint SHALL be public; FOR any other service it SHALL require the owner token, with the same HTTP 401 for a missing, malformed or wrong token. Entries SHALL be redacted again when read.
 
 ---
 
@@ -167,9 +169,12 @@ This spec depends on `summon` (ServiceDefinition, Translator, safeFetch, Registr
 
 #### Acceptance Criteria
 
-1. `GET /api/services/{id}` SHALL return the ServiceDefinition summary, mode (`ghost` boolean), Rules and risk per operation, and never the Owner_Token hash.
-2. `PUT /api/services/{id}/rules` SHALL replace the Rules (owner token required) after validating with zod; invalid Rules SHALL return HTTP 400 with field errors.
-3. `PATCH /api/services/{id}/settings` SHALL toggle `ghost` (owner token required).
+1. `GET /api/services/{id}` SHALL return the ServiceDefinition summary (`id`, `name`, `isDemo`), mode (`ghost` boolean), Rules and, per operation, `name`, `port`, `risk`, `riskReason` and `riskSource`, and never the Owner_Token hash. An unknown or malformed id SHALL return HTTP 404 (a malformed id without touching storage); a storage failure SHALL return HTTP 503 with a fixed message. Every error body SHALL be `{ error, code }`.
+2. `PUT /api/services/{id}/rules` SHALL replace the Rules (owner token required; the body is the bare JSON array of rules, at most 25, unique ids, body at most 32 KB) after validating with zod, and return the saved Rules. Invalid Rules SHALL return HTTP 400 with field errors in the message (at most 500 characters); an oversized body SHALL return HTTP 413; a missing, malformed or wrong owner token SHALL return the same HTTP 401.
+3. `PATCH /api/services/{id}/settings` SHALL toggle `ghost` (owner token required; the body is exactly `{ ghost: boolean }`, extra keys or a non-boolean SHALL return HTTP 400, body at most 4 KB, otherwise HTTP 413) and return the saved settings. Both write endpoints check, in order: id validity (404, no storage call), service lookup (404 or 503), owner token (401), then the body.
 4. `GET /api/services/{id}/approvals` SHALL list pending and recent Approvals (newest first, max 50).
 5. `POST /api/services/{id}/approvals/{approvalId}` SHALL accept `{ decision: "approve" | "deny", note?: string (max 200) }`, subject to Requirement 6.
 6. RESOLVING an Approval that is not `pending` SHALL return HTTP 409.
+7. `GET /api/services/{id}/approvals` SHALL return each Approval with its arguments passed through the redaction of Requirement 8.3; the raw arguments SHALL never leave the server. For a service that is not a Demo_Service it requires the owner token (Requirement 6.5); for a Demo_Service it is public.
+8. `POST /api/services/{id}/approvals/{approvalId}` SHALL validate the approval id against `/^[A-Za-z0-9_-]{1,64}$/` (invalid: HTTP 404, no storage call), reject extra body keys, a decision other than `approve`/`deny` or a note over 200 characters with HTTP 400, cap the body at 4 KB (HTTP 413), sanitise the note, and return the updated Approval (redacted arguments) with HTTP 200. An unknown approval returns HTTP 404; a missing, malformed or wrong owner token on a non-demo service returns the same HTTP 401 (Requirement 6.3 exempts demo services).
+9. `POST /api/services/{id}/approvals/{approvalId}` SHALL allow at most 30 requests per minute per client IP per service; IF exceeded THEN it SHALL return HTTP 429, and IF the rate limiter is unavailable THEN it SHALL fail closed with HTTP 503 and resolve nothing. A 409 body is `{ error: "This approval is no longer pending.", code: "CONFLICT" }`; a 429 body carries code `RATE_LIMITED`.

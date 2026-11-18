@@ -228,6 +228,32 @@ export function isDemoService(service: Pick<ServiceDefinition, "wsdlUrl"> | null
 
 No route exports `runtime` (rejected by `cacheComponents: true`).
 
+**Management API conventions (task 12).** Logic lives in `lib/api/services.ts` as functions taking injected deps; route files only await `params` (a Promise in Next 16) and delegate.
+
+- Ids are validated first: a service id with `isServiceId`, an approval id with `/^[A-Za-z0-9_-]{1,64}$/`. An invalid id returns 404 before any registry or Redis call.
+- Every error body is `{ error, code }` with fixed text. Codes: `NOT_FOUND` (404), `UNAUTHORIZED` (401), `UNAVAILABLE` (503), `INVALID_REQUEST` (400), `TOO_LARGE` (413). Any throw or `ok: false` from the registry, approvals or transcripts maps to the single 503 body "The registry is temporarily unavailable."; no upstream text is returned or logged.
+- Owner auth reads header `x-lazarus-owner` through `authorizeOwner`. A missing, malformed or wrong token returns the same 401 body ("Owner token required."). The token and its hash never appear in any response, log or transcript.
+- JSON bodies are read with a byte cap (`readJsonBody(request, maxBytes)`, default 256 KB; `PUT rules` 32 KB, `PATCH settings` 4 KB); over the cap returns 413 `TOO_LARGE`, bad JSON 400; parser text is never echoed.
+- Write endpoints (`putServiceRules`, `patchServiceSettings`) run in order: id validity (404, no Redis) → service lookup (404/503) → owner auth (401) → body (413/400) → registry save. A registry `INVALID_REQUEST` becomes 400 with its field-error message (at most 500 chars); any other failure or throw becomes the fixed 503. Success returns the saved value re-read from the registry (rules array, or `{ ghost }`).
+- Responses carry `Cache-Control: no-store`.
+- `PUT rules` takes the bare JSON array of rules as its body (no wrapper object), validated by `RuleSetSchema` plus the duplicate-id check in the registry.
+- `GET /api/services/{id}` returns `{ id, name, ghost, isDemo, rules, operations: [{ name, port, risk, riskReason, riskSource }] }`, built field by field from `publicDefinition`, so `ownerTokenHash` can never be included. `isDemo` comes from `isDemoService`, so the UI knows whether approvals are public. A rules or settings read failure gives 503 rather than a partial summary.
+
+**Approvals endpoints (task 12.3).** `listServiceApprovals(deps, id, request)` and `resolveServiceApproval(deps, id, aid, request)` take `{ registry, approvals, rateRedis }`. Routes build these from `defaultDeps()` (a failure there gives the fixed 503).
+
+- Both return approvals as `{ ...approval, args: redactJson(approval.args) }`; the stored raw arguments (needed to execute) never leave the server.
+- Auth: a Demo_Service (`isDemoService`) is public for both endpoints; any other service needs the owner token (identical 401). Requiring the token for the GET on non-demo services is a hardening beyond Requirement 10.4 (see Requirement 6.5).
+- POST order: service id and approval id shape (404, no storage) → service lookup (404/503) → owner auth unless demo (401) → rate limit → body (413/400) → `resolveApproval` → re-read via `getApproval`. `not_found` → 404, `conflict` (not pending, or expired) → 409 `CONFLICT`. Body is zod `.strict()` `{ decision: "approve" | "deny", note?: string (max 200) }`, at most 4 KB; the note is passed through `sanitizeText` and an empty result stores no note.
+- Rate limit: `hit()` with key `rate:approve:{svc}:{ip}`, 30 per 60 s. The IP is the first `x-forwarded-for` entry, else `x-real-ip`, else `unknown`, reduced to `[A-Za-z0-9.:-]` (others become `_`) and cut to 64 characters. Over the limit gives 429 `RATE_LIMITED` with `Retry-After`; any limiter error is the fixed 503 (fail closed, nothing resolved).
+- Error codes gain `CONFLICT` (409) and `RATE_LIMITED` (429).
+
+**Transcripts endpoint (task 12.4).** `listServiceTranscripts(deps, id, request)` takes `{ registry, transcripts }` (`transcripts` is `Pick<Transcripts, "listTranscripts">`). The route builds it from `defaultDeps().transcripts`; a `defaultDeps()` failure gives the fixed 503.
+
+- Order: service id shape (404, no storage) → service lookup (404/503) → owner token unless demo (401) → `since` (400) → `listTranscripts`. Auth runs before `since` parsing, so an unauthenticated caller always sees 401.
+- Access matches approvals: a Demo_Service is public, any other service needs the owner token (identical 401).
+- `since` is optional and **exclusive**: `listTranscripts` keeps only entries whose `ts` is strictly after it (entries with an unparseable `ts` are dropped when `since` is set). A present `since` must match an ISO 8601 date (`YYYY-MM-DD`, optionally with `Thh:mm[:ss[.fff]]` and `Z` or `±hh:mm`), be at most 64 characters, and parse to a real date; otherwise 400 `INVALID_REQUEST` with the fixed text "since must be an ISO 8601 date." (an empty `since=` is also 400). It is normalised with `toISOString()` before reaching the store. `+` in a query string decodes to a space, so callers must encode it as `%2B`.
+- Response: a JSON array, newest first, at most 100 (`listTranscripts` caps at 100 and the handler slices again). Entries are redacted on write, again inside `listTranscripts`, and a third time here (`args` with `redactJson`, `soapRequest`/`soapResponse` with `redactXml`).
+
 ## Correctness Properties
 
 ### Property 16: Destructive never runs unattended by default

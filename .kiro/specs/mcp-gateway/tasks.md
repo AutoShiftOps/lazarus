@@ -90,16 +90,16 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
   - [x] 11.3 Integration test with the MCP SDK `Client` against the handler, using the Gravewood handler as upstream
     - _Requirements: 1, 3_
 
-- [ ] 12. Management APIs
-  - [ ] 12.1 `GET /api/services/[id]`
+- [x] 12. Management APIs
+  - [x] 12.1 `GET /api/services/[id]`
     - _Requirements: 10.1_
-  - [ ] 12.2 `PUT rules`, `PATCH settings`
+  - [x] 12.2 `PUT rules`, `PATCH settings`
     - _Requirements: 10.2, 10.3, 6.2_
-  - [ ] 12.3 `GET approvals`, `POST approvals/[aid]`
+  - [x] 12.3 `GET approvals`, `POST approvals/[aid]`
     - _Requirements: 10.4, 10.5, 10.6, 6.3_
-  - [ ] 12.4 `GET transcripts`
+  - [x] 12.4 `GET transcripts`
     - _Requirements: 8.5_
-  - [ ]* 12.5 Property test 24: owner token never leaks
+  - [x]* 12.5 Property test 24: owner token never leaks
     - **Property 24**
     - _Requirements: 6.4_
 
