@@ -7,6 +7,10 @@
     "3.4 Property test 16": {
       "status": "passed",
       "lastRunTimestamp": 1794964231517
+    },
+    "8.2 Property test 23": {
+      "status": "passed",
+      "lastRunTimestamp": 1795010973747
     }
   },
   "executionHistory": {
@@ -352,6 +356,32 @@
         "executionId": "3cf7fb23-8e6d-4fb0-81d7-05962a684638",
         "chatSessionId": "sess_3d341a35-232e-452f-b429-733e5f8cd314",
         "timestamp": 1795010494432
+      }
+    ],
+    "8.1 Implement `lib/mcp/tools.ts` (`buildTools`, `sanitizeToolName`)": [
+      {
+        "executionId": "82e291a7-a300-4d3b-adfa-649bd9c9eed2",
+        "chatSessionId": "sess_1c408edf-58a3-46d3-bc60-e2356f130c6a",
+        "timestamp": 1795010848154
+      },
+      {
+        "executionId": "82e291a7-a300-4d3b-adfa-649bd9c9eed2",
+        "chatSessionId": "sess_1c408edf-58a3-46d3-bc60-e2356f130c6a",
+        "timestamp": 1795010987386
+      }
+    ],
+    "8. Tool generation": [
+      {
+        "executionId": "82e291a7-a300-4d3b-adfa-649bd9c9eed2",
+        "chatSessionId": "sess_1c408edf-58a3-46d3-bc60-e2356f130c6a",
+        "timestamp": 1795010987603
+      }
+    ],
+    "8.2 Property test 23": [
+      {
+        "executionId": "82e291a7-a300-4d3b-adfa-649bd9c9eed2",
+        "chatSessionId": "sess_1c408edf-58a3-46d3-bc60-e2356f130c6a",
+        "timestamp": 1795010990147
       }
     ]
   }

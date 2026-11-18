@@ -50,9 +50,9 @@ This spec depends on `summon` (ServiceDefinition, Translator, safeFetch, Registr
 
 1. THE Gateway SHALL name each tool after its operation, restricted to `[A-Za-z0-9_-]`, at most 64 characters, and unique within the service (a numeric suffix resolves collisions).
 2. THE Gateway SHALL build each tool's `inputSchema` from the OperationSchema's `inputDescriptor` via `buildZodSchema` and `z.toJSONSchema`.
-3. THE Gateway SHALL build each tool's description from the WSDL documentation when present, otherwise from the operation name, and SHALL append a line `Risk: <risk> — <riskReason>`.
+3. THE Gateway SHALL treat WSDL documentation as untrusted text (tool-poisoning risk). Each tool description SHALL start with the Gateway's own line `Risk: <risk> — <riskReason>`, then a blank line, then the sanitised documentation (or the operation name when there is none). Sanitising SHALL strip control, zero-width and bidi characters, collapse all whitespace (including newlines) to single spaces, cap the text at 400 characters with an ellipsis, and trim. The tool name and the Risk line SHALL never derive from documentation.
 4. THE Gateway SHALL set MCP annotations: `readOnlyHint: true` for read, `destructiveHint: true` for destructive, `idempotentHint: false` for write and destructive.
-5. THE tool description SHALL be at most 1,000 characters.
+5. THE whole tool description (Risk line, blank line and documentation) SHALL be at most 1,000 characters.
 
 ---
 

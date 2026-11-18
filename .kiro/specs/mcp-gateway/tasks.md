@@ -56,10 +56,10 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
     - _Requirements: 4.8, 10.2, 10.3_
   - [x] 7.4 Provide in-memory fakes in `tests/helpers/` implementing the same interfaces
 
-- [ ] 8. Tool generation
-  - [ ] 8.1 Implement `lib/mcp/tools.ts` (`buildTools`, `sanitizeToolName`)
+- [x] 8. Tool generation
+  - [x] 8.1 Implement `lib/mcp/tools.ts` (`buildTools`, `sanitizeToolName`)
     - _Requirements: 2.1–2.5_
-  - [ ]* 8.2 Property test 23
+  - [x]* 8.2 Property test 23
     - **Property 23**
 
 - [ ] 9. Call pipeline

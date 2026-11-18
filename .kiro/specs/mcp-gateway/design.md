@@ -159,6 +159,12 @@ export function buildTools(service: ServiceDefinition): ToolDef[];
 export function sanitizeToolName(raw: string, taken: Set<string>): string;
 ```
 
+`sanitizeToolName` replaces every character outside `[A-Za-z0-9_-]` with `_`, maps an empty result to `op`, caps at 64 characters, resolves collisions with `_2`, `_3`... (truncating the base so the total stays ≤ 64), adds the result to `taken`, and never throws (a non-string input yields `op`).
+
+**Description (untrusted documentation).** WSDL documentation is attacker-controlled text that agents read, so it can carry tool-poisoning instructions. The description is `Risk: <risk> — <riskReason>`, a blank line, then the sanitised documentation (or the operation name if none). Sanitising turns tab/newline-class characters into spaces, strips control and format (zero-width, bidi) characters, collapses whitespace to single spaces, caps at 400 characters with an ellipsis and trims. `riskReason` gets the same treatment capped at 120 characters. The result is at most 1,000 characters. Tool name and Risk line never come from documentation.
+
+Annotations: `openWorldHint: true` always; `readOnlyHint: true` for read; `destructiveHint: true` for destructive; `idempotentHint: false` for write and destructive. Other hints are left unset.
+
 ### `lib/mcp/pipeline.ts`
 
 ```typescript
