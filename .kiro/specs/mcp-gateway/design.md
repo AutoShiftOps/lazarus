@@ -11,7 +11,7 @@ flowchart TD
   Server --> Pipe["lib/mcp/pipeline.ts\nrunCall()"]
   Pipe --> V[validate: buildZodSchema]
   V --> P["lib/safety/policy.ts\ndecide()"]
-  P -->|allow| X[execute: toEnvelope → safeFetch → fromEnvelope]
+  P -->|allow| X[execute: toEnvelope → safePost → fromEnvelope]
   P -->|hold| A["lib/safety/approvals.ts"]
   P -->|ghost| G["lib/safety/ghost.ts"]
   P -->|block| B[tool error]
@@ -27,12 +27,13 @@ flowchart TD
 ## Dependencies
 
 - `@modelcontextprotocol/sdk`: `McpServer` and `WebStandardStreamableHTTPServerTransport` (stateless: `sessionIdGenerator: undefined`, `enableJsonResponse: true`).
-- Reuses from `summon`: `buildZodSchema`, `toEnvelope`, `fromEnvelope`, `safeFetch`, `getService`.
+- Reuses from `summon`: `buildZodSchema`, `toEnvelope` (returns `{ ok, xml, headers }`), `fromEnvelope`, `getService` (returns `{ ok, value }`), and `generateOwnerToken`/`verifyOwnerToken`/`publicDefinition` from `lib/owner-token.ts`.
+- New in this spec: `safePost` in `lib/soap/fetcher.ts` (below). `safeFetch` is GET-only and rejects every non-200, so it cannot carry a SOAP call.
 
 ## Data models (`lib/safety/types.ts`)
 
 ```typescript
-export type Risk = "read" | "write" | "destructive";
+import type { Risk } from "../soap/types"; // single definition lives in lib/soap/types.ts; do not redeclare
 export type Effect = "allow" | "hold" | "block";
 export type CondOp = "gt" | "gte" | "lt" | "lte" | "eq" | "neq" | "contains";
 
@@ -120,6 +121,16 @@ export async function listTranscripts(svc: string, since?: string): Promise<Tran
 
 Redaction is applied inside `appendTranscript` (defence in depth), not only by callers.
 
+### `safePost` (added to `lib/soap/fetcher.ts`)
+
+```typescript
+export async function safePost(url: string, req: {
+  body: string; headers: Record<string, string>; timeoutMs?: number; maxBytes?: number;
+}): Promise<{ ok: true; status: number; body: string } | { ok: false; error: LazarusError }>;
+```
+
+Shares the SSRF machinery of `safeFetch` (DNS pinning through the custom `lookup`, blocked ranges, IP-literal check, dev loopback flag honoured only outside production) by generalising `requestOnce` to take a method, headers and body. Differences from `safeFetch`: method is always `POST`; request headers are limited to an allowlist (`Content-Type`, `SOAPAction`) plus a fixed `User-Agent`; **redirects are never followed** (any 3xx returns a failure, so a hostile upstream cannot bounce the call to an internal address); every HTTP status is returned to the caller with its body (a SOAP Fault arrives as HTTP 500); request body is capped at 256 KB; default timeout 25 000 ms; response cap 5 MB. The caller must pass the bytes from `toEnvelope` and read the response with `fromEnvelope`, which parses untrusted XML safely.
+
 ### `lib/mcp/tools.ts`
 
 ```typescript
@@ -145,10 +156,10 @@ export async function runCall(ctx: {
 
 ### `lib/auth/owner.ts`
 
+Thin module. Token generation, hashing and constant-time verification already exist in `lib/owner-token.ts` (`generateOwnerToken`, `hashOwnerToken`, `verifyOwnerToken`, `publicDefinition`); do not reimplement them.
+
 ```typescript
-export function newOwnerToken(): string;                 // 32 random bytes, base64url
-export async function hashToken(t: string): Promise<string>; // SHA-256 hex
-export function verifyToken(presented: string, storedHash: string): Promise<boolean>; // timingSafeEqual
+export async function authorizeOwner(service: ServiceDefinition, presented: string | null): Promise<boolean>; // verifyOwnerToken against service.ownerTokenHash; false when no hash or no token
 export function isDemoService(wsdlUrl: string, ownOrigin: string): boolean;
 ```
 

@@ -64,7 +64,7 @@ This spec depends on `summon` (ServiceDefinition, Translator, safeFetch, Registr
 
 1. WHEN `tools/call` is received, THE Gateway SHALL execute, in order: validate arguments, redact for logging, decide via Policy_Engine, act on the Decision, write the Transcript entry, return the result.
 2. IF arguments fail validation THEN THE Gateway SHALL return an MCP tool error that lists the missing or invalid fields, and SHALL NOT build an envelope or contact the service.
-3. WHEN the Decision is `allow`, THE Gateway SHALL translate with `toEnvelope`, call the service through `safeFetch`, and translate the response with `fromEnvelope`.
+3. WHEN the Decision is `allow`, THE Gateway SHALL translate with `toEnvelope`, call the service through `safePost`, and translate the response with `fromEnvelope`.
 4. IF the service returns a SOAP Fault THEN THE Gateway SHALL return an MCP tool error whose text is the fault string (max 300 chars), without stack traces or raw XML.
 5. THE Gateway SHALL bound each upstream call to 25 seconds.
 6. IF the upstream is unreachable THEN THE Gateway SHALL return a tool error "The spirit did not answer." and log the cause server-side only.

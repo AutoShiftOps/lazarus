@@ -32,7 +32,7 @@ Build the loop against fakes first (no AWS needed), then the scripted fallback, 
 - [ ] 4. Checkpoint: all tests pass; ask the user if questions arise
 
 - [ ] 5. Budget and rate limits
-  - [ ] 5.1 Move `hit` to `lib/rate-limit.ts` (update Gravewood imports); implement `lib/medium/budget.ts`
+  - [ ] 5.1 `hit` already lives in `lib/rate-limit.ts` (created in gravewood-bank task 8; signature `hit(redis, key, limit, windowSec)` returning `{ allowed, retryAfter }`); implement `lib/medium/budget.ts` on top of it
     - _Requirements: 3.1, 3.2_
 
 - [ ] 6. Bedrock model

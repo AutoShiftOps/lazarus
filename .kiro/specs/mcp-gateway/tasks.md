@@ -6,9 +6,13 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
 
 ## Tasks
 
-- [ ] 1. Safety types and zod schemas
-  - [ ] 1.1 Create `lib/safety/types.ts` (types from the design) and `lib/safety/schemas.ts` (zod for `Rule`, `Condition`, settings, approval decision)
+- [x] 1. Safety types and zod schemas
+  - [x] 1.1 Create `lib/safety/types.ts` (types from the design; import `Risk` from `lib/soap/types`) and `lib/safety/schemas.ts` (zod for `Rule`, `Condition`, settings, approval decision)
     - _Requirements: 4.4, 4.8, 10.2_
+  - [x] 1.2 Add `safePost` to `lib/soap/fetcher.ts` (see design: shares SSRF machinery, POST only, header allowlist, no redirects, any status returned, 256 KB request cap, 25 s default)
+    - _Requirements: 3.3, 3.5, 3.6_
+  - [x] 1.3 Tests in `tests/soap/safepost.test.ts` against a local `node:http` server: body and allowed headers arrive; a disallowed header is dropped; HTTP 500 with an XML body is returned as ok with status 500; a redirect is NOT followed (no second request, failure result); 169.254.169.254, 10.0.0.1 and public-name-resolving-to-private are blocked with zero sockets opened; request over 256 KB rejected before any socket; response over the cap and timeout fail cleanly; production ignores the loopback flag
+    - _Requirements: 3.3, 3.5, 3.6_
 
 - [ ] 2. Redaction
   - [ ] 2.1 Implement `lib/safety/redact.ts` (`redactJson`, `redactXml`, `truncate`)
@@ -39,7 +43,7 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
 - [ ] 5. Checkpoint: all tests pass; ask the user if questions arise
 
 - [ ] 6. Owner authentication
-  - [ ] 6.1 Implement `lib/auth/owner.ts`
+  - [ ] 6.1 Implement `lib/auth/owner.ts` as a thin module (`authorizeOwner`, `isDemoService`); reuse `verifyOwnerToken` from `lib/owner-token.ts`, do not reimplement hashing
     - _Requirements: 6.1, 6.2, 6.3_
   - [ ] 6.2 Unit tests: hash is stable, verify is constant-time path, wrong token fails, demo detection rejects look-alike hosts (`gravewood.evil.com`)
 
@@ -48,7 +52,7 @@ Build the pure safety modules first (types, redact, policy, ghost), then storage
     - _Requirements: 5.1, 5.6, 5.7, 5.9_
   - [ ] 7.2 Implement `lib/safety/transcript.ts`
     - _Requirements: 8.1, 8.2, 8.4_
-  - [ ] 7.3 Add rules and settings accessors to `lib/registry/index.ts`
+  - [ ] 7.3 Add rules and settings accessors to `lib/registry/index.ts` (stored under separate keys, not by rewriting the service JSON; `RedisLike` gains only what is needed; `getService` keeps returning `{ ok, value }`)
     - _Requirements: 4.8, 10.2, 10.3_
   - [ ] 7.4 Provide in-memory fakes in `tests/helpers/` implementing the same interfaces
 
