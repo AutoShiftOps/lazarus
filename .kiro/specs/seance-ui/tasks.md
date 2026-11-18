@@ -22,7 +22,7 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - _Requirements: 4.1, 4.2_
   - [ ]* 2.4 Property test 31
     - **Property 31**
-  - [-] 2.5 `lib/ui/rule-text.ts` and `lib/ui/token-store.ts`
+  - [ ] 2.5 `lib/ui/rule-text.ts` and `lib/ui/token-store.ts`
     - _Requirements: 7.3, 6.11_
   - [ ]* 2.6 Property test 32
     - **Property 32**
@@ -43,10 +43,10 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
   - [x] 5.2 "Raise the Gravewood Bank demo" button and example links
     - _Requirements: 1.2, 1.3, 1.6_
 
-- [ ] 6. Service page
-  - [ ] 6.1 Server component, `not-found`, metadata
+- [x] 6. Service page
+  - [x] 6.1 Server component, `not-found`, metadata
     - _Requirements: 3.1, 3.5, 9.2_
-  - [ ] 6.2 `SpiritCard` list and `McpConfig`
+  - [x] 6.2 `SpiritCard` list and `McpConfig`
     - _Requirements: 3.2, 3.4, 3.6_
 
 - [ ] 7. Commune form

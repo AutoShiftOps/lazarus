@@ -61,6 +61,11 @@
         "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
         "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
         "timestamp": 1795043482519
+      },
+      {
+        "executionId": "4478a8c3-69b5-427d-a09c-7ed000b1fd35",
+        "chatSessionId": "sess_c3457eca-852b-4271-ac66-c15885364165",
+        "timestamp": 1795044512190
       }
     ],
     "4.2 `RiskBadge` (text + icon + colour)": [
@@ -106,6 +111,47 @@
         "executionId": "1e698a2e-0707-4498-9b1a-027f713f5aca",
         "chatSessionId": "sess_f69c0a61-04f2-471b-9245-cf66d81c1ea7",
         "timestamp": 1795044091657
+      }
+    ],
+    "6.1 Server component, `not-found`, metadata": [
+      {
+        "executionId": "4478a8c3-69b5-427d-a09c-7ed000b1fd35",
+        "chatSessionId": "sess_c3457eca-852b-4271-ac66-c15885364165",
+        "timestamp": 1795044509119
+      },
+      {
+        "executionId": "4478a8c3-69b5-427d-a09c-7ed000b1fd35",
+        "chatSessionId": "sess_c3457eca-852b-4271-ac66-c15885364165",
+        "timestamp": 1795044512287
+      },
+      {
+        "executionId": "4478a8c3-69b5-427d-a09c-7ed000b1fd35",
+        "chatSessionId": "sess_c3457eca-852b-4271-ac66-c15885364165",
+        "timestamp": 1795045220501
+      }
+    ],
+    "6.2 `SpiritCard` list and `McpConfig`": [
+      {
+        "executionId": "4478a8c3-69b5-427d-a09c-7ed000b1fd35",
+        "chatSessionId": "sess_c3457eca-852b-4271-ac66-c15885364165",
+        "timestamp": 1795044509214
+      },
+      {
+        "executionId": "4478a8c3-69b5-427d-a09c-7ed000b1fd35",
+        "chatSessionId": "sess_c3457eca-852b-4271-ac66-c15885364165",
+        "timestamp": 1795044512376
+      },
+      {
+        "executionId": "4478a8c3-69b5-427d-a09c-7ed000b1fd35",
+        "chatSessionId": "sess_c3457eca-852b-4271-ac66-c15885364165",
+        "timestamp": 1795045220828
+      }
+    ],
+    "6. Service page": [
+      {
+        "executionId": "4478a8c3-69b5-427d-a09c-7ed000b1fd35",
+        "chatSessionId": "sess_c3457eca-852b-4271-ac66-c15885364165",
+        "timestamp": 1795045220950
       }
     ]
   }

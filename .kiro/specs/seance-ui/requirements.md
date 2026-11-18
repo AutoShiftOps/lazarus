@@ -62,7 +62,7 @@ Depends on: `summon`, `gravewood-bank`, `mcp-gateway` (APIs only; this spec adds
 2. THE Service_Page SHALL show one Spirit_Card per operation with its name, one-line description (documentation, max 140 chars, ellipsised), and Risk_Badge with the `riskReason` as tooltip and as visible text on focus.
 3. Risk SHALL be conveyed by text and icon as well as colour.
 4. THE Service_Page SHALL show a copy-ready MCP client config snippet (JSON) for the endpoint.
-5. IF the service id does not exist THEN THE Service_Page SHALL show a "This spirit has passed on" page with a link home, and HTTP 404.
+5. IF the service id does not exist THEN THE Service_Page SHALL show a "This spirit has passed on" page with a link home and a `noindex` robots tag. Under Cache Components the registry lookup streams inside a `<Suspense>` boundary, so the response status is HTTP 200 (Next.js cannot change the status after streaming starts); a real 404 status is not required.
 6. THE Service_Page SHALL be usable at 360 px width without horizontal scrolling.
 
 ---
