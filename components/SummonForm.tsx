@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { raiseDemo, summonWsdl, type SummonOutcome } from "../lib/ui/summon-client";
-import { STAGE_DELAYS_MS, stageLabel, type SummonKind } from "../lib/ui/summon-stages";
+import type { AwakeningStage } from "../lib/ui/awakening-state";
+import { STAGE_DELAYS_MS, stageKey, stageLabel, type SummonKind } from "../lib/ui/summon-stages";
+import { SpiritAwakening } from "./SpiritAwakening";
 import { setOwnerToken } from "../lib/ui/token-store";
 
 const EXAMPLES = [
@@ -22,6 +24,7 @@ export function SummonForm() {
   const [wsdlUrl, setWsdlUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState("");
+  const [sceneStage, setSceneStage] = useState<AwakeningStage>("fetching");
   const [error, setError] = useState("");
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -37,9 +40,15 @@ export function SummonForm() {
     setBusy(true);
     setError("");
     setStage(stageLabel(kind, 0));
+    setSceneStage(stageKey(kind, 0));
     clearTimers();
     for (const delay of STAGE_DELAYS_MS) {
-      timers.current.push(setTimeout(() => setStage(stageLabel(kind, delay)), delay));
+      timers.current.push(
+        setTimeout(() => {
+          setStage(stageLabel(kind, delay));
+          setSceneStage(stageKey(kind, delay));
+        }, delay),
+      );
     }
     const fetchFn = (input: string, init?: RequestInit): Promise<Response> => fetch(input, init);
     const outcome: SummonOutcome =
@@ -47,6 +56,7 @@ export function SummonForm() {
     clearTimers();
     if (outcome.ok) {
       if (outcome.ownerToken) setOwnerToken(outcome.serviceId, outcome.ownerToken);
+      setSceneStage("raising");
       router.push(`/s/${outcome.serviceId}`);
       return;
     }
@@ -62,6 +72,26 @@ export function SummonForm() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void run("demo")}
+          className="min-h-14 w-full rounded-md bg-candle px-8 py-3 text-lg font-semibold text-background shadow-[0_0_24px_rgba(246,173,85,0.25)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+        >
+          Raise the Gravewood Bank demo
+        </button>
+        <p className="mt-2 text-sm text-muted">
+          A safe practice bank, created just for you. No WSDL needed.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3 text-sm text-muted">
+        <span aria-hidden="true" className="h-px flex-1 bg-border" />
+        <span>or raise your own</span>
+        <span aria-hidden="true" className="h-px flex-1 bg-border" />
+      </div>
+
       <form onSubmit={onSubmit} className="space-y-3" noValidate>
         <label htmlFor="wsdl-url" className="block text-sm font-medium text-text">
           WSDL URL
@@ -83,7 +113,7 @@ export function SummonForm() {
           <button
             type="submit"
             disabled={busy}
-            className={`${buttonBase} border border-spectral bg-surface-raised text-spectral hover:bg-surface`}
+            className={`${buttonBase} border border-border bg-transparent text-spectral hover:border-spectral hover:bg-surface`}
           >
             Summon
           </button>
@@ -107,23 +137,9 @@ export function SummonForm() {
         </div>
       </div>
 
-      <div>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void run("demo")}
-          className={`${buttonBase} bg-candle text-background hover:brightness-110`}
-        >
-          Raise the Gravewood Bank demo
-        </button>
-        <p className="mt-2 text-sm text-muted">
-          A safe practice bank, created just for you. No WSDL needed.
-        </p>
+      <div aria-live="polite" className="min-h-6">
+        {busy ? <SpiritAwakening stage={sceneStage} label={stage} /> : null}
       </div>
-
-      <p aria-live="polite" className="min-h-6 text-spectral">
-        {busy ? stage : ""}
-      </p>
       <div role="alert" className="text-vengeful">
         {error}
       </div>

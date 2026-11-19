@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { cache, Suspense } from "react";
+import { Heartbeat } from "../../../components/Heartbeat";
 import { McpConfig } from "../../../components/McpConfig";
 import { SpiritCard } from "../../../components/SpiritCard";
 import { isServiceId, registry } from "../../../lib/registry";
@@ -99,7 +100,7 @@ function SpiritGrid({ spirits, label }: { spirits: SpiritView[]; label: string }
   return (
     <ul aria-label={label} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {spirits.map((s, i) => (
-        <SpiritCard key={`${s.port}:${s.name}:${i}`} spirit={s} />
+        <SpiritCard key={`${s.port}:${s.name}:${i}`} spirit={s} index={i} />
       ))}
     </ul>
   );
@@ -113,7 +114,10 @@ function ServiceDetails({ view }: { view: ServiceView }) {
     <div className="space-y-10">
       <header className="space-y-2">
         <h1 className="font-display text-3xl leading-tight text-text sm:text-4xl">{view.name}</h1>
-        <p className="text-muted">{count}</p>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+          <p className="text-muted">{count}</p>
+          <Heartbeat />
+        </div>
       </header>
 
       <section aria-labelledby="endpoint-heading" className="space-y-4 rounded-md border border-border bg-surface p-4 sm:p-6">

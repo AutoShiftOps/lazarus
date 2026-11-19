@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { Cinzel, Inter, JetBrains_Mono } from "next/font/google";
+import { Atmosphere } from "../components/Atmosphere";
+import { LazarusMark } from "../components/LazarusMark";
+import { StillToggle } from "../components/StillToggle";
+import { STILL_INIT_SCRIPT } from "../lib/ui/still-mode";
 import "./globals.css";
 
 const cinzel = Cinzel({
@@ -31,8 +34,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${cinzel.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: STILL_INIT_SCRIPT }} />
+      </head>
       <body className="relative flex min-h-full flex-col bg-background text-text">
         <a
           href="#main-content"
@@ -40,19 +47,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        <div className="spirit-mist" aria-hidden="true" />
+        <Atmosphere />
         <header className="relative z-10 border-b border-border">
           <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-4 sm:px-6">
-            <Image
-              src="/lazarus-logo.svg"
-              alt=""
-              width={32}
-              height={32}
-              className="h-8 w-8 shrink-0"
-            />
-            <span className="font-display text-xl tracking-wide text-text">
+            <LazarusMark size={60} priority className="shrink-0" />
+            <span className="relative z-10 font-display text-2xl tracking-wide text-text">
               Lazarus
             </span>
+            <StillToggle />
           </div>
         </header>
         <main

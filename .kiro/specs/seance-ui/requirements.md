@@ -34,7 +34,7 @@ Depends on: `summon`, `gravewood-bank`, `mcp-gateway` (APIs only; this spec adds
 1. THE Home_Page SHALL show the product line "Dead SOAP services, reborn as MCP tools — safely." and a WSDL URL input with a "Summon" button.
 2. THE Home_Page SHALL show a prominent button "Raise the Gravewood Bank demo".
 3. WHEN the demo button is pressed, THE UI SHALL call Demo_Bootstrap, store the Owner_Token in the Token_Store, and navigate to the Service_Page.
-4. WHILE summoning, THE Home_Page SHALL show a progress state that names the stage (fetching, reading the runes, raising spirits) and SHALL disable the button.
+4. WHILE summoning, THE Home_Page SHALL show a progress state that names the stage (fetching, reading the runes, raising spirits) and SHALL disable the button. THE progress state SHALL be a "spirit waking" scene: a grave that stirs, glowing eyes that open, and a spirit that rises and brightens as the stage advances. The stage text SHALL remain the source of truth (aria-live), and each stage SHALL have a distinct static illustration so that reduced-motion and Still mode users still see the progression.
 5. IF summoning fails THEN THE Home_Page SHALL show the API's error message in plain language and keep the input value.
 6. THE Home_Page SHALL list the two public demo WSDLs (Calculator, CountryInfo) as clickable examples that fill the input.
 
@@ -146,6 +146,10 @@ Depends on: `summon`, `gravewood-bank`, `mcp-gateway` (APIs only; this spec adds
 4. THE UI SHALL work with `prefers-reduced-motion: reduce` (no drifting, no flame animation).
 5. THE Home_Page SHALL reach Lighthouse accessibility ≥ 95 in CI-free manual checks, and an automated `axe` run in Playwright SHALL report zero serious or critical violations on Home_Page and Service_Page.
 6. NO UI string SHALL render an Owner_Token or token hash.
+7. THE logo mark SHALL glow like a real lantern flame: a bright core, a layered halo that bleeds softly onto the surroundings, and an irregular flicker, with a faint pair of hollow eyes in the flame for the scary note. The glow SHALL be built from layered SVG/CSS (blurred radial gradients), SHALL not alter the original logo asset file, and SHALL fall back to a steady glow under reduced motion or Still mode.
+8. THE UI SHALL carry a Kiroween atmosphere that tells the story of a dead service waking up: a moonlit graveyard silhouette, drifting mist, a few slowly flying bats, a flickering candle flame, spirits that rise into place when a page loads, and a heartbeat line on a raised service. All of it SHALL be decorative: `aria-hidden`, `pointer-events: none`, never covering or reducing the contrast of text, and built from CSS and inline SVG only (no new dependencies, no images over 20 KB).
+9. THE atmosphere SHALL animate only `transform` and `opacity`, SHALL show at most 3 bats at 360 px width and at most 6 on wider screens, and SHALL NOT cause horizontal scrolling or layout shift.
+10. UNDER `prefers-reduced-motion: reduce` THE bats, mist drift, flame flicker, rising and heartbeat animations SHALL be off (static silhouettes and a steady flame remain). A visible "Still mode" toggle in the header SHALL switch the same animations off for everyone and remember the choice (localStorage in try/catch).
 
 ---
 

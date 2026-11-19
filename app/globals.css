@@ -12,6 +12,20 @@
   --spectral: #4fd1c5;
   --vengeful: #ff6b5b;
   --duration-base: 500ms;
+
+  /* Atmosphere (decorative layers). Peak alphas are checked by tests/ui/contrast.test.ts. */
+  --moon: #e6e1f0;
+  --moon-opacity: 0.13;
+  --star-opacity: 0.16;
+  --bat: #5a4d78;
+  --glow-opacity: 0.16;
+  --sky-glow-opacity: 0.18;
+  --silhouette: #0b0812;
+
+  /* Logo lantern layers. Peak opacities are checked by tests/ui/contrast.test.ts. */
+  --halo-opacity: 0.15;
+  --bloom-opacity: 0.12;
+  --eyes-rest-opacity: 0.22;
 }
 
 @theme inline {
@@ -74,11 +88,10 @@ summary,
   outline-offset: 2px;
 }
 
-/* Drifting spirit mist: fixed, decorative, CSS-only. */
+/* Drifting spirit mist: lives inside .atmosphere, decorative, CSS-only. */
 .spirit-mist {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 0;
   overflow: hidden;
   pointer-events: none;
 }
@@ -131,10 +144,462 @@ summary,
   animation: fade-in 600ms ease both;
 }
 
+/* ---- Kiroween atmosphere (decorative: never interactive, never over text) ---- */
+
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.moon {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: clamp(120px, 16vw, 220px);
+  height: auto;
+  opacity: var(--moon-opacity);
+}
+
+.moon-disc {
+  fill: var(--moon);
+}
+
+.moon-shade {
+  fill: var(--background);
+  opacity: 0.2;
+}
+
+.stars {
+  position: absolute;
+  top: 2%;
+  left: 8%;
+  width: 45%;
+  height: auto;
+  fill: var(--moon);
+  opacity: var(--star-opacity);
+}
+
+.bat {
+  position: absolute;
+  left: 0;
+  width: 40px;
+  height: 20px;
+  will-change: transform;
+}
+
+.bat svg {
+  display: block;
+  fill: var(--bat);
+}
+
+/* Per-bat opacity: 0.25-0.45, checked against the contrast budget in tests. */
+.bat-1 { opacity: 0.3; }
+.bat-2 { opacity: 0.4; }
+.bat-3 { opacity: 0.25; }
+.bat-4 { opacity: 0.45; }
+.bat-5 { opacity: 0.35; }
+.bat-6 { opacity: 0.3; }
+
+.bat-path-ltr {
+  animation: bat-ltr 20s linear infinite both;
+}
+
+.bat-path-rtl {
+  animation: bat-rtl 20s linear infinite both;
+}
+
+.bat-path-ltr-b {
+  animation: bat-ltr-b 20s linear infinite both;
+}
+
+.bat-wing {
+  transform-box: fill-box;
+  animation: bat-flap 0.8s ease-in-out infinite;
+}
+
+.bat-wing-left {
+  transform-origin: right center;
+  --flap-dir: -1;
+}
+
+.bat-wing-right {
+  transform-origin: left center;
+  --flap-dir: 1;
+}
+
+@keyframes bat-ltr {
+  0% { transform: translate3d(-12vw, 0, 0) scale(var(--bat-scale, 1)); }
+  25% { transform: translate3d(20vw, -5vh, 0) scale(var(--bat-scale, 1)); }
+  50% { transform: translate3d(50vw, 3vh, 0) scale(var(--bat-scale, 1)); }
+  75% { transform: translate3d(82vw, -4vh, 0) scale(var(--bat-scale, 1)); }
+  100% { transform: translate3d(112vw, 1vh, 0) scale(var(--bat-scale, 1)); }
+}
+
+@keyframes bat-rtl {
+  0% { transform: translate3d(112vw, 2vh, 0) scale(var(--bat-scale, 1)); }
+  30% { transform: translate3d(76vw, -6vh, 0) scale(var(--bat-scale, 1)); }
+  60% { transform: translate3d(38vw, 4vh, 0) scale(var(--bat-scale, 1)); }
+  100% { transform: translate3d(-12vw, -3vh, 0) scale(var(--bat-scale, 1)); }
+}
+
+@keyframes bat-ltr-b {
+  0% { transform: translate3d(-12vw, 8vh, 0) scale(var(--bat-scale, 1)); }
+  40% { transform: translate3d(40vw, -8vh, 0) scale(var(--bat-scale, 1)); }
+  70% { transform: translate3d(70vw, 2vh, 0) scale(var(--bat-scale, 1)); }
+  100% { transform: translate3d(112vw, -10vh, 0) scale(var(--bat-scale, 1)); }
+}
+
+@keyframes bat-flap {
+  0%,
+  100% { transform: scaleY(1) rotate(0deg); }
+  50% { transform: scaleY(0.45) rotate(calc(var(--flap-dir, 1) * 10deg)); }
+}
+
+@media (max-width: 480px) {
+  .bat-4,
+  .bat-5,
+  .bat-6 {
+    display: none;
+  }
+}
+
+/* Candle-flame flicker on the logo: irregular, 3.6 s loop. */
+.flame-flicker {
+  transform-origin: 50% 90%;
+  animation: flame-flicker 3.6s ease-in-out infinite;
+}
+
+@keyframes flame-flicker {
+  0%,
+  100% { opacity: 1; transform: scale(1); }
+  12% { opacity: 0.88; transform: scale(0.98); }
+  23% { opacity: 1; transform: scale(1.03); }
+  41% { opacity: 0.82; transform: scale(0.97); }
+  55% { opacity: 0.96; transform: scale(1.02); }
+  68% { opacity: 0.86; transform: scale(0.99); }
+  84% { opacity: 1; transform: scale(1.04); }
+}
+
+/* Rising: spirits and "how it works" cards. --i is the card index (80 ms stagger, capped). */
+.rise {
+  animation: rise 600ms ease-out both;
+  animation-delay: calc(min(var(--i, 0), 12) * 80ms);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero heading fades in from fog. filter is allowed here: it is composited and cheap for one element. */
+.fog-in {
+  animation: fog-in 700ms ease-out both;
+}
+
+@keyframes fog-in {
+  from { opacity: 0; filter: blur(6px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+/* Graveyard hero art. */
+.graveyard-shape {
+  fill: var(--silhouette);
+}
+
+.graveyard-sky {
+  opacity: var(--sky-glow-opacity);
+}
+
+.grave-glow {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  opacity: var(--glow-opacity);
+  animation: glow-rise 5s ease-in-out infinite;
+}
+
+@keyframes glow-rise {
+  0% { opacity: 0.4; transform: translateY(6px) scale(0.85); }
+  50% { opacity: 1; transform: translateY(-10px) scale(1); }
+  100% { opacity: 0.4; transform: translateY(6px) scale(0.85); }
+}
+
+/* Heartbeat: stroke-dashoffset draws the ECG line (pathLength is 100). Opacity fades it between beats. */
+.heartbeat-line {
+  stroke-dasharray: 100;
+  animation: heartbeat-trace 1.6s linear infinite;
+}
+
+@keyframes heartbeat-trace {
+  0% { stroke-dashoffset: 100; opacity: 1; }
+  60% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0.2; }
+}
+
+/* ---- Logo lantern (components/LazarusMark.tsx). Layers are decorative and never take pointer events. ---- */
+
+.lantern {
+  position: relative;
+  display: block;
+  isolation: isolate;
+}
+
+.lantern-bloom,
+.lantern-halo,
+.lantern-core,
+.lantern-eyes {
+  position: absolute;
+  pointer-events: none;
+}
+
+.lantern-mark {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Wide faint spectral bloom: a radial gradient (not a box-shadow) so light bleeds onto the page. */
+.lantern-bloom {
+  inset: -110%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 43%, var(--spectral), transparent 62%);
+  opacity: var(--bloom-opacity);
+  animation: lantern-bloom 3.7s ease-in-out infinite;
+}
+
+/* Mid halo in candle amber. The blur radius is static; only transform and opacity animate. */
+.lantern-halo {
+  inset: -35%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 43%, var(--candle), transparent 65%);
+  filter: blur(6px);
+  opacity: var(--halo-opacity);
+  animation: lantern-halo 4.3s ease-in-out infinite;
+}
+
+/* Tight warm-white core, confined to the mark so it never sits under text. */
+.lantern-core {
+  left: 27%;
+  top: 17%;
+  width: 46%;
+  height: 46%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff4d6, rgba(246, 173, 85, 0.5) 45%, transparent 70%);
+  opacity: 0.9;
+}
+
+.lantern-eyes {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: var(--eyes-rest-opacity);
+  animation: lantern-eyes 3.6s ease-in-out infinite;
+}
+
+@keyframes lantern-halo {
+  0%,
+  100% { opacity: var(--halo-opacity); transform: scale(1); }
+  20% { opacity: calc(var(--halo-opacity) * 0.8); transform: scale(0.95); }
+  47% { opacity: var(--halo-opacity); transform: scale(1.06); }
+  72% { opacity: calc(var(--halo-opacity) * 0.7); transform: scale(0.97); }
+}
+
+@keyframes lantern-bloom {
+  0%,
+  100% { opacity: var(--bloom-opacity); }
+  33% { opacity: calc(var(--bloom-opacity) * 0.6); }
+  58% { opacity: calc(var(--bloom-opacity) * 0.9); }
+  81% { opacity: calc(var(--bloom-opacity) * 0.5); }
+}
+
+/* Eyes brighten on the same peaks as the core (flame-flicker 23% and 84%). */
+@keyframes lantern-eyes {
+  0%,
+  100% { opacity: var(--eyes-rest-opacity); }
+  23% { opacity: 0.85; }
+  41% { opacity: var(--eyes-rest-opacity); }
+  84% { opacity: 0.85; }
+}
+
+/* ---- Spirit awakening scene (components/SpiritAwakening.tsx) ----
+ * Each stage is a static state set by data-eyes / data-spirit / data-lit / --glow.
+ * Changes between stages are 300-800 ms transitions of transform and opacity only. */
+
+.awakening {
+  max-width: 100%;
+}
+
+.awakening-scene {
+  display: block;
+  width: 100%;
+  max-width: 24rem;
+  height: auto;
+}
+
+.aw-halo,
+.aw-soil-glow,
+.aw-spirit,
+.aw-mist,
+.aw-rune,
+.aw-eyes-closed,
+.aw-eyes-open,
+.aw-crack,
+.aw-motes {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 700ms ease-out,
+    opacity 700ms ease-out;
+}
+
+.aw-halo {
+  opacity: calc(var(--glow, 0.2) * 0.8);
+  transform: scale(calc(0.5 + var(--glow, 0.2) * 0.5));
+}
+
+.aw-soil-glow {
+  opacity: 0.35;
+}
+
+.awakening[data-spirit="rising"] .aw-soil-glow {
+  opacity: 0;
+}
+
+.aw-spirit {
+  opacity: 0;
+  transform: translateY(56px);
+}
+
+.awakening[data-spirit="rising"] .aw-spirit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.aw-eyes-open {
+  fill: var(--spectral);
+  opacity: 0;
+}
+
+.aw-eyes-closed {
+  opacity: 1;
+}
+
+.awakening[data-eyes="dim"] .aw-eyes-open {
+  opacity: 0.45;
+}
+
+.awakening[data-eyes="blazing"] .aw-eyes-open {
+  opacity: 1;
+  transform: scale(1.35);
+}
+
+.awakening[data-eyes="blazing"] .aw-eyes-closed,
+.awakening[data-eyes="dim"] .aw-eyes-closed {
+  opacity: 0;
+}
+
+.aw-mist {
+  fill: var(--spectral);
+  opacity: 0.05;
+}
+
+.awakening[data-spirit="rising"] .aw-mist {
+  opacity: 0.22;
+  animation: aw-swirl 5s ease-in-out infinite alternate;
+}
+
+.aw-rune {
+  stroke: var(--muted);
+  opacity: 0.25;
+  transition-delay: calc(var(--i, 0) * 120ms);
+}
+
+.aw-rune[data-lit="true"] {
+  stroke: var(--candle);
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.aw-crack {
+  stroke: var(--candle);
+  opacity: 0.7;
+}
+
+.awakening[data-spirit="rising"] .aw-crack {
+  opacity: 0.25;
+}
+
+.aw-motes {
+  fill: var(--muted);
+}
+
+.awakening[data-spirit="rising"] .aw-motes {
+  opacity: 0;
+}
+
+.aw-mote {
+  opacity: 0.6;
+  animation: aw-drift 6s ease-in-out infinite;
+}
+
+.aw-ground {
+  fill: var(--silhouette);
+}
+
+.aw-mound,
+.aw-stone {
+  fill: var(--surface-raised);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+@keyframes aw-drift {
+  0%,
+  100% { opacity: 0.15; transform: translate3d(0, 0, 0); }
+  50% { opacity: 0.7; transform: translate3d(6px, -14px, 0); }
+}
+
+@keyframes aw-swirl {
+  from { transform: translate3d(-8px, 0, 0) scale(1); }
+  to { transform: translate3d(8px, -4px, 0) scale(1.15); }
+}
+
+/*
+ * Motion off: prefers-reduced-motion OR Still mode. The same selector list appears in both rules
+ * (CSS cannot OR a media query with an attribute selector). Bats are hidden, everything else is
+ * static and fully visible.
+ */
 @media (prefers-reduced-motion: reduce) {
   .spirit-mist::before,
-  .spirit-mist::after {
+  .spirit-mist::after,
+  .bat-path-ltr,
+  .bat-path-rtl,
+  .bat-path-ltr-b,
+  .bat-wing,
+  .flame-flicker,
+  .rise,
+  .fog-in,
+  .grave-glow,
+  .heartbeat-line,
+  .lantern-bloom,
+  .lantern-halo,
+  .lantern-eyes,
+  .aw-mote,
+  .awakening[data-spirit="rising"] .aw-mist {
     animation: none;
+  }
+
+  .bat {
+    display: none;
+  }
+
+  /* Stage changes in the awakening scene snap to their end states. */
+  .awakening *,
+  .awakening *::before {
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
   }
 
   *,
@@ -143,4 +608,33 @@ summary,
     scroll-behavior: auto !important;
     transition-duration: 300ms !important;
   }
+}
+
+html[data-still="true"] .spirit-mist::before,
+html[data-still="true"] .spirit-mist::after,
+html[data-still="true"] .bat-path-ltr,
+html[data-still="true"] .bat-path-rtl,
+html[data-still="true"] .bat-path-ltr-b,
+html[data-still="true"] .bat-wing,
+html[data-still="true"] .flame-flicker,
+html[data-still="true"] .rise,
+html[data-still="true"] .fog-in,
+html[data-still="true"] .grave-glow,
+html[data-still="true"] .heartbeat-line,
+html[data-still="true"] .lantern-bloom,
+html[data-still="true"] .lantern-halo,
+html[data-still="true"] .lantern-eyes,
+html[data-still="true"] .aw-mote,
+html[data-still="true"] .awakening[data-spirit="rising"] .aw-mist {
+  animation: none;
+}
+
+html[data-still="true"] .awakening *,
+html[data-still="true"] .awakening *::before {
+  transition-duration: 0ms !important;
+  transition-delay: 0ms !important;
+}
+
+html[data-still="true"] .bat {
+  display: none;
 }
