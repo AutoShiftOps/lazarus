@@ -21,7 +21,7 @@ const MOTES = [
  * source of truth and is rendered under it. Each stage has its own static state, set through
  * data attributes; CSS transitions move between them (see .awakening in globals.css).
  */
-export function SpiritAwakening({ stage, label }: { stage: AwakeningStage; label: string }) {
+export function SpiritAwakening({ stage, label }: { stage: AwakeningStage; label?: string }) {
   const state = awakeningState(stage);
   return (
     <div
@@ -106,7 +106,7 @@ export function SpiritAwakening({ stage, label }: { stage: AwakeningStage; label
         <path className="aw-crack" d="M130 200 L138 188 L132 180 L144 170" fill="none" strokeWidth="1.5" />
         <path className="aw-crack" d="M192 200 L184 186 L192 178" fill="none" strokeWidth="1.5" />
       </svg>
-      <p className="mt-2 text-spectral">{label}</p>
+      {label ? <p className="mt-2 text-spectral">{label}</p> : null}
     </div>
   );
 }

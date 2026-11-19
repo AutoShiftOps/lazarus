@@ -1,6 +1,6 @@
 /** What the "spirit waking" scene shows at each summon stage. Pure, so it can be unit-tested. */
 
-export type AwakeningStage = "fetching" | "reading" | "raising" | "demo-sandbox";
+export type AwakeningStage = "fetching" | "reading" | "stirring" | "raising" | "demo-sandbox";
 
 export interface AwakeningState {
   eyes: "closed" | "dim" | "blazing";
@@ -19,6 +19,7 @@ const STATES: Record<AwakeningStage, AwakeningState> = {
   fetching: BURIED,
   "demo-sandbox": BURIED,
   reading: { eyes: "dim", spirit: "buried", runes: RUNE_COUNT, glow: 0.5 },
+  stirring: { eyes: "blazing", spirit: "buried", runes: RUNE_COUNT, glow: 0.75 },
   raising: { eyes: "blazing", spirit: "rising", runes: RUNE_COUNT, glow: 1 },
 };
 

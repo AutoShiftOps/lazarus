@@ -174,6 +174,23 @@
         "executionId": "7f21603b-d7c5-47fa-8cbb-5cf2fcb52acd",
         "chatSessionId": "sess_3fcca12c-b86c-4415-bafd-b1e2a86955e3",
         "timestamp": 1795047352559
+      },
+      {
+        "executionId": "39c67e92-0f7b-40fa-adcb-b9328195a3bb",
+        "chatSessionId": "sess_3fcca12c-b86c-4415-bafd-b1e2a86955e3",
+        "timestamp": 1795047582243
+      }
+    ],
+    "4.4 Awakening ritual: full-screen overlay, pure ritual timing, compact hero": [
+      {
+        "executionId": "64bee920-255e-4d0b-becc-8a2fde3e1f4d",
+        "chatSessionId": "sess_3fcca12c-b86c-4415-bafd-b1e2a86955e3",
+        "timestamp": 1795047936374
+      },
+      {
+        "executionId": "64bee920-255e-4d0b-becc-8a2fde3e1f4d",
+        "chatSessionId": "sess_3fcca12c-b86c-4415-bafd-b1e2a86955e3",
+        "timestamp": 1795048263277
       }
     ]
   }

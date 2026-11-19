@@ -90,6 +90,14 @@ describe("atmosphere keeps text contrast (peak layer colour over background)", (
     return `#${((mix(16) << 16) | (mix(8) << 8) | mix(0)).toString(16).padStart(6, "0")}`;
   }
 
+  const markSource = readFileSync(join(process.cwd(), "components", "LazarusMark.tsx"), "utf8");
+  const haloStop = /<radialGradient id=\{id\("halo"\)\}>\s*<stop offset="0" stopColor="(#[0-9a-f]{6})" stopOpacity="([\d.]+)"/.exec(
+    markSource,
+  );
+  if (!haloStop) throw new Error("halo gradient stop not found in LazarusMark.tsx");
+  const haloColour = haloStop[1];
+  const haloStopAlpha = Number(haloStop[2]);
+
   const batOpacities = [...css.matchAll(/\.bat-\d\s*\{\s*opacity:\s*([\d.]+);/g)].map((m) =>
     Number(m[1]),
   );
@@ -97,14 +105,16 @@ describe("atmosphere keeps text contrast (peak layer colour over background)", (
 
   const layers: [string, string][] = [
     ["moon", blend(cssVar("moon"), palette.background, Number(cssVar("moon-opacity")))],
-    ["stars", blend(cssVar("moon"), palette.background, Number(cssVar("star-opacity")))],
+    ["stars", blend(cssVar("star"), palette.background, Number(cssVar("star-opacity")))],
     ["brightest bat", blend(cssVar("bat"), palette.background, maxBat)],
     ["grave candle glow", blend(palette.candle, palette.background, Number(cssVar("glow-opacity")))],
     // #8b5cf6 is the sky glow colour hard-coded in components/Graveyard.tsx.
     ["graveyard sky", blend("#8b5cf6", palette.background, Number(cssVar("sky-glow-opacity")))],
-    // Logo lantern: amber halo and teal bloom reach beyond the mark, so they must keep AA.
-    // (The warm core is confined inside the mark box and never sits under text.)
-    ["lantern halo", blend(palette.candle, palette.background, Number(cssVar("halo-opacity")))],
+    // Logo lantern: the white-teal halo and teal bloom reach beyond the mark, so they must keep AA.
+    // The halo's peak alpha is its gradient stop opacity (read from LazarusMark.tsx) times the CSS
+    // opacity; keyframes only ever scale that opacity down. The core, rim light and eyes are drawn
+    // inside the logo box and never sit under text.
+    ["lantern halo", blend(haloColour, palette.background, haloStopAlpha * Number(cssVar("halo-opacity")))],
     ["lantern bloom", blend(palette.spectral, palette.background, Number(cssVar("bloom-opacity")))],
   ];
 

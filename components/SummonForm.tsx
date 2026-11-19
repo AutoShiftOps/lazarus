@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { raiseDemo, summonWsdl, type SummonOutcome } from "../lib/ui/summon-client";
-import type { AwakeningStage } from "../lib/ui/awakening-state";
-import { STAGE_DELAYS_MS, stageKey, stageLabel, type SummonKind } from "../lib/ui/summon-stages";
-import { SpiritAwakening } from "./SpiritAwakening";
+import type { SummonStatus } from "../lib/ui/ritual-timing";
+import type { SummonKind } from "../lib/ui/summon-stages";
+import { AwakeningRitual } from "./AwakeningRitual";
 import { setOwnerToken } from "../lib/ui/token-store";
 
 const EXAMPLES = [
@@ -23,46 +23,39 @@ export function SummonForm() {
   const router = useRouter();
   const [wsdlUrl, setWsdlUrl] = useState("");
   const [busy, setBusy] = useState(false);
-  const [stage, setStage] = useState("");
-  const [sceneStage, setSceneStage] = useState<AwakeningStage>("fetching");
+  const [kind, setKind] = useState<SummonKind>("summon");
+  const [status, setStatus] = useState<SummonStatus>("pending");
   const [error, setError] = useState("");
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const serviceId = useRef("");
 
-  function clearTimers(): void {
-    for (const t of timers.current) clearTimeout(t);
-    timers.current = [];
-  }
-
-  useEffect(() => clearTimers, []);
-
-  async function run(kind: SummonKind): Promise<void> {
+  async function run(next: SummonKind): Promise<void> {
     if (busy) return;
     setBusy(true);
     setError("");
-    setStage(stageLabel(kind, 0));
-    setSceneStage(stageKey(kind, 0));
-    clearTimers();
-    for (const delay of STAGE_DELAYS_MS) {
-      timers.current.push(
-        setTimeout(() => {
-          setStage(stageLabel(kind, delay));
-          setSceneStage(stageKey(kind, delay));
-        }, delay),
-      );
-    }
+    setKind(next);
+    setStatus("pending");
+    serviceId.current = "";
     const fetchFn = (input: string, init?: RequestInit): Promise<Response> => fetch(input, init);
     const outcome: SummonOutcome =
-      kind === "demo" ? await raiseDemo(fetchFn) : await summonWsdl(fetchFn, wsdlUrl.trim());
-    clearTimers();
+      next === "demo" ? await raiseDemo(fetchFn) : await summonWsdl(fetchFn, wsdlUrl.trim());
     if (outcome.ok) {
       if (outcome.ownerToken) setOwnerToken(outcome.serviceId, outcome.ownerToken);
-      setSceneStage("raising");
-      router.push(`/s/${outcome.serviceId}`);
+      serviceId.current = outcome.serviceId;
+      setStatus("success");
       return;
     }
-    setStage("");
+    // The ritual closes at once on failure; the error shows in the form.
     setError(outcome.message);
+    setStatus("failed");
     setBusy(false);
+  }
+
+  function closeRitual(): void {
+    setBusy(false);
+  }
+
+  function finishRitual(): void {
+    if (serviceId.current) router.push(`/s/${serviceId.current}`);
   }
 
   function onSubmit(e: FormEvent<HTMLFormElement>): void {
@@ -137,9 +130,9 @@ export function SummonForm() {
         </div>
       </div>
 
-      <div aria-live="polite" className="min-h-6">
-        {busy ? <SpiritAwakening stage={sceneStage} label={stage} /> : null}
-      </div>
+      {busy ? (
+        <AwakeningRitual kind={kind} summonStatus={status} onDone={finishRitual} onClosed={closeRitual} />
+      ) : null}
       <div role="alert" className="text-vengeful">
         {error}
       </div>

@@ -36,8 +36,10 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - _Requirements: 8.1, 8.2, 8.4_
   - [x] 4.2 `RiskBadge` (text + icon + colour)
     - _Requirements: 3.2, 3.3_
-  - [x] 4.3 Kiroween atmosphere: graveyard hero art, bats, flickering flame, rising spirits, heartbeat line, Still mode toggle
+  - [ ] 4.3 Kiroween atmosphere: graveyard hero art, bats, flickering flame, rising spirits, heartbeat line, Still mode toggle
     - _Requirements: 1.4, 8.7-8.10_
+  - [x] 4.4 Awakening ritual: full-screen overlay, pure ritual timing, compact hero
+    - _Requirements: 1.4, 1.7, 1.8_
 
 - [x] 5. Home page
   - [x] 5.1 `SummonForm` with staged progress and error display

@@ -50,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Atmosphere />
         <header className="relative z-10 border-b border-border">
           <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-4 sm:px-6">
-            <LazarusMark size={60} priority className="shrink-0" />
+            <LazarusMark size={40} variant="plain" className="shrink-0" />
             <span className="relative z-10 font-display text-2xl tracking-wide text-text">
               Lazarus
             </span>

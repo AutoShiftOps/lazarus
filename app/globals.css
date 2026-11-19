@@ -14,8 +14,11 @@
   --duration-base: 500ms;
 
   /* Atmosphere (decorative layers). Peak alphas are checked by tests/ui/contrast.test.ts. */
-  --moon: #e6e1f0;
+  --moon: #e9e4f5;
   --moon-opacity: 0.13;
+  /* Wide screens only: the moon then sits in the gutter beside the 64rem content column. */
+  --moon-opacity-wide: 0.85;
+  --star: #e6e1f0;
   --star-opacity: 0.16;
   --bat: #5a4d78;
   --glow-opacity: 0.16;
@@ -23,9 +26,8 @@
   --silhouette: #0b0812;
 
   /* Logo lantern layers. Peak opacities are checked by tests/ui/contrast.test.ts. */
-  --halo-opacity: 0.15;
+  --halo-opacity: 0.22;
   --bloom-opacity: 0.12;
-  --eyes-rest-opacity: 0.22;
 }
 
 @theme inline {
@@ -168,8 +170,16 @@ summary,
 }
 
 .moon-shade {
-  fill: var(--background);
-  opacity: 0.2;
+  fill: #8d84a8;
+  opacity: 0.35;
+}
+
+/* Bright moon: only where it fits in the side gutter, so it never sits under text. */
+@media (min-width: 1400px) {
+  .moon {
+    width: 160px;
+    opacity: var(--moon-opacity-wide);
+  }
 }
 
 .stars {
@@ -178,7 +188,7 @@ summary,
   left: 8%;
   width: 45%;
   height: auto;
-  fill: var(--moon);
+  fill: var(--star);
   opacity: var(--star-opacity);
 }
 
@@ -266,23 +276,6 @@ summary,
   }
 }
 
-/* Candle-flame flicker on the logo: irregular, 3.6 s loop. */
-.flame-flicker {
-  transform-origin: 50% 90%;
-  animation: flame-flicker 3.6s ease-in-out infinite;
-}
-
-@keyframes flame-flicker {
-  0%,
-  100% { opacity: 1; transform: scale(1); }
-  12% { opacity: 0.88; transform: scale(0.98); }
-  23% { opacity: 1; transform: scale(1.03); }
-  41% { opacity: 0.82; transform: scale(0.97); }
-  55% { opacity: 0.96; transform: scale(1.02); }
-  68% { opacity: 0.86; transform: scale(0.99); }
-  84% { opacity: 1; transform: scale(1.04); }
-}
-
 /* Rising: spirits and "how it works" cards. --i is the card index (80 ms stagger, capped). */
 .rise {
   animation: rise 600ms ease-out both;
@@ -340,87 +333,162 @@ summary,
 
 /* ---- Logo lantern (components/LazarusMark.tsx). Layers are decorative and never take pointer events. ---- */
 
+/*
+ * The box is the logo itself (size x size). The inline SVG is 150% of it, offset by -25%, because its
+ * viewBox adds 128 units of glow padding on every side of the 512-unit logo. z-index -1 keeps the
+ * glow below any in-flow text next to it (the parent must form a stacking context; both uses do).
+ */
 .lantern {
   position: relative;
+  z-index: -1;
   display: block;
   isolation: isolate;
-}
-
-.lantern-bloom,
-.lantern-halo,
-.lantern-core,
-.lantern-eyes {
-  position: absolute;
   pointer-events: none;
 }
 
-.lantern-mark {
-  position: relative;
-  width: 100%;
-  height: 100%;
+.lantern-svg {
+  position: absolute;
+  left: -25%;
+  top: -25%;
+  width: 150%;
+  height: 150%;
+  overflow: visible;
+  pointer-events: none;
 }
 
-/* Wide faint spectral bloom: a radial gradient (not a box-shadow) so light bleeds onto the page. */
-.lantern-bloom {
-  inset: -110%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 43%, var(--spectral), transparent 62%);
+/*
+ * Rest values are the steady "mid-point" look used by reduced motion and Still mode.
+ * One shared 4.2 s family (core, halo, rim, eyes, eye glow) with peaks at 18%, 46% and 79%;
+ * 46% is the big flare. The rim lags 90 ms like light travelling. Bloom is slower (6.5 s).
+ * Only opacity and transform animate; blur radii are static attributes in the SVG.
+ */
+.lm-bloom,
+.lm-halo,
+.lm-core,
+.lm-rim,
+.lm-eyes,
+.lm-eye-glow,
+.lm-spill {
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+}
+
+.lm-bloom {
   opacity: var(--bloom-opacity);
-  animation: lantern-bloom 3.7s ease-in-out infinite;
+  animation: lm-bloom 6.5s ease-in-out infinite;
 }
 
-/* Mid halo in candle amber. The blur radius is static; only transform and opacity animate. */
-.lantern-halo {
-  inset: -35%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 43%, var(--candle), transparent 65%);
-  filter: blur(6px);
-  opacity: var(--halo-opacity);
-  animation: lantern-halo 4.3s ease-in-out infinite;
+.lm-halo {
+  opacity: calc(var(--halo-opacity) * 0.85);
+  animation: lm-halo 4.2s ease-in-out infinite;
 }
 
-/* Tight warm-white core, confined to the mark so it never sits under text. */
-.lantern-core {
-  left: 27%;
-  top: 17%;
-  width: 46%;
-  height: 46%;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff4d6, rgba(246, 173, 85, 0.5) 45%, transparent 70%);
-  opacity: 0.9;
+.lm-core {
+  mix-blend-mode: screen;
+  opacity: 0.6;
+  animation: lm-core 4.2s ease-in-out infinite;
 }
 
-.lantern-eyes {
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: var(--eyes-rest-opacity);
-  animation: lantern-eyes 3.6s ease-in-out infinite;
+.lm-rim {
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  animation: lm-rim 4.2s ease-in-out 90ms infinite;
 }
 
-@keyframes lantern-halo {
+.lm-spill {
+  mix-blend-mode: screen;
+  opacity: 0.6;
+}
+
+.lm-eye-glow {
+  opacity: 0.6;
+  animation: lm-eye-glow 4.2s ease-in-out infinite;
+}
+
+.lm-eyes {
+  opacity: 0.85;
+  animation: lm-eyes 4.2s ease-in-out infinite;
+}
+
+/* Header mark: the same bloom and halo, fainter, and nothing animated. */
+.lantern[data-variant="plain"] .lm-bloom {
+  opacity: calc(var(--bloom-opacity) * 0.6);
+  animation: none;
+}
+
+.lantern[data-variant="plain"] .lm-halo {
+  opacity: calc(var(--halo-opacity) * 0.5);
+  animation: none;
+}
+
+@keyframes lm-bloom {
   0%,
-  100% { opacity: var(--halo-opacity); transform: scale(1); }
-  20% { opacity: calc(var(--halo-opacity) * 0.8); transform: scale(0.95); }
-  47% { opacity: var(--halo-opacity); transform: scale(1.06); }
-  72% { opacity: calc(var(--halo-opacity) * 0.7); transform: scale(0.97); }
+  100% { opacity: var(--bloom-opacity); transform: scale(1); }
+  30% { opacity: calc(var(--bloom-opacity) * 0.7); transform: scale(0.97); }
+  52% { opacity: calc(var(--bloom-opacity) * 1); transform: scale(1.04); }
+  80% { opacity: calc(var(--bloom-opacity) * 0.6); transform: scale(0.98); }
 }
 
-@keyframes lantern-bloom {
+@keyframes lm-halo {
   0%,
-  100% { opacity: var(--bloom-opacity); }
-  33% { opacity: calc(var(--bloom-opacity) * 0.6); }
-  58% { opacity: calc(var(--bloom-opacity) * 0.9); }
-  81% { opacity: calc(var(--bloom-opacity) * 0.5); }
+  100% { opacity: calc(var(--halo-opacity) * 0.6); transform: scale(0.97); }
+  18% { opacity: calc(var(--halo-opacity) * 0.85); transform: scale(1.02); }
+  31% { opacity: calc(var(--halo-opacity) * 0.55); transform: scale(0.96); }
+  46% { opacity: var(--halo-opacity); transform: scale(1.08); }
+  62% { opacity: calc(var(--halo-opacity) * 0.65); transform: scale(0.98); }
+  79% { opacity: calc(var(--halo-opacity) * 0.9); transform: scale(1.04); }
+  90% { opacity: calc(var(--halo-opacity) * 0.6); transform: scale(0.97); }
 }
 
-/* Eyes brighten on the same peaks as the core (flame-flicker 23% and 84%). */
-@keyframes lantern-eyes {
+@keyframes lm-core {
   0%,
-  100% { opacity: var(--eyes-rest-opacity); }
-  23% { opacity: 0.85; }
-  41% { opacity: var(--eyes-rest-opacity); }
-  84% { opacity: 0.85; }
+  100% { opacity: 0.45; transform: scale(0.96); }
+  18% { opacity: 0.65; transform: scale(1.03); }
+  31% { opacity: 0.4; transform: scale(0.94); }
+  46% { opacity: 0.9; transform: scale(1.14); }
+  62% { opacity: 0.45; transform: scale(0.97); }
+  79% { opacity: 0.7; transform: scale(1.05); }
+  90% { opacity: 0.4; transform: scale(0.95); }
+}
+
+@keyframes lm-rim {
+  0%,
+  100% { opacity: 0.4; }
+  18% { opacity: 0.7; }
+  31% { opacity: 0.35; }
+  46% { opacity: 1; }
+  62% { opacity: 0.4; }
+  79% { opacity: 0.8; }
+  90% { opacity: 0.35; }
+}
+
+@keyframes lm-eyes {
+  0%,
+  100% { opacity: 0.4; }
+  18% { opacity: 0.75; }
+  31% { opacity: 0.45; }
+  46% { opacity: 1; }
+  62% { opacity: 0.45; }
+  79% { opacity: 0.85; }
+  90% { opacity: 0.4; }
+}
+
+@keyframes lm-eye-glow {
+  0%,
+  100% { opacity: 0.25; transform: scale(1); }
+  18% { opacity: 0.55; transform: scale(1.04); }
+  31% { opacity: 0.3; transform: scale(1); }
+  46% { opacity: 0.95; transform: scale(1.16); }
+  62% { opacity: 0.3; transform: scale(1); }
+  79% { opacity: 0.65; transform: scale(1.06); }
+  90% { opacity: 0.25; transform: scale(1); }
+}
+
+/* Graveyard ground dissolves into the page background instead of ending in a flat edge. */
+.graveyard-art {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
 }
 
 /* ---- Spirit awakening scene (components/SpiritAwakening.tsx) ----
@@ -566,6 +634,24 @@ summary,
   to { transform: translate3d(8px, -4px, 0) scale(1.15); }
 }
 
+/* Full-screen ritual (components/AwakeningRitual.tsx): a larger scene and a gentle pulse while the
+ * summon is slower than the stages. The pulse animates opacity only. */
+.ritual .awakening-scene {
+  max-width: min(36rem, 92vw);
+  max-height: 55vh;
+  margin-inline: auto;
+}
+
+.ritual-pulse {
+  animation: ritual-pulse 1800ms ease-in-out infinite;
+}
+
+@keyframes ritual-pulse {
+  0%,
+  100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
 /*
  * Motion off: prefers-reduced-motion OR Still mode. The same selector list appears in both rules
  * (CSS cannot OR a media query with an attribute selector). Bats are hidden, everything else is
@@ -578,15 +664,18 @@ summary,
   .bat-path-rtl,
   .bat-path-ltr-b,
   .bat-wing,
-  .flame-flicker,
   .rise,
   .fog-in,
   .grave-glow,
   .heartbeat-line,
-  .lantern-bloom,
-  .lantern-halo,
-  .lantern-eyes,
+  .lm-bloom,
+  .lm-halo,
+  .lm-core,
+  .lm-rim,
+  .lm-eyes,
+  .lm-eye-glow,
   .aw-mote,
+  .ritual-pulse,
   .awakening[data-spirit="rising"] .aw-mist {
     animation: none;
   }
@@ -616,15 +705,18 @@ html[data-still="true"] .bat-path-ltr,
 html[data-still="true"] .bat-path-rtl,
 html[data-still="true"] .bat-path-ltr-b,
 html[data-still="true"] .bat-wing,
-html[data-still="true"] .flame-flicker,
 html[data-still="true"] .rise,
 html[data-still="true"] .fog-in,
 html[data-still="true"] .grave-glow,
 html[data-still="true"] .heartbeat-line,
-html[data-still="true"] .lantern-bloom,
-html[data-still="true"] .lantern-halo,
-html[data-still="true"] .lantern-eyes,
+html[data-still="true"] .lm-bloom,
+html[data-still="true"] .lm-halo,
+html[data-still="true"] .lm-core,
+html[data-still="true"] .lm-rim,
+html[data-still="true"] .lm-eyes,
+html[data-still="true"] .lm-eye-glow,
 html[data-still="true"] .aw-mote,
+html[data-still="true"] .ritual-pulse,
 html[data-still="true"] .awakening[data-spirit="rising"] .aw-mist {
   animation: none;
 }

@@ -83,8 +83,8 @@ describe("motion switch-off", () => {
   it("finds the new animated selectors (guards against a vacuous pass)", () => {
     const selectors = used.flatMap((r) => r.selectors);
     for (const s of [
-      ".bat-path-ltr", ".bat-wing", ".flame-flicker", ".rise", ".fog-in", ".grave-glow", ".heartbeat-line",
-      ".lantern-bloom", ".lantern-halo", ".lantern-eyes", ".aw-mote", '.awakening[data-spirit="rising"] .aw-mist',
+      ".bat-path-ltr", ".bat-wing", ".rise", ".fog-in", ".grave-glow", ".heartbeat-line",
+      ".lm-bloom", ".lm-halo", ".lm-core", ".lm-rim", ".lm-eyes", ".lm-eye-glow", ".aw-mote", '.awakening[data-spirit="rising"] .aw-mist',
     ]) {
       expect(selectors).toContain(s);
     }
@@ -156,8 +156,8 @@ describe("animated properties", () => {
   it("includes the keyframes added by this task", () => {
     const names = keyframes.map((k) => k.name);
     for (const n of [
-      "bat-ltr", "bat-rtl", "bat-ltr-b", "bat-flap", "flame-flicker", "rise", "fog-in", "glow-rise", "heartbeat-trace",
-      "lantern-halo", "lantern-bloom", "lantern-eyes", "aw-drift", "aw-swirl",
+      "bat-ltr", "bat-rtl", "bat-ltr-b", "bat-flap", "rise", "fog-in", "glow-rise", "heartbeat-trace",
+      "lm-halo", "lm-bloom", "lm-core", "lm-rim", "lm-eyes", "lm-eye-glow", "aw-drift", "aw-swirl",
     ]) {
       expect(names).toContain(n);
     }
@@ -189,13 +189,123 @@ describe("logo lantern and spirit awakening", () => {
   const mark = read("components", "LazarusMark.tsx");
   const scene = read("components", "SpiritAwakening.tsx");
 
-  it("every LazarusMark glow layer is aria-hidden and the image keeps its alt prop", () => {
-    for (const cls of ["lantern-bloom", "lantern-halo", "lantern-core"]) {
-      expect(mark).toMatch(new RegExp(`className="${cls}[^"]*"\\s+aria-hidden="true"`));
+  const BRACES = [
+    "M238 222 c -11 0 -11 5 -11 13 c 0 9 -4 11 -10 11 c 6 0 10 2 10 11 c 0 8 0 13 11 13",
+    "M278 222 c 11 0 11 5 11 13 c 0 9 4 11 10 11 c -6 0 -10 2 -10 11 c 0 8 0 13 -11 13",
+  ];
+
+  it("the mark is one aria-hidden inline SVG that draws the untouched logo via <image href>", () => {
+    expect(mark).toMatch(/<svg\s[^>]*viewBox="-128 -128 768 768"[^>]*aria-hidden="true"/);
+    expect((mark.match(/<svg\b/g) ?? []).length).toBe(1);
+    expect(mark).toContain('<image href="/lazarus-logo.svg" x="0" y="0" width="512" height="512" />');
+    expect(mark).not.toContain("next/image");
+    for (const old of ["lantern-bloom", "lantern-halo", "lantern-core", "lantern-eyes"]) {
+      expect(mark).not.toContain(old);
     }
-    expect(mark).toMatch(/<svg\s[^>]*className="lantern-eyes"[^>]*aria-hidden="true"/);
-    expect(mark).toContain("alt={alt}");
-    expect(mark).toContain('src="/lazarus-logo.svg"');
+  });
+
+  it("the burning eyes reuse the logo's brace paths and no other eye shapes exist", () => {
+    const svg = read("public", "lazarus-logo.svg");
+    for (const d of BRACES) {
+      expect(svg, "brace path exists in the logo asset").toContain(d);
+      expect(mark, "brace path is redrawn in the mark").toContain(d);
+    }
+    // Both braces are drawn twice (sharp stroke + blurred glow): once per group, via the constants.
+    expect((mark.match(/<path d=\{BRACE_LEFT\} \/>/g) ?? []).length).toBe(2);
+    expect((mark.match(/<path d=\{BRACE_RIGHT\} \/>/g) ?? []).length).toBe(2);
+    expect(mark).not.toContain("<circle");
+    // Every ellipse is a centred glow layer (cx 256); none sits left or right of centre like an eye.
+    const ellipses = [...mark.matchAll(/<ellipse\b[^>]*>/g)].map((m) => m[0]);
+    expect(ellipses.length).toBeGreaterThanOrEqual(4);
+    for (const el of ellipses) {
+      expect(/cx="(\d+)"/.exec(el)?.[1], el).toBe("256");
+    }
+  });
+
+  it("the plain variant has only the bloom and halo; the lantern variant adds the rest", () => {
+    const [plainPart, fullPart] = mark.split("<image href");
+    expect(plainPart).toContain('className="lm-bloom"');
+    expect(plainPart).toContain('className="lm-halo"');
+    for (const cls of ["lm-rim", "lm-core", "lm-eyes", "lm-eye-glow", "lm-spill"]) {
+      expect(plainPart).not.toContain(`className="${cls}"`);
+      expect(fullPart).toContain(`className="${cls}"`);
+    }
+    expect(css).toMatch(/\.lantern\[data-variant="plain"\] \.lm-halo\s*\{[^}]*animation:\s*none/);
+    expect(css).toMatch(/\.lantern\[data-variant="plain"\] \.lm-bloom\s*\{[^}]*animation:\s*none/);
+  });
+
+  it("the header uses the plain mark and the hero uses the full lantern", () => {
+    expect(read("app", "layout.tsx")).toMatch(/<LazarusMark\s[^>]*variant="plain"/);
+    const hero = /<LazarusMark\s[^>]*>/.exec(read("app", "page.tsx"))?.[0] ?? "";
+    expect(hero).not.toContain('variant="plain"');
+    expect(Number(/size=\{(\d+)\}/.exec(hero)?.[1])).toBeGreaterThanOrEqual(128);
+  });
+
+  it("lantern layers never take pointer events and sit below text", () => {
+    const lantern = topLevelRules(css).find((r) => r.selectors.includes(".lantern"));
+    expect(lantern?.body).toMatch(/pointer-events:\s*none/);
+    expect(lantern?.body).toMatch(/z-index:\s*-1/);
+    const svg = topLevelRules(css).find((r) => r.selectors.includes(".lantern-svg"));
+    expect(svg?.body).toMatch(/pointer-events:\s*none/);
+    expect(svg?.body).toMatch(/overflow:\s*visible/);
+    const layers = topLevelRules(css).find((r) => r.selectors.includes(".lm-bloom") && r.selectors.includes(".lm-eyes"));
+    expect(layers?.body).toMatch(/pointer-events:\s*none/);
+    expect(layers?.body).toMatch(/transform-box:\s*fill-box/);
+  });
+
+  it("the lm-* keyframes animate only opacity and transform, share 4.2 s (bloom 6.5 s), rim lags 90 ms", () => {
+    const lm = keyframes.filter((k) => k.name.startsWith("lm-"));
+    expect(lm.map((k) => k.name).sort()).toEqual(
+      ["lm-bloom", "lm-core", "lm-eye-glow", "lm-eyes", "lm-halo", "lm-rim"],
+    );
+    for (const kf of lm) {
+      const decls = [...kf.body.matchAll(/([\w-]+)\s*:/g)].map((m) => m[1]);
+      expect(decls.length).toBeGreaterThan(0);
+      for (const prop of decls) expect(["opacity", "transform"], `${kf.name} uses ${prop}`).toContain(prop);
+    }
+    const anim = (name: string): string =>
+      topLevelRules(css).find((r) => r.selectors.length === 1 && r.selectors[0] === `.${name}`)?.body ?? "";
+    for (const n of ["lm-halo", "lm-core", "lm-rim", "lm-eyes", "lm-eye-glow"]) {
+      expect(anim(n), n).toMatch(new RegExp(`animation:\\s*${n}\\s+4\\.2s`));
+    }
+    expect(anim("lm-bloom")).toMatch(/animation:\s*lm-bloom\s+6\.5s/);
+    expect(anim("lm-rim")).toMatch(/animation:\s*lm-rim\s+4\.2s\s+\S+\s+90ms/);
+  });
+
+  it("the halo keyframes never exceed the --halo-opacity peak that the contrast test budgets", () => {
+    const body = keyframes.find((k) => k.name === "lm-halo")?.body ?? "";
+    const opacities = [...body.matchAll(/opacity:\s*([^;]+);/g)].map((m) => m[1].trim());
+    expect(opacities.length).toBeGreaterThan(3);
+    for (const o of opacities) {
+      const k = o === "var(--halo-opacity)" ? 1 : Number(/^calc\(var\(--halo-opacity\) \* ([\d.]+)\)$/.exec(o)?.[1]);
+      expect(k, o).toBeGreaterThan(0);
+      expect(k, o).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("the pocket spill is clipped to the front-pocket shape", () => {
+    expect(mark).toContain("M104 304 L256 392 L408 304 L408 444 Q408 464 388 464 L124 464 Q104 464 104 444 Z");
+    expect(mark).toMatch(/<g clipPath=\{ref\("pocket"\)\}/);
+  });
+
+  it("the moon is a pale disc with light craters, bright only in the side gutter", () => {
+    expect(css).toMatch(/--moon:\s*#e9e4f5;/);
+    expect(css).toMatch(/\.moon-shade\s*\{\s*fill:\s*#[0-9a-f]{6};\s*opacity:\s*0\.3\d*;/);
+    expect(css).not.toMatch(/\.moon-shade\s*\{[^}]*var\(--background\)/);
+    const wide = css.indexOf("@media (min-width: 1400px)");
+    expect(wide).toBeGreaterThanOrEqual(0);
+    const body = blockAt(css, wide);
+    expect(body).toMatch(/\.moon\s*\{[^}]*opacity:\s*var\(--moon-opacity-wide\)/);
+    // 160 px wide + 4 px offset must fit beside the 64rem (1024 px) content column at 1400 px.
+    const width = Number(/width:\s*(\d+)px/.exec(body)?.[1]);
+    expect(width + 4).toBeLessThanOrEqual((1400 - 1024) / 2);
+    expect(css).toMatch(/--moon-opacity-wide:\s*0\.85;/);
+  });
+
+  it("the graveyard fades into the page background with a bottom mask", () => {
+    expect(read("components", "Graveyard.tsx")).toContain("graveyard-art");
+    const rule = topLevelRules(css).find((r) => r.selectors.includes(".graveyard-art"));
+    expect(rule?.body).toMatch(/mask-image:\s*linear-gradient\(to bottom,[^)]*transparent 100%\)/);
   });
 
   it("the SpiritAwakening scene svg is aria-hidden and the stage label is real text", () => {
@@ -203,23 +313,10 @@ describe("logo lantern and spirit awakening", () => {
     expect(scene).toContain("{label}");
   });
 
-  it("the stage text lives in an aria-live region in SummonForm", () => {
-    expect(read("components", "SummonForm.tsx")).toMatch(/aria-live="polite"[^>]*>\s*\{busy \? <SpiritAwakening/);
-  });
-
-  it("lantern layers and the awakening scene never take pointer events", () => {
-    const rule = topLevelRules(css).find((r) => r.selectors.includes(".lantern-bloom"));
-    expect(rule?.selectors).toEqual([".lantern-bloom", ".lantern-halo", ".lantern-core", ".lantern-eyes"]);
-    expect(rule?.body).toMatch(/pointer-events:\s*none/);
-    expect(rule?.body).toMatch(/position:\s*absolute/);
-  });
-
-  it("the lantern core stays inside the mark box (it never sits under text)", () => {
-    const rule = topLevelRules(css).find((r) => r.selectors.length === 1 && r.selectors[0] === ".lantern-core");
-    expect(rule).toBeDefined();
-    const px = (prop: string): number => Number(new RegExp(`${prop}:\\s*([\\d.]+)%`).exec(rule?.body ?? "")?.[1]);
-    expect(px("left") + px("width")).toBeLessThanOrEqual(100);
-    expect(px("top") + px("height")).toBeLessThanOrEqual(100);
+  it("the stage text lives in an aria-live region in AwakeningRitual", () => {
+    expect(read("components", "AwakeningRitual.tsx")).toMatch(
+      /aria-live="polite"[^>]*>\s*\{ritualLabel\(kind, state\.stageIndex\)\}/,
+    );
   });
 
   it("reduced motion and Still mode zero the awakening transitions but keep end states", () => {

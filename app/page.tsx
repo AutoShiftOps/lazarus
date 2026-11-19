@@ -22,21 +22,25 @@ export default function Home() {
   return (
     <div className="space-y-12">
       <section className="gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-center">
-        <div className="relative z-10 space-y-6">
-          <LazarusMark size={104} className="mb-2 block" />
-          <p className="font-display text-lg text-spectral">
+        <div className="relative z-10 space-y-4 sm:space-y-6">
+          <p className="font-display text-base text-spectral sm:text-lg">
             Your dead SOAP service has a pulse again.
           </p>
-          <h1 className="fog-in font-display text-3xl leading-tight text-text sm:text-4xl">
+          <h1 className="fog-in font-display text-2xl leading-tight text-text sm:text-4xl">
             Dead SOAP services, reborn as MCP tools — safely.
           </h1>
-          <p className="max-w-prose text-muted">
+          <p className="max-w-prose text-sm text-muted sm:text-base">
             Lazarus turns legacy SOAP web services into live MCP servers, so any AI agent can call
             them in plain JSON.
           </p>
           <SummonForm />
         </div>
-        <Graveyard className="mx-auto mt-8 w-56 sm:w-72 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:w-full" />
+        <div className="relative z-10 mt-8 lg:col-start-2 lg:row-start-1 lg:mt-0">
+          <Graveyard className="mx-auto w-56 sm:w-72 lg:w-full" />
+          <div className="hidden justify-center lg:flex">
+            <LazarusMark size={144} className="block" />
+          </div>
+        </div>
       </section>
 
       <section aria-labelledby="how-it-works" className="space-y-4">

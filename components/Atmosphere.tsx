@@ -44,14 +44,15 @@ export function Atmosphere() {
       <svg className="moon" viewBox="0 0 200 200" focusable="false">
         <defs>
           <radialGradient id="moon-glow">
-            <stop offset="30%" style={{ stopColor: "var(--moon)", stopOpacity: 1 }} />
+            <stop offset="30%" style={{ stopColor: "var(--moon)", stopOpacity: 0.4 }} />
             <stop offset="100%" style={{ stopColor: "var(--moon)", stopOpacity: 0 }} />
           </radialGradient>
         </defs>
         <circle cx="100" cy="100" r="100" fill="url(#moon-glow)" />
-        <circle className="moon-disc" cx="100" cy="100" r="34" />
-        <circle className="moon-shade" cx="88" cy="92" r="6" />
-        <circle className="moon-shade" cx="112" cy="108" r="4" />
+        <circle className="moon-disc" cx="100" cy="100" r="36" />
+        <circle className="moon-shade" cx="88" cy="90" r="7" />
+        <circle className="moon-shade" cx="113" cy="107" r="5" />
+        <circle className="moon-shade" cx="97" cy="116" r="3.5" />
       </svg>
       <svg className="stars" viewBox="0 0 400 200" preserveAspectRatio="none" focusable="false">
         <circle cx="60" cy="40" r="1.6" />

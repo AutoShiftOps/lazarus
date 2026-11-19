@@ -19,6 +19,10 @@ describe("awakeningState", () => {
     expect(awakeningState("raising")).toEqual({ eyes: "blazing", spirit: "rising", runes: RUNE_COUNT, glow: 1 });
   });
 
+  it("stirring: eyes blazing, spirit still buried, between reading and raising", () => {
+    expect(awakeningState("stirring")).toEqual({ eyes: "blazing", spirit: "buried", runes: RUNE_COUNT, glow: 0.75 });
+  });
+
   it("an unknown stage defaults to the earliest state", () => {
     for (const s of ["", "nonsense", "toString", "__proto__"]) {
       expect(awakeningState(s)).toEqual(awakeningState("fetching"));

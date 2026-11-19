@@ -2,7 +2,7 @@
 export function Graveyard({ className = "" }: { className?: string }) {
   return (
     <div className={`graveyard pointer-events-none ${className}`} aria-hidden="true">
-      <svg viewBox="0 0 480 300" width="480" height="300" focusable="false" className="h-auto w-full">
+      <svg viewBox="0 0 480 300" width="480" height="300" focusable="false" className="graveyard-art h-auto w-full">
         <defs>
           <radialGradient id="sky-glow">
             <stop offset="0%" style={{ stopColor: "#8b5cf6", stopOpacity: 1 }} />
