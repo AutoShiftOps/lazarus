@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import {
   ritualLabel,
   ritualSceneStage,
@@ -11,6 +12,17 @@ import type { SummonKind } from "../lib/ui/summon-stages";
 import { SpiritAwakening } from "./SpiritAwakening";
 
 const TICK_MS = 100;
+
+const subscribeNever = (): (() => void) => () => {};
+
+/** False on the server and during hydration, true on the client afterwards (no hydration mismatch). */
+function useMounted(): boolean {
+  return useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false,
+  );
+}
 
 interface Props {
   kind: SummonKind;
@@ -35,6 +47,7 @@ function detectReduced(): boolean {
  * is decorative. Timing comes from the pure `ritualState`.
  */
 export function AwakeningRitual({ kind, summonStatus, onDone, onClosed }: Props) {
+  const mounted = useMounted();
   const [reduced] = useState(detectReduced);
   const [skipped, setSkipped] = useState(false);
   const [clock, setClock] = useState<{ elapsedMs: number; settledAtMs: number | undefined }>({
@@ -78,11 +91,12 @@ export function AwakeningRitual({ kind, summonStatus, onDone, onClosed }: Props)
   // Move focus into the overlay, give it back on close.
   useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!mounted) return;
     skipRef.current?.focus();
     return () => {
       if (opener && opener.isConnected) opener.focus();
     };
-  }, []);
+  }, [mounted]);
 
   const state = ritualState({
     elapsedMs: clock.elapsedMs,
@@ -111,13 +125,17 @@ export function AwakeningRitual({ kind, summonStatus, onDone, onClosed }: Props)
     }
   }
 
-  return (
+  if (!mounted || typeof document === "undefined") return null;
+
+  // Portalled to <body>: the page container is transformed (animated), which would turn a fixed
+  // overlay into one that only covers its own column.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Raising a spirit"
       onKeyDown={onKeyDown}
-      className="ritual fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 overflow-hidden bg-background px-4"
+      className="ritual fixed inset-0 z-[1000] flex h-dvh w-screen flex-col items-center justify-center gap-6 overflow-hidden bg-background px-4"
     >
       <div aria-hidden="true" className={`w-full ${state.pulseLast ? "ritual-pulse" : ""}`}>
         <SpiritAwakening stage={ritualSceneStage(kind, state.stageIndex)} />
@@ -133,6 +151,7 @@ export function AwakeningRitual({ kind, summonStatus, onDone, onClosed }: Props)
       >
         Skip
       </button>
-    </div>
+    </div>,
+    document.body,
   );
 }

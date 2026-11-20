@@ -289,6 +289,18 @@
         "chatSessionId": "sess_a079c3a3-5088-4c54-9dfd-603b1a920120",
         "timestamp": 1795202584602
       }
+    ],
+    "4.6 Fix awakening overlay (portal) and redraw spirit as a realistic ghost": [
+      {
+        "executionId": "4e9c5f83-a291-4a4b-acf1-ca121e01ed11",
+        "chatSessionId": "sess_c8e5a99c-7155-4275-a536-a668d043f6cb",
+        "timestamp": 1795203697353
+      },
+      {
+        "executionId": "4e9c5f83-a291-4a4b-acf1-ca121e01ed11",
+        "chatSessionId": "sess_c8e5a99c-7155-4275-a536-a668d043f6cb",
+        "timestamp": 1795204303692
+      }
     ]
   }
 }

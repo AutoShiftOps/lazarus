@@ -13,6 +13,15 @@ describe("AwakeningRitual source", () => {
     expect(ritual).toMatch(/z-\[(\d{3,})\]/);
   });
 
+  it("portals to document.body after mount, covering the viewport above the header", () => {
+    expect(ritual).toContain("createPortal(");
+    expect(ritual).toContain("document.body,");
+    expect(ritual).toContain("useSyncExternalStore");
+    expect(ritual).toMatch(/\bh-dvh\b/);
+    expect(ritual).toMatch(/\bw-screen\b/);
+    expect(ritual).toMatch(/bg-background/);
+  });
+
   it("has a Skip button that is a real, focusable button", () => {
     expect(ritual).toMatch(/<button[^>]*type="button"[\s\S]*?>\s*Skip\s*<\/button>/);
     expect(ritual).toMatch(/skipRef\.current\?\.focus\(\)/);

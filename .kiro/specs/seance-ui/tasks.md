@@ -1,4 +1,4 @@
-# Implementation Plan: Seance UI
+﻿# Implementation Plan: Seance UI
 
 ## Overview
 
@@ -39,6 +39,17 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
   - [ ] 4.3 Kiroween atmosphere: graveyard hero art, bats, flickering flame, rising spirits, heartbeat line, Still mode toggle
     - _Requirements: 1.4, 8.7-8.10_
   - [x] 4.4 Awakening ritual: full-screen overlay, pure ritual timing, compact hero
+  - [x] 4.6 Fix awakening overlay (portal) and redraw spirit as a realistic ghost
+    - Do not touch public/lazarus-logo.svg or .env.local. Keep public APIs of lib/ui/ritual-timing.ts and lib/ui/awakening-state.ts unchanged. Do not commit.
+    - Overlay: render AwakeningRitual through createPortal(..., document.body), client only, guard for undefined document, mount after hydration (useSyncExternalStore or effect flag, no hydration mismatch). Cover full viewport (inset-0, h-dvh/w-screen), opaque background, z-index above header and Atmosphere.
+    - Test (jsdom): when open the overlay parent is document.body, not inside the form container; body scroll lock restores on close. Update ritual-source.test.ts only if it breaks.
+    - Redraw components/SpiritAwakening.tsx (original inline SVG, under 12 KB, no external assets): layers back to front = moon glow, drifting ground mist bands, grave mound with soil cracks and tombstone at bottom, ghost, front mist wisps. Ghost: tall translucent bluish-white robe (55-75% opacity), vertical gradient fading to transparent, tattered hem, long wispy tapering tail, bowed/hooded head with faint face, hollow dark eye sockets with cold teal glow, slightly open mouth, two thin arms reaching up and out in last stage. Static SVG filter (feGaussianBlur + feTurbulence/feDisplacementMap, fixed seed, never animated), faint inner glow and teal/white rim light.
+    - Stages (names from awakening-state.ts): fetching = quiet grave, faint light in cracks, cold mist; reading = tombstone runes glow one by one; stirring = soil trembles (tiny translate), pale fingers push through mound, mist thickens; awake = ghost rises in one smooth motion, head lifts, eyes ignite, arms spread, tail trails into mist, slow breathing glow.
+    - Animation: transform and opacity only, CSS keyframes; idle float/sway when awake; rise uses clip-path on a non-animated wrapper with ghost translateY animated behind a fixed mask. Reduced motion / Still mode: static state per stage, no keyframes, same layout. Scene aria-hidden; stage text region stays source of truth.
+    - Remove leftover flame-with-eyes artwork from this scene; verify no component renders SpiritAwakening outside the overlay (no duplicate on home page).
+    - Tests: update tests/ui/awakening-state.test.ts and tests/ui/ritual-source.test.ts only as needed; add source test that SpiritAwakening animates only transform/opacity and has stage classes/attributes for all four stages.
+    - Verify: npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
+    - _Requirements: 1.4, 1.7_
     - _Requirements: 1.4, 1.7, 1.8_
 
 - [x] 5. Home page
@@ -55,11 +66,11 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
 
 - [ ] 7. Commune form
   - [ ] 7.1 `CommuneForm` calling the MCP endpoint
-    - _Requirements: 4.1–4.4_
+    - _Requirements: 4.1â€“4.4_
 
 - [ ] 8. Transcript
   - [ ] 8.1 `TranscriptPanel` with expandable four-step view and `aria-live`
-    - _Requirements: 5.1–5.6_
+    - _Requirements: 5.1â€“5.6_
 
 - [x] 9. Inbox and Candle
   - [x] 9.1 `useApprove` hook (single in-flight request, error mapping)

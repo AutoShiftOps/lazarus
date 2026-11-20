@@ -492,8 +492,9 @@ summary,
 }
 
 /* ---- Spirit awakening scene (components/SpiritAwakening.tsx) ----
- * Each stage is a static state set by data-eyes / data-spirit / data-lit / --glow.
- * Changes between stages are 300-800 ms transitions of transform and opacity only. */
+ * Each stage is a static state set by data-phase / data-eyes / data-spirit / --glow.
+ * Everything animates transform and opacity only. Stage changes are transitions; the rise uses a
+ * fixed clip-path mask (in the SVG), only the ghost's translateY moves behind it. */
 
 .awakening {
   max-width: 100%;
@@ -507,14 +508,10 @@ summary,
 }
 
 .aw-halo,
-.aw-soil-glow,
-.aw-spirit,
-.aw-mist,
 .aw-rune,
-.aw-eyes-closed,
-.aw-eyes-open,
-.aw-crack,
-.aw-motes {
+.aw-hand,
+.aw-cracks,
+.aw-mist {
   transform-box: fill-box;
   transform-origin: center;
   transition:
@@ -522,99 +519,115 @@ summary,
     opacity 700ms ease-out;
 }
 
+.aw-ghost,
+.aw-head,
+.aw-arm,
+.aw-eyes,
+.aw-float,
+.aw-sway,
+.aw-breathe,
+.aw-mound-g {
+  transform-box: view-box;
+}
+
 .aw-halo {
   opacity: calc(var(--glow, 0.2) * 0.8);
-  transform: scale(calc(0.5 + var(--glow, 0.2) * 0.5));
-}
-
-.aw-soil-glow {
-  opacity: 0.35;
-}
-
-.awakening[data-spirit="rising"] .aw-soil-glow {
-  opacity: 0;
-}
-
-.aw-spirit {
-  opacity: 0;
-  transform: translateY(56px);
-}
-
-.awakening[data-spirit="rising"] .aw-spirit {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.aw-eyes-open {
-  fill: var(--spectral);
-  opacity: 0;
-}
-
-.aw-eyes-closed {
-  opacity: 1;
-}
-
-.awakening[data-eyes="dim"] .aw-eyes-open {
-  opacity: 0.45;
-}
-
-.awakening[data-eyes="blazing"] .aw-eyes-open {
-  opacity: 1;
-  transform: scale(1.35);
-}
-
-.awakening[data-eyes="blazing"] .aw-eyes-closed,
-.awakening[data-eyes="dim"] .aw-eyes-closed {
-  opacity: 0;
+  transform: scale(calc(0.6 + var(--glow, 0.2) * 0.4));
 }
 
 .aw-mist {
-  fill: var(--spectral);
-  opacity: 0.05;
+  opacity: calc(var(--glow, 0.2) * 0.5);
 }
 
-.awakening[data-spirit="rising"] .aw-mist {
-  opacity: 0.22;
-  animation: aw-swirl 5s ease-in-out infinite alternate;
-}
+.aw-mist-a { animation: aw-drift-a 11s ease-in-out infinite alternate; }
+.aw-mist-b { animation: aw-drift-b 14s ease-in-out infinite alternate; }
+.aw-mist-c { animation: aw-drift-a 17s ease-in-out infinite alternate-reverse; }
+.aw-wisp-a { animation: aw-drift-b 9s ease-in-out infinite alternate; }
+.aw-wisp-b { animation: aw-drift-a 12s ease-in-out infinite alternate; }
+
+.aw-cracks { opacity: 0.55; }
+.aw-crack { stroke: var(--candle); }
+.awakening[data-phase="awake"] .aw-cracks { opacity: 0.15; }
 
 .aw-rune {
   stroke: var(--muted);
   opacity: 0.25;
-  transition-delay: calc(var(--i, 0) * 120ms);
+  transition-delay: calc(var(--i, 0) * 160ms);
 }
 
 .aw-rune[data-lit="true"] {
   stroke: var(--candle);
   opacity: 1;
-  transform: scale(1.15);
 }
 
-.aw-crack {
-  stroke: var(--candle);
-  opacity: 0.7;
-}
+/* Stirring: the soil trembles by a pixel or so and a pale hand pushes up. */
+.awakening[data-phase="stirring"] .aw-mound-g { animation: aw-tremble 0.28s linear infinite; }
 
-.awakening[data-spirit="rising"] .aw-crack {
-  opacity: 0.25;
-}
-
-.aw-motes {
-  fill: var(--muted);
-}
-
-.awakening[data-spirit="rising"] .aw-motes {
+.aw-hand {
   opacity: 0;
+  transform: translateY(18px);
 }
 
-.aw-mote {
-  opacity: 0.6;
-  animation: aw-drift 6s ease-in-out infinite;
+.awakening[data-phase="stirring"] .aw-hand {
+  opacity: 0.85;
+  transform: translateY(0);
 }
 
-.aw-ground {
-  fill: var(--silhouette);
+/* Awake: the ghost rises in one smooth motion behind the fixed mask. */
+.aw-ghost {
+  opacity: 0;
+  transform: translateY(240px);
+  transition:
+    transform 2000ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 600ms ease-out;
 }
+
+.awakening[data-phase="awake"] .aw-ghost {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.aw-float,
+.aw-sway {
+  transform-origin: 160px 250px;
+}
+
+.awakening[data-phase="awake"] .aw-float { animation: aw-float 6s ease-in-out 2s infinite; }
+.awakening[data-phase="awake"] .aw-sway { animation: aw-sway 8s ease-in-out 2s infinite; }
+.awakening[data-phase="awake"] .aw-breathe { animation: aw-breathe 4.5s ease-in-out 1.6s infinite; }
+
+.aw-breathe { opacity: 0.5; }
+
+.aw-head {
+  transform-origin: 160px 100px;
+  transform: rotate(9deg) translateY(2px);
+  transition: transform 1400ms ease-in-out 600ms;
+}
+
+.awakening[data-phase="awake"] .aw-head { transform: rotate(0) translateY(-3px); }
+
+.aw-arm {
+  transition: transform 1600ms ease-in-out 900ms;
+}
+
+.aw-arm-l { transform-origin: 112px 114px; }
+.aw-arm-r { transform-origin: 208px 114px; }
+.awakening[data-phase="awake"] .aw-arm-l { transform: rotate(135deg); }
+.awakening[data-phase="awake"] .aw-arm-r { transform: rotate(-135deg); }
+
+.aw-eyes {
+  opacity: 0;
+  transition: opacity 700ms ease-out;
+}
+
+.awakening[data-eyes="dim"] .aw-eyes { opacity: 0.35; }
+
+.awakening[data-eyes="blazing"] .aw-eyes {
+  opacity: 1;
+  transition-delay: 800ms;
+}
+
+.aw-ground { fill: var(--silhouette); }
 
 .aw-mound,
 .aw-stone {
@@ -623,22 +636,46 @@ summary,
   stroke-width: 1.5;
 }
 
-@keyframes aw-drift {
-  0%,
-  100% { opacity: 0.15; transform: translate3d(0, 0, 0); }
-  50% { opacity: 0.7; transform: translate3d(6px, -14px, 0); }
+@keyframes aw-drift-a {
+  from { transform: translate3d(-14px, 0, 0); }
+  to { transform: translate3d(14px, 0, 0); }
 }
 
-@keyframes aw-swirl {
-  from { transform: translate3d(-8px, 0, 0) scale(1); }
-  to { transform: translate3d(8px, -4px, 0) scale(1.15); }
+@keyframes aw-drift-b {
+  from { transform: translate3d(12px, 0, 0); }
+  to { transform: translate3d(-12px, 0, 0); }
+}
+
+@keyframes aw-tremble {
+  0%,
+  100% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(0.8px, 0.4px, 0); }
+  75% { transform: translate3d(-0.8px, -0.4px, 0); }
+}
+
+@keyframes aw-float {
+  0%,
+  100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -5px, 0); }
+}
+
+@keyframes aw-sway {
+  0%,
+  100% { transform: rotate(-1.2deg); }
+  50% { transform: rotate(1.2deg); }
+}
+
+@keyframes aw-breathe {
+  0%,
+  100% { opacity: 0.35; }
+  50% { opacity: 0.85; }
 }
 
 /* Full-screen ritual (components/AwakeningRitual.tsx): a larger scene and a gentle pulse while the
  * summon is slower than the stages. The pulse animates opacity only. */
 .ritual .awakening-scene {
-  max-width: min(36rem, 92vw);
-  max-height: 55vh;
+  max-width: min(30rem, 92vw);
+  max-height: 62dvh;
   margin-inline: auto;
 }
 
@@ -674,9 +711,16 @@ summary,
   .lm-rim,
   .lm-eyes,
   .lm-eye-glow,
-  .aw-mote,
-  .ritual-pulse,
-  .awakening[data-spirit="rising"] .aw-mist {
+  .aw-mist-a,
+  .aw-mist-b,
+  .aw-mist-c,
+  .aw-wisp-a,
+  .aw-wisp-b,
+  .awakening[data-phase="stirring"] .aw-mound-g,
+  .awakening[data-phase="awake"] .aw-float,
+  .awakening[data-phase="awake"] .aw-sway,
+  .awakening[data-phase="awake"] .aw-breathe,
+  .ritual-pulse {
     animation: none;
   }
 
@@ -715,9 +759,16 @@ html[data-still="true"] .lm-core,
 html[data-still="true"] .lm-rim,
 html[data-still="true"] .lm-eyes,
 html[data-still="true"] .lm-eye-glow,
-html[data-still="true"] .aw-mote,
-html[data-still="true"] .ritual-pulse,
-html[data-still="true"] .awakening[data-spirit="rising"] .aw-mist {
+html[data-still="true"] .aw-mist-a,
+html[data-still="true"] .aw-mist-b,
+html[data-still="true"] .aw-mist-c,
+html[data-still="true"] .aw-wisp-a,
+html[data-still="true"] .aw-wisp-b,
+html[data-still="true"] .awakening[data-phase="stirring"] .aw-mound-g,
+html[data-still="true"] .awakening[data-phase="awake"] .aw-float,
+html[data-still="true"] .awakening[data-phase="awake"] .aw-sway,
+html[data-still="true"] .awakening[data-phase="awake"] .aw-breathe,
+html[data-still="true"] .ritual-pulse {
   animation: none;
 }
 

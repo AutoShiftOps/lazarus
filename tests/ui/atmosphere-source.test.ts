@@ -84,7 +84,7 @@ describe("motion switch-off", () => {
     const selectors = used.flatMap((r) => r.selectors);
     for (const s of [
       ".bat-path-ltr", ".bat-wing", ".rise", ".fog-in", ".grave-glow", ".heartbeat-line",
-      ".lm-bloom", ".lm-halo", ".lm-core", ".lm-rim", ".lm-eyes", ".lm-eye-glow", ".aw-mote", '.awakening[data-spirit="rising"] .aw-mist',
+      ".lm-bloom", ".lm-halo", ".lm-core", ".lm-rim", ".lm-eyes", ".lm-eye-glow", ".aw-mist-a", '.awakening[data-phase="awake"] .aw-float',
     ]) {
       expect(selectors).toContain(s);
     }
@@ -157,7 +157,7 @@ describe("animated properties", () => {
     const names = keyframes.map((k) => k.name);
     for (const n of [
       "bat-ltr", "bat-rtl", "bat-ltr-b", "bat-flap", "rise", "fog-in", "glow-rise", "heartbeat-trace",
-      "lm-halo", "lm-bloom", "lm-core", "lm-rim", "lm-eyes", "lm-eye-glow", "aw-drift", "aw-swirl",
+      "lm-halo", "lm-bloom", "lm-core", "lm-rim", "lm-eyes", "lm-eye-glow", "aw-drift-a", "aw-float",
     ]) {
       expect(names).toContain(n);
     }
