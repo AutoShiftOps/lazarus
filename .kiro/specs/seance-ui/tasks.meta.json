@@ -301,6 +301,18 @@
         "chatSessionId": "sess_c8e5a99c-7155-4275-a536-a668d043f6cb",
         "timestamp": 1795204303692
       }
+    ],
+    "4.5 Ghost pointer follower and wisp cursor": [
+      {
+        "executionId": "c6fe47b7-bcde-457e-b773-3f84db402a7b",
+        "chatSessionId": "sess_f1e94a46-0647-4e75-97ea-086018eaf004",
+        "timestamp": 1795204527802
+      },
+      {
+        "executionId": "c6fe47b7-bcde-457e-b773-3f84db402a7b",
+        "chatSessionId": "sess_f1e94a46-0647-4e75-97ea-086018eaf004",
+        "timestamp": 1795205564685
+      }
     ]
   }
 }

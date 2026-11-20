@@ -720,7 +720,8 @@ summary,
   .awakening[data-phase="awake"] .aw-float,
   .awakening[data-phase="awake"] .aw-sway,
   .awakening[data-phase="awake"] .aw-breathe,
-  .ritual-pulse {
+  .ritual-pulse,
+  .ghost-bob {
     animation: none;
   }
 
@@ -768,7 +769,8 @@ html[data-still="true"] .awakening[data-phase="stirring"] .aw-mound-g,
 html[data-still="true"] .awakening[data-phase="awake"] .aw-float,
 html[data-still="true"] .awakening[data-phase="awake"] .aw-sway,
 html[data-still="true"] .awakening[data-phase="awake"] .aw-breathe,
-html[data-still="true"] .ritual-pulse {
+html[data-still="true"] .ritual-pulse,
+html[data-still="true"] .ghost-bob {
   animation: none;
 }
 
@@ -867,4 +869,46 @@ html[data-still="true"] .candle-hold-flame {
 
 html[data-still="true"] .candle-hold-button {
   padding-left: 1rem;
+}
+
+/* Ghost pointer follower (components/GhostCursor.tsx). Only transform and opacity change. */
+.ghost-cursor {
+  transition: opacity 300ms ease;
+  will-change: transform;
+}
+
+.ghost-bob {
+  animation: ghost-bob 3.2s ease-in-out infinite;
+}
+
+@keyframes ghost-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/*
+ * Wisp cursor: a small teal flame, hotspot at its tip (6 2). Fine pointers only, and never in
+ * Still mode or with reduced motion. Inputs, disabled controls keep their native meaning.
+ */
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html:not([data-still="true"]) body {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M6 2C8 8 16 10 16 17A6 6 0 0 1 4 17C4 13 8 11 6 2Z' fill='%234fd1c5' stroke='%230b0812' stroke-width='1'/%3E%3C/svg%3E") 6 2, auto;
+  }
+
+  html:not([data-still="true"]) :is(a[href], button, [role="button"], summary, label):not([disabled], [aria-disabled="true"]) {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M6 2C8 8 16 10 16 17A6 6 0 0 1 4 17C4 13 8 11 6 2Z' fill='%234fd1c5' stroke='%230b0812' stroke-width='1'/%3E%3C/svg%3E") 6 2, pointer;
+  }
+
+  html:not([data-still="true"]) :is(input, textarea):not([disabled], [aria-disabled="true"]) {
+    cursor: text;
+  }
+
+  html:not([data-still="true"]) :is([disabled], [aria-disabled="true"]) {
+    cursor: not-allowed;
+  }
 }
