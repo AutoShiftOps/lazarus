@@ -87,23 +87,53 @@ describe("hold-machine properties", () => {
     expect(sends).toBeGreaterThan(0);
   });
 
-  it("Property 29: sends at most once", () => {
+  it("Property 29: at most one send per attempt; a failed attempt may be retried", () => {
     let sequencesWithSend = 0;
     fc.assert(
       fc.property(eventsArb, (events) => {
         let s: HoldState = IDLE;
-        let count = 0;
+        let total = 0;
+        let perAttempt = 0;
+        let released = false;
         for (const e of events) {
           const r = reduce(s, e);
-          if (r.effect === "send") count++;
+          if (r.effect === "send") {
+            total++;
+            perAttempt++;
+            expect(released).toBe(false);
+            expect(perAttempt).toBeLessThanOrEqual(1);
+          }
+          if (e.type === "failed") perAttempt = 0;
           s = r.state;
+          // "released" is terminal; a stray "sent" outside an in-flight send is ignored.
+          if (s.kind === "released") released = true;
         }
-        if (count > 0) sequencesWithSend++;
-        expect(count).toBeLessThanOrEqual(1);
+        if (total > 0) sequencesWithSend++;
       }),
       { numRuns: 500 },
     );
     expect(sequencesWithSend).toBeGreaterThan(0);
+  });
+
+  it("retry after failure sends once more", () => {
+    const events: HoldEvent[] = [
+      { type: "down", at: 0 },
+      { type: "tick", at: 2000 },
+      { type: "failed", message: "x" },
+      { type: "down", at: 3000 },
+      { type: "down", at: 4000 },
+      { type: "tick", at: 5000 },
+    ];
+    let s: HoldState = IDLE;
+    const sendsAt: number[] = [];
+    events.forEach((e, i) => {
+      const r = reduce(s, e);
+      if (r.effect === "send") sendsAt.push(i);
+      s = r.state;
+    });
+    expect(sendsAt).toHaveLength(2);
+    expect(sendsAt[0]).toBeLessThan(2);
+    expect(sendsAt[1]).toBeGreaterThan(2);
   });
 
   it("Property 30: repeated down events cannot restart or shorten the hold", () => {

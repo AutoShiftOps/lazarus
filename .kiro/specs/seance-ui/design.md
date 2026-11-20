@@ -113,9 +113,9 @@ CSS variables from `ui-seance.md`; fonts via `next/font` (Cinzel, Inter, JetBrai
 ### Property 28: Hold machine never sends before 2000 ms
 For any sequence of events with timestamps, `effect: "send"` is produced only when a continuous `down`…`tick` span of at least `HOLD_MS` exists with no intervening `up` or `cancel`.
 
-### Property 29: Hold machine sends at most once
+### Property 29: Hold machine sends at most once per attempt; a failed attempt may be retried
 For any event sequence, at most one `send` effect is produced.
-
+For any event sequence, at most one `send` effect is produced between two consecutive `failed` events (or from the start), and no `send` follows a `sent` event. The error state accepts a new `down`, so the user can retry after a failed approve; server-side CAS keeps approvals single-use.
 ### Property 30: Key auto-repeat cannot restart or shorten the hold
 For any sequence containing repeated `down` events while holding, the earliest completion time equals the first `down` time plus `HOLD_MS`.
 

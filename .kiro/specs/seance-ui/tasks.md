@@ -18,15 +18,15 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - _Requirements: 6.3, 6.4, 6.5, 6.6_
   - [x]* 2.2 Property tests 28, 29, 30
     - **Properties 28, 29, 30**
-  - [ ] 2.3 `lib/ui/form-model.ts`
+  - [x] 2.3 `lib/ui/form-model.ts`
     - _Requirements: 4.1, 4.2_
-  - [ ]* 2.4 Property test 31
+  - [x]* 2.4 Property test 31
     - **Property 31**
-  - [ ] 2.5 `lib/ui/rule-text.ts` and `lib/ui/token-store.ts`
+  - [x] 2.5 `lib/ui/rule-text.ts` and `lib/ui/token-store.ts`
     - _Requirements: 7.3, 6.11_
-  - [ ]* 2.6 Property test 32
+  - [x]* 2.6 Property test 32
     - **Property 32**
-  - [ ] 2.7 `lib/ui/poll.ts`
+  - [x] 2.7 `lib/ui/poll.ts`
     - _Requirements: 5.1_
 
 - [ ] 3. Checkpoint: all tests pass; ask the user if questions arise

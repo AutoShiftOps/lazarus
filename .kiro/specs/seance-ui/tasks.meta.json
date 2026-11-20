@@ -1,5 +1,14 @@
 {
-  "pbtResults": {},
+  "pbtResults": {
+    "2.4 Property test 31": {
+      "status": "passed",
+      "lastRunTimestamp": 1795189356141
+    },
+    "2.6 Property test 32": {
+      "status": "passed",
+      "lastRunTimestamp": 1795189532526
+    }
+  },
   "executionHistory": {
     "1.2 Implement `app/api/demo/route.ts` with rate limits": [
       {
@@ -35,6 +44,11 @@
         "executionId": "c81b1fef-f72e-4e0f-a731-7f7577a381be",
         "chatSessionId": "sess_61ca3038-3896-4645-bd6d-573ff94cd990",
         "timestamp": 1795043250076
+      },
+      {
+        "executionId": "113c3963-aca4-4b01-9213-46a8f9236a60",
+        "chatSessionId": "sess_01263f5f-f8ef-4564-8b5b-cb7989de72f6",
+        "timestamp": 1795190140176
       }
     ],
     "1. Shared summon function and demo bootstrap": [
@@ -66,6 +80,11 @@
         "executionId": "4478a8c3-69b5-427d-a09c-7ed000b1fd35",
         "chatSessionId": "sess_c3457eca-852b-4271-ac66-c15885364165",
         "timestamp": 1795044512190
+      },
+      {
+        "executionId": "99c4dd31-39c1-4dac-af66-cf2de3fcb658",
+        "chatSessionId": "sess_01263f5f-f8ef-4564-8b5b-cb7989de72f6",
+        "timestamp": 1795189280840
       }
     ],
     "4.2 `RiskBadge` (text + icon + colour)": [
@@ -191,6 +210,34 @@
         "executionId": "64bee920-255e-4d0b-becc-8a2fde3e1f4d",
         "chatSessionId": "sess_3fcca12c-b86c-4415-bafd-b1e2a86955e3",
         "timestamp": 1795048263277
+      }
+    ],
+    "2.3 `lib/ui/form-model.ts`": [
+      {
+        "executionId": "99c4dd31-39c1-4dac-af66-cf2de3fcb658",
+        "chatSessionId": "sess_01263f5f-f8ef-4564-8b5b-cb7989de72f6",
+        "timestamp": 1795189102052
+      }
+    ],
+    "2.4 Property test 31": [
+      {
+        "executionId": "99c4dd31-39c1-4dac-af66-cf2de3fcb658",
+        "chatSessionId": "sess_01263f5f-f8ef-4564-8b5b-cb7989de72f6",
+        "timestamp": 1795189280695
+      }
+    ],
+    "2.7 `lib/ui/poll.ts`": [
+      {
+        "executionId": "99c4dd31-39c1-4dac-af66-cf2de3fcb658",
+        "chatSessionId": "sess_01263f5f-f8ef-4564-8b5b-cb7989de72f6",
+        "timestamp": 1795189280978
+      }
+    ],
+    "2.6 Property test 32": [
+      {
+        "executionId": "99c4dd31-39c1-4dac-af66-cf2de3fcb658",
+        "chatSessionId": "sess_01263f5f-f8ef-4564-8b5b-cb7989de72f6",
+        "timestamp": 1795189465340
       }
     ]
   }
