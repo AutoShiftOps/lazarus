@@ -239,6 +239,18 @@
         "chatSessionId": "sess_01263f5f-f8ef-4564-8b5b-cb7989de72f6",
         "timestamp": 1795189465340
       }
+    ],
+    "9.1 `useApprove` hook (single in-flight request, error mapping)": [
+      {
+        "executionId": "36547acd-ecc7-4a79-a88c-41dfc5f2773f",
+        "chatSessionId": "sess_69878a54-dfb5-431a-bf32-3d2d360f8523",
+        "timestamp": 1795192092097
+      },
+      {
+        "executionId": "6bf02488-2ebd-402c-bb2f-f8205659f679",
+        "chatSessionId": "sess_69878a54-dfb5-431a-bf32-3d2d360f8523",
+        "timestamp": 1795194113944
+      }
     ]
   }
 }

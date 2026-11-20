@@ -62,7 +62,7 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - _Requirements: 5.1–5.6_
 
 - [ ] 9. Inbox and Candle
-  - [ ] 9.1 `useApprove` hook (single in-flight request, error mapping)
+  - [x] 9.1 `useApprove` hook (single in-flight request, error mapping)
     - _Requirements: 6.5, 6.10_
   - [ ] 9.2 `CandleHold` component (pointer + keyboard, reduced-motion text countdown)
     - _Requirements: 6.3, 6.4, 6.6, 6.8, 6.9_
