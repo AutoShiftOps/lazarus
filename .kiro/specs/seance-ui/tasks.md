@@ -59,6 +59,16 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - Verify: npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
     - _Requirements: 1.4, 1.7_
     - _Requirements: 1.4, 1.7, 1.8_
+  - [x] 4.7 Polish awakening scene (SpiritAwakening.tsx and container in AwakeningRitual.tsx only)
+    - Do not touch public/lazarus-logo.svg or .env.local. Keep stage names, timing and tests passing. Do not commit.
+    - 1. No clipping: svg overflow visible plus viewBox padding so moon glow, mist and halo are never cut off. Verify at 1280x720 and 360x640.
+    - 2. Larger scene: svg about min(70vh, 90vw), centred; stage text and Skip button below without scrolling at 1280x720 and 360x640.
+    - 3. Redesign ghost face (original, not a mask): remove grey oval face plate and open mouth; deep dark hollow eye sockets inside the hood with cold teal glow, faint shadowed mouth line, soft shading, no outlined face shape.
+    - 4. Emerge from grave: tail and lower robe fade into the mound via gradient mask (no visible hem line above mound); front mist layer overlaps lower body. Rise animation stays transform/opacity only.
+    - 5. Keep reduced-motion and Still mode static states.
+    - Update tests/ui/spirit-awakening-source.test.ts only if a selector changed.
+    - Verify: npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
+    - _Requirements: 1.4, 1.7_
 
 - [x] 5. Home page
   - [x] 5.1 `SummonForm` with staged progress and error display

@@ -313,6 +313,18 @@
         "chatSessionId": "sess_f1e94a46-0647-4e75-97ea-086018eaf004",
         "timestamp": 1795205564685
       }
+    ],
+    "4.7 Polish awakening scene (SpiritAwakening.tsx and container in AwakeningRitual.tsx only)": [
+      {
+        "executionId": "1dde073a-32b7-4a4b-a1da-9181e3f89cfd",
+        "chatSessionId": "sess_930a1b8f-47a4-4d42-b6cb-81ca3295e90c",
+        "timestamp": 1795206062049
+      },
+      {
+        "executionId": "1dde073a-32b7-4a4b-a1da-9181e3f89cfd",
+        "chatSessionId": "sess_930a1b8f-47a4-4d42-b6cb-81ca3295e90c",
+        "timestamp": 1795206895122
+      }
     ]
   }
 }
