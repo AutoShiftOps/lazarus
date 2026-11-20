@@ -183,7 +183,7 @@ export function CandleHold({ onRelease, disabled = false, label = "Hold to relea
         Hold Space or Enter, or press and hold, for 2 seconds
       </p>
       <p role="status" aria-live="polite" className="candle-hold-status">
-        {state.kind === "released" ? "Released" : state.kind === "error" ? state.message : ""}
+        {state.kind === "released" ? "Released" : ""}
       </p>
     </div>
   );

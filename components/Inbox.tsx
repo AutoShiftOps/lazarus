@@ -88,7 +88,7 @@ function PendingRow({ serviceId, approval, ownerToken, now }: RowProps) {
   const remaining = remainingLabel(approval.expiresAt, now);
   const done = approve.status === "released";
   const busy = approve.status === "sending";
-  const locked = busy || done || remaining.expired;
+  const locked = busy || done || approval.status === "expired";
 
   const send = async (kind: "approve" | "deny"): Promise<void> => {
     const result = await (kind === "approve" ? approve.approve(note) : approve.deny(note));
@@ -240,7 +240,7 @@ export function Inbox({ serviceId, isDemo }: InboxProps) {
   }
 
   const pending = (approvals ?? []).filter((a) => a.status === "pending");
-  const resolved = (approvals ?? []).filter((a) => a.status !== "pending").slice(-RESOLVED_MAX);
+  const resolved = (approvals ?? []).filter((a) => a.status !== "pending").slice(0, RESOLVED_MAX);
 
   return (
     <section aria-labelledby="inbox-heading" className="space-y-4">

@@ -160,4 +160,37 @@ describe("Inbox", () => {
     await flush();
     expect(screen.getByText("Listening for the spirits…")).toBeTruthy();
   });
+
+  it("shows only the 5 newest resolved items when the API returns newest first", async () => {
+    const resolved = Array.from({ length: 7 }, (_, i) =>
+      approval({ id: `r${i + 1}`, tool: `Tool${i + 1}`, status: "approved" }),
+    );
+    stubFetch(resolved);
+    render(<Inbox serviceId={SID} isDemo />);
+    await flush();
+    for (const n of [1, 2, 3, 4, 5]) expect(screen.getByText(`Tool${n}`)).toBeTruthy();
+    for (const n of [6, 7]) expect(screen.queryByText(`Tool${n}`)).toBeNull();
+  });
+
+  it("keeps controls enabled when the client clock says expired but the server says pending", async () => {
+    stubFetch([approval({ expiresAt: new Date(Date.now() - 60_000).toISOString(), status: "pending" })]);
+    render(<Inbox serviceId={SID} isDemo />);
+    await flush();
+    expect(screen.getByTestId("remaining").textContent).toBe("expired");
+    expect((screen.getByRole("button", { name: "Deny" }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole("button", { name: "Hold to release" }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByLabelText("Note (optional)") as HTMLInputElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect((screen.getByRole("button", { name: "Approve" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("shows a 409 from a failed candle release exactly once", async () => {
+    const calls = stubFetch([approval()], 409);
+    render(<Inbox serviceId={SID} isDemo />);
+    await flush();
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Hold to release" }));
+    await flush(2200);
+    expect(posts(calls)).toHaveLength(1);
+    expect(screen.getAllByText("This call was already resolved.")).toHaveLength(1);
+  });
 });
