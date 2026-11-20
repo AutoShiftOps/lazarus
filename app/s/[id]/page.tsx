@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { cache, Suspense } from "react";
 import { Heartbeat } from "../../../components/Heartbeat";
+import { Inbox } from "../../../components/Inbox";
 import { McpConfig } from "../../../components/McpConfig";
+import { isDemoService } from "../../../lib/auth/owner";
 import { SpiritCard } from "../../../components/SpiritCard";
 import { isServiceId, registry } from "../../../lib/registry";
 import { originFromHeaders } from "../../../lib/ui/origin";
@@ -58,7 +60,7 @@ async function ServiceContent({ params }: { params: Promise<{ id: string }> }) {
     throw error;
   }
 
-  return <ServiceDetails view={view} />;
+  return <ServiceDetails view={view} serviceId={id} isDemo={isDemoService(loaded.value)} />;
 }
 
 function Interrupted() {
@@ -106,7 +108,7 @@ function SpiritGrid({ spirits, label }: { spirits: SpiritView[]; label: string }
   );
 }
 
-function ServiceDetails({ view }: { view: ServiceView }) {
+function ServiceDetails({ view, serviceId, isDemo }: { view: ServiceView; serviceId: string; isDemo: boolean }) {
   const count = `${view.operationCount} ${view.operationCount === 1 ? "spirit" : "spirits"}`;
   const groups = groupByPort(view.spirits);
 
@@ -153,6 +155,8 @@ function ServiceDetails({ view }: { view: ServiceView }) {
           <SpiritGrid spirits={view.spirits} label="Operations" />
         )}
       </section>
+
+      <Inbox serviceId={serviceId} isDemo={isDemo} />
     </div>
   );
 }

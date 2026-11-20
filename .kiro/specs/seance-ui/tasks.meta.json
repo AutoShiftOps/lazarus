@@ -251,6 +251,44 @@
         "chatSessionId": "sess_69878a54-dfb5-431a-bf32-3d2d360f8523",
         "timestamp": 1795194113944
       }
+    ],
+    "9.2 `CandleHold` component (pointer + keyboard, reduced-motion text countdown)": [
+      {
+        "executionId": "1097af91-996d-4147-906e-2cff11ffc61e",
+        "chatSessionId": "sess_a079c3a3-5088-4c54-9dfd-603b1a920120",
+        "timestamp": 1795198038330
+      },
+      {
+        "executionId": "1097af91-996d-4147-906e-2cff11ffc61e",
+        "chatSessionId": "sess_a079c3a3-5088-4c54-9dfd-603b1a920120",
+        "timestamp": 1795201169727
+      }
+    ],
+    "9.3 `Inbox` with deny, note, checkbox alternative, owner-token gating": [
+      {
+        "executionId": "1097af91-996d-4147-906e-2cff11ffc61e",
+        "chatSessionId": "sess_a079c3a3-5088-4c54-9dfd-603b1a920120",
+        "timestamp": 1795201170262
+      },
+      {
+        "executionId": "1097af91-996d-4147-906e-2cff11ffc61e",
+        "chatSessionId": "sess_a079c3a3-5088-4c54-9dfd-603b1a920120",
+        "timestamp": 1795202583968
+      }
+    ],
+    "9.4 Component tests: early release sends nothing; keyboard repeat ignored; checkbox path; 409 message": [
+      {
+        "executionId": "1097af91-996d-4147-906e-2cff11ffc61e",
+        "chatSessionId": "sess_a079c3a3-5088-4c54-9dfd-603b1a920120",
+        "timestamp": 1795202584522
+      }
+    ],
+    "9. Inbox and Candle": [
+      {
+        "executionId": "1097af91-996d-4147-906e-2cff11ffc61e",
+        "chatSessionId": "sess_a079c3a3-5088-4c54-9dfd-603b1a920120",
+        "timestamp": 1795202584602
+      }
     ]
   }
 }

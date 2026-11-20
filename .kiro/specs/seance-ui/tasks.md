@@ -61,14 +61,14 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
   - [ ] 8.1 `TranscriptPanel` with expandable four-step view and `aria-live`
     - _Requirements: 5.1–5.6_
 
-- [ ] 9. Inbox and Candle
+- [x] 9. Inbox and Candle
   - [x] 9.1 `useApprove` hook (single in-flight request, error mapping)
     - _Requirements: 6.5, 6.10_
-  - [ ] 9.2 `CandleHold` component (pointer + keyboard, reduced-motion text countdown)
+  - [x] 9.2 `CandleHold` component (pointer + keyboard, reduced-motion text countdown)
     - _Requirements: 6.3, 6.4, 6.6, 6.8, 6.9_
-  - [ ] 9.3 `Inbox` with deny, note, checkbox alternative, owner-token gating
+  - [x] 9.3 `Inbox` with deny, note, checkbox alternative, owner-token gating
     - _Requirements: 6.1, 6.2, 6.7, 6.11, 6.12_
-  - [ ] 9.4 Component tests: early release sends nothing; keyboard repeat ignored; checkbox path; 409 message
+  - [x] 9.4 Component tests: early release sends nothing; keyboard repeat ignored; checkbox path; 409 message
 
 - [ ] 10. Rules and ghost mode
   - [ ] 10.1 `GhostSwitch` and banner

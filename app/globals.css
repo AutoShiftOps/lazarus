@@ -730,3 +730,90 @@ html[data-still="true"] .awakening *::before {
 html[data-still="true"] .bat {
   display: none;
 }
+
+/* ---- Candle hold (components/CandleHold.tsx). --hold runs 0..1 over the 2000 ms hold. ---- */
+
+.candle-hold {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.candle-hold-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  min-width: 3.5rem;
+  padding: 0.5rem 1rem 0.5rem 4rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: var(--surface-raised);
+  color: var(--text);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.candle-hold-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.candle-hold-ring {
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-top: -1.25rem;
+  border-radius: 50%;
+  background: conic-gradient(var(--candle) calc(var(--hold, 0) * 360deg), var(--border) 0);
+  -webkit-mask: radial-gradient(circle, transparent 0.9rem, #000 0.95rem);
+  mask: radial-gradient(circle, transparent 0.9rem, #000 0.95rem);
+}
+
+.candle-hold-flame {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  width: 1rem;
+  height: 1.5rem;
+  margin-top: -0.75rem;
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: radial-gradient(circle at 50% 70%, #fff3d6, var(--candle) 60%, transparent 100%);
+  transform-origin: center bottom;
+  transform: scale(calc(0.5 + var(--hold, 0) * 0.9));
+  opacity: calc(0.6 + var(--hold, 0) * 0.4);
+}
+
+.candle-hold-help,
+.candle-hold-status {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Motion off: no ring or flame animation, the text countdown replaces it (same 2000 ms). */
+@media (prefers-reduced-motion: reduce) {
+  .candle-hold-ring,
+  .candle-hold-flame {
+    display: none;
+  }
+
+  .candle-hold-button {
+    padding-left: 1rem;
+  }
+}
+
+html[data-still="true"] .candle-hold-ring,
+html[data-still="true"] .candle-hold-flame {
+  display: none;
+}
+
+html[data-still="true"] .candle-hold-button {
+  padding-left: 1rem;
+}
