@@ -524,6 +524,7 @@ summary,
 .aw-arm,
 .aw-eyes,
 .aw-float,
+.aw-dip,
 .aw-sway,
 .aw-breathe,
 .aw-mound-g {
@@ -573,12 +574,12 @@ summary,
   transform: translateY(0);
 }
 
-/* Awake: the ghost rises in one smooth motion behind the fixed mask. */
+/* Awake: the ghost rises in slow, slightly jerky steps behind the fixed mask. */
 .aw-ghost {
   opacity: 0;
   transform: translateY(240px);
   transition:
-    transform 2000ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 2400ms steps(10, end),
     opacity 600ms ease-out;
 }
 
@@ -587,33 +588,34 @@ summary,
   transform: translateY(0);
 }
 
-.aw-float,
-.aw-sway {
-  transform-origin: 160px 250px;
-}
+/* Idle: a very slow sideways drift, an occasional stepped opacity dip, a delayed head tilt. */
+.awakening[data-phase="awake"] .aw-float { animation: aw-float 22s ease-in-out 4s infinite alternate; }
+.awakening[data-phase="awake"] .aw-dip { animation: aw-breathe-dip 5.5s steps(1, end) 5s infinite; }
+.awakening[data-phase="awake"] .aw-sway { animation: aw-sway 6s ease-in-out 3.5s infinite alternate; }
+.awakening[data-phase="awake"] .aw-breathe { animation: aw-breathe 7s ease-in-out 3s infinite; }
 
-.awakening[data-phase="awake"] .aw-float { animation: aw-float 6s ease-in-out 2s infinite; }
-.awakening[data-phase="awake"] .aw-sway { animation: aw-sway 8s ease-in-out 2s infinite; }
-.awakening[data-phase="awake"] .aw-breathe { animation: aw-breathe 4.5s ease-in-out 1.6s infinite; }
+.aw-breathe { opacity: 0.4; }
 
-.aw-breathe { opacity: 0.5; }
+.aw-sway { transform-origin: 160px 80px; }
 
+/* Head tilted about 13 degrees; it settles into the tilt after the rise. */
 .aw-head {
-  transform-origin: 160px 100px;
-  transform: rotate(9deg) translateY(2px);
-  transition: transform 1400ms ease-in-out 600ms;
+  transform-origin: 160px 80px;
+  transform: rotate(24deg) translateY(2px);
+  transition: transform 1600ms steps(6, end) 1200ms;
 }
 
-.awakening[data-phase="awake"] .aw-head { transform: rotate(0) translateY(-3px); }
+.awakening[data-phase="awake"] .aw-head { transform: rotate(13deg); }
 
+/* The long reaching arm hangs folded and unfolds last; the other arm stays limp. */
 .aw-arm {
-  transition: transform 1600ms ease-in-out 900ms;
+  transition: transform 1800ms steps(6, end) 2800ms;
 }
 
-.aw-arm-l { transform-origin: 112px 114px; }
-.aw-arm-r { transform-origin: 208px 114px; }
-.awakening[data-phase="awake"] .aw-arm-l { transform: rotate(135deg); }
-.awakening[data-phase="awake"] .aw-arm-r { transform: rotate(-135deg); }
+.aw-arm-l { transform-origin: 142px 86px; transform: rotate(8deg); }
+.aw-arm-r { transform-origin: 184px 84px; transform: rotate(78deg); }
+.awakening[data-phase="awake"] .aw-arm-l { transform: rotate(0); }
+.awakening[data-phase="awake"] .aw-arm-r { transform: rotate(0); }
 
 .aw-eyes {
   opacity: 0;
@@ -654,21 +656,27 @@ summary,
 }
 
 @keyframes aw-float {
-  0%,
-  100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -5px, 0); }
+  from { transform: translate3d(-4px, 0, 0); }
+  to { transform: translate3d(5px, 0, 0); }
 }
 
 @keyframes aw-sway {
-  0%,
-  100% { transform: rotate(-1.2deg); }
-  50% { transform: rotate(1.2deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(3deg); }
+}
+
+@keyframes aw-breathe-dip {
+  0% { opacity: 1; }
+  76% { opacity: 0.55; }
+  80% { opacity: 0.8; }
+  84% { opacity: 0.55; }
+  90% { opacity: 1; }
 }
 
 @keyframes aw-breathe {
   0%,
-  100% { opacity: 0.35; }
-  50% { opacity: 0.85; }
+  100% { opacity: 0.25; }
+  50% { opacity: 0.6; }
 }
 
 /* Full-screen ritual (components/AwakeningRitual.tsx): a larger scene and a gentle pulse while the
@@ -719,6 +727,7 @@ summary,
   .awakening[data-phase="stirring"] .aw-mound-g,
   .awakening[data-phase="awake"] .aw-float,
   .awakening[data-phase="awake"] .aw-sway,
+  .awakening[data-phase="awake"] .aw-dip,
   .awakening[data-phase="awake"] .aw-breathe,
   .ritual-pulse,
   .ghost-bob {
@@ -768,6 +777,7 @@ html[data-still="true"] .aw-wisp-b,
 html[data-still="true"] .awakening[data-phase="stirring"] .aw-mound-g,
 html[data-still="true"] .awakening[data-phase="awake"] .aw-float,
 html[data-still="true"] .awakening[data-phase="awake"] .aw-sway,
+html[data-still="true"] .awakening[data-phase="awake"] .aw-dip,
 html[data-still="true"] .awakening[data-phase="awake"] .aw-breathe,
 html[data-still="true"] .ritual-pulse,
 html[data-still="true"] .ghost-bob {

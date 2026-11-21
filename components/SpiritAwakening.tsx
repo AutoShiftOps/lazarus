@@ -20,9 +20,17 @@ const RUNES = [
   [250, 301, "M-4 -6 V6 H4 M-4 0 H3"],
 ] as const;
 
-/** Robe: hood, shoulders, long hem with a tattered edge. Symmetric about x = 160. */
+/** Body: narrow shoulders, a long thin torso, then uneven torn strips. Not symmetric. */
 const ROBE =
-  "M160 34C176 34 190 50 190 70C190 88 196 98 208 108C222 122 226 150 230 184C232 200 238 212 246 226L232 222L226 240L212 224L204 244L190 228L180 248L166 230L156 250L144 230L132 246L124 226L110 242L104 224L92 238L88 222L74 226C82 212 88 200 90 184C94 150 98 122 112 108C124 98 130 88 130 70C130 50 144 34 160 34Z";
+  "M146 76C152 71 168 71 174 76C184 82 187 98 186 126C185 156 190 186 196 214L206 262L198 244L194 290L184 238L182 276L174 246L170 312L162 240L158 284L150 244L142 300L136 238L130 270L124 232L116 262L120 214C128 190 134 156 134 126C132 98 136 82 146 76Z";
+
+/** Long thin tatters that trail below the body. */
+const TATTERS =
+  "M140 150L126 262L148 160ZM152 160L146 286L164 160ZM166 160L174 292L178 156ZM178 150L198 272L188 150ZM134 140L114 238L142 150ZM186 140L208 246L190 150Z";
+
+/** Stretched hood, pulled to a point. */
+const HOOD =
+  "M160 6C150 8 142 26 141 46C140 60 143 72 148 82L172 82C178 72 181 60 180 46C179 26 170 8 160 6Z";
 
 /** Region above the mound surface: the fixed mask the ghost rises behind. */
 const MASK = "M0 0H320V300H250C230 270 200 262 160 262C120 262 90 270 70 300H0Z";
@@ -51,43 +59,45 @@ export function SpiritAwakening({ stage, label }: { stage: AwakeningStage; label
       >
         <defs>
           <radialGradient id="aw-moon-g">
-            <stop offset="0%" stopColor="#dfe9ff" stopOpacity="0.8" />
+            <stop offset="0%" stopColor="#dfe9ff" stopOpacity="0.7" />
             <stop offset="100%" stopColor="#dfe9ff" stopOpacity="0" />
           </radialGradient>
           <radialGradient id="aw-mist-g">
-            <stop offset="0%" stopColor="#c6f3f0" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#c6f3f0" stopOpacity="0" />
+            <stop offset="0%" stopColor="#b4cdd6" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#b4cdd6" stopOpacity="0" />
           </radialGradient>
-          <linearGradient id="aw-ghost-g" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#e9fbff" stopOpacity="0.75" />
-            <stop offset="55%" stopColor="#bfe6f5" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#9fd8e8" stopOpacity="0" />
+          <linearGradient id="aw-ghost-g" gradientUnits="userSpaceOnUse" x1="0" y1="70" x2="0" y2="250">
+            <stop offset="0%" stopColor="#4b5d70" stopOpacity="0.5" />
+            <stop offset="60%" stopColor="#7d96a6" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#a3c0cb" stopOpacity="0.45" />
           </linearGradient>
-          <radialGradient id="aw-inner-g" cx="50%" cy="38%" r="55%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="#7ff0e6" stopOpacity="0" />
-          </radialGradient>
+          <linearGradient id="aw-under-g" gradientUnits="userSpaceOnUse" x1="0" y1="262" x2="0" y2="120">
+            <stop offset="0%" stopColor="#8fd0d8" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#8fd0d8" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="aw-hood-g" gradientUnits="userSpaceOnUse" x1="0" y1="6" x2="0" y2="82">
+            <stop offset="0%" stopColor="#141f2a" stopOpacity="0.92" />
+            <stop offset="100%" stopColor="#4a5f70" stopOpacity="0.6" />
+          </linearGradient>
           <radialGradient id="aw-eye-g">
-            <stop offset="0%" stopColor="#b9fff7" />
-            <stop offset="60%" stopColor="#2fd6c8" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="#2fd6c8" stopOpacity="0" />
+            <stop offset="0%" stopColor="#9fe9e2" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#2a9d98" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="aw-hollow-g" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#010305" stopOpacity="0.97" />
+            <stop offset="65%" stopColor="#02060a" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#02060a" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="aw-vig-g" cx="50%" cy="50%" r="62%">
+            <stop offset="55%" stopColor="#02050a" stopOpacity="0" />
+            <stop offset="100%" stopColor="#02050a" stopOpacity="0.5" />
           </radialGradient>
           {/* Static soft edge: fixed seed, applied once, never animated. */}
           <filter id="aw-soft" x="-10%" y="-5%" width="120%" height="115%">
             <feTurbulence type="fractalNoise" baseFrequency="0.022 0.035" numOctaves="2" seed="7" result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="5" result="d" />
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="4" result="d" />
             <feGaussianBlur in="d" stdDeviation="0.8" />
           </filter>
-          <radialGradient id="aw-hollow-g" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#010406" stopOpacity="0.95" />
-            <stop offset="55%" stopColor="#03090d" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#03090d" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="aw-hood-g" cx="50%" cy="55%" r="55%">
-            <stop offset="0%" stopColor="#02080c" stopOpacity="0.8" />
-            <stop offset="70%" stopColor="#06141b" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#06141b" stopOpacity="0" />
-          </radialGradient>
           {/* Fixed fade (not part of the rise): the lower robe dissolves into the mound. */}
           <linearGradient id="aw-fade-g" gradientUnits="userSpaceOnUse" x1="0" y1="212" x2="0" y2="272">
             <stop offset="0%" stopColor="#fff" />
@@ -96,10 +106,6 @@ export function SpiritAwakening({ stage, label }: { stage: AwakeningStage; label
           <mask id="aw-fade" maskUnits="userSpaceOnUse" x="-40" y="-50" width="400" height="420">
             <rect x="-40" y="-50" width="400" height="420" fill="url(#aw-fade-g)" />
           </mask>
-          <linearGradient id="aw-edge-g" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="230">
-            <stop offset="0%" stopColor="#8ff3ea" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#8ff3ea" stopOpacity="0" />
-          </linearGradient>
           <radialGradient
             id="aw-ground-fade-g"
             gradientUnits="userSpaceOnUse"
@@ -121,7 +127,7 @@ export function SpiritAwakening({ stage, label }: { stage: AwakeningStage; label
           </clipPath>
         </defs>
 
-        <circle className="aw-halo" cx="240" cy="64" r="86" fill="url(#aw-moon-g)" />
+        <circle className="aw-halo" cx="240" cy="64" r="52" fill="url(#aw-moon-g)" />
         <circle cx="240" cy="64" r="13" fill="#e9e4f5" opacity="0.55" />
 
         <g className="aw-mist-back" fill="url(#aw-mist-g)">
@@ -141,45 +147,47 @@ export function SpiritAwakening({ stage, label }: { stage: AwakeningStage; label
         </g>
 
         <g clipPath="url(#aw-clip)">
-          <g className="aw-hand" fill="none" stroke="#dff6ff" strokeWidth="3" strokeLinecap="round">
+          <g className="aw-hand" fill="none" stroke="#c9dbe4" strokeWidth="3" strokeLinecap="round">
             <path d="M144 276C144 262 146 254 148 249M150 276C150 260 152 250 154 244M156 276C157 262 159 254 161 248M162 276C163 266 165 260 168 256" />
           </g>
           <g mask="url(#aw-fade)">
-        <g className="aw-ghost">
-            <g className="aw-float">
-              <g className="aw-sway">
-                <g filter="url(#aw-soft)">
-                  <path
-                    className="aw-tail"
-                    d="M146 232C146 252 176 258 204 250C232 242 256 246 288 230C262 258 232 264 204 262C172 264 140 258 140 232Z"
-                    fill="url(#aw-ghost-g)"
-                  />
-                  <use href="#aw-robe" fill="url(#aw-ghost-g)" />
-                  <use className="aw-breathe" href="#aw-robe" fill="url(#aw-inner-g)" />
-                  <use href="#aw-robe" fill="none" stroke="url(#aw-edge-g)" strokeWidth="1.2" />
-                </g>
-                <g className="aw-arm aw-arm-l" fill="none" stroke="#d8f4ff" strokeOpacity="0.6" strokeWidth="4" strokeLinecap="round">
-                  <path d="M112 114C104 136 100 156 100 176M100 176L97 185M100 176L101 186M100 176L105 184" />
-                </g>
-                <g className="aw-arm aw-arm-r" fill="none" stroke="#d8f4ff" strokeOpacity="0.6" strokeWidth="4" strokeLinecap="round">
-                  <path d="M208 114C216 136 220 156 220 176M220 176L223 185M220 176L219 186M220 176L215 184" />
-                </g>
-                <g className="aw-head">
-                  <ellipse cx="160" cy="76" rx="27" ry="32" fill="url(#aw-hood-g)" />
-                  <ellipse cx="160" cy="78" rx="19" ry="23" fill="url(#aw-hollow-g)" />
-                  <ellipse cx="152" cy="71" rx="7" ry="9" fill="url(#aw-hollow-g)" />
-                  <ellipse cx="168" cy="71" rx="7" ry="9" fill="url(#aw-hollow-g)" />
-                  <g className="aw-eyes">
-                    <ellipse cx="152" cy="72" rx="4.5" ry="6" fill="url(#aw-eye-g)" />
-                    <ellipse cx="168" cy="72" rx="4.5" ry="6" fill="url(#aw-eye-g)" />
+            <g className="aw-ghost">
+              <g className="aw-float">
+                <g className="aw-dip">
+                  <g filter="url(#aw-soft)">
+                    <path d={TATTERS} fill="url(#aw-ghost-g)" opacity="0.7" />
+                    <use href="#aw-robe" fill="url(#aw-ghost-g)" />
+                    <use className="aw-breathe" href="#aw-robe" fill="url(#aw-under-g)" />
+                    <path d="M174 76C184 82 187 98 186 126C185 156 190 186 196 214L206 262" fill="none" stroke="#a9d3dc" strokeOpacity="0.5" strokeWidth="1.2" />
                   </g>
-                  <path d="M153 91C157 92.6 163 92.6 167 91" fill="none" stroke="#010406" strokeOpacity="0.4" strokeWidth="1.3" strokeLinecap="round" />
+                  <g className="aw-arm aw-arm-l" fill="none" stroke="#9fb4c0" strokeOpacity="0.5" strokeWidth="2.4" strokeLinecap="round">
+                    <path d="M142 86C130 112 128 150 132 190M132 190L130 203M132 190L134 204M132 190L138 201M132 190L126 200M132 190L140 194" />
+                  </g>
+                  <g className="aw-arm aw-arm-r" fill="none" stroke="#b6cdd8" strokeOpacity="0.6" strokeWidth="2.4" strokeLinecap="round">
+                    <path d="M184 84C206 90 236 104 268 120C274 123 278 125 281 127" />
+                    <path strokeWidth="1.4" d="M281 127C289 125 295 130 296 138M281 127C291 122 299 126 302 133M281 127C290 119 299 119 304 125M281 127C288 116 296 113 301 117M281 127C286 132 289 138 287 144" />
+                  </g>
+                  <g className="aw-head">
+                    <g className="aw-sway">
+                      <path d={HOOD} fill="url(#aw-hood-g)" filter="url(#aw-soft)" />
+                      <path d="M170 10C177 26 180 44 178 62" fill="none" stroke="#a9d3dc" strokeOpacity="0.45" strokeWidth="1.1" />
+                      <ellipse cx="160" cy="48" rx="12" ry="31" fill="url(#aw-hollow-g)" />
+                      <g className="aw-eyes">
+                        <ellipse cx="153" cy="54" rx="2.3" ry="7" fill="#010305" />
+                        <ellipse cx="167" cy="50" rx="2" ry="6" fill="#010305" />
+                        <ellipse cx="153" cy="54.5" rx="1.2" ry="4.6" fill="url(#aw-eye-g)" />
+                        <ellipse cx="167" cy="50.5" rx="1.1" ry="4" fill="url(#aw-eye-g)" />
+                      </g>
+                      <path d="M160 66V77" fill="none" stroke="#010305" strokeWidth="1.5" strokeLinecap="round" />
+                    </g>
+                  </g>
                 </g>
               </g>
             </g>
           </g>
-          </g>
         </g>
+
+        <rect x="-40" y="-50" width="400" height="420" fill="url(#aw-vig-g)" />
 
         <g className="aw-stone-g">
           <path className="aw-stone" d="M210 326V280C210 258 274 258 274 280V326Z" />

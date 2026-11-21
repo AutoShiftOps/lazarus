@@ -70,7 +70,7 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - Verify: npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
     - _Requirements: 1.4, 1.7_
 
-  - [ ] 4.8 Make the awake ghost scary, not cute (SpiritAwakening.tsx and its CSS only)
+  - [x] 4.8 Make the awake ghost scary, not cute (SpiritAwakening.tsx and its CSS only)
     - Do not touch public/lazarus-logo.svg or .env.local. Keep stage names, timing, a11y, reduced-motion/Still static states and all tests passing. Do not commit.
     - 1. Proportions: tall and thin (about 1:2.6), narrow shoulders, long stretched hood and face; body tapers into a long torn trailing shroud of uneven ragged strips, not a bell with a zig-zag hem.
     - 2. Asymmetry: head tilted 12 to 15 degrees; one very long thin arm reaching forward and slightly down with five bony curled fingers, the other arm hanging low and limp. No raised-arms pose.
