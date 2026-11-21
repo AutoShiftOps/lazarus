@@ -208,7 +208,7 @@ describe("pipeline: faults", () => {
 
     expect(res.isError).toBe(true);
     expect(textOf(res)).toBe("Account 9999 not found");
-    expect(res.structuredContent).toBeUndefined();
+    expect(res.structuredContent).toBeUndefined(); // a fault never carries status "blocked"
     const [entry] = t.entries();
     expect(entry.outcome).toBe("fault");
     expect(entry.summary).not.toContain("not found");
@@ -443,7 +443,7 @@ describe("pipeline: block path", () => {
 
     expect(res.isError).toBe(true);
     expect(textOf(res)).toBe("Transfers over 1000 are blocked");
-    expect(res.structuredContent).toBeUndefined();
+    expect(res.structuredContent).toEqual({ status: "blocked", reason: "Transfers over 1000 are blocked" });
     expect(t.calls).toHaveLength(0);
     expect(t.entries()[0]).toMatchObject({ decision: "block", outcome: "blocked", ruleId: "no-big" });
   });
@@ -455,6 +455,7 @@ describe("pipeline: block path", () => {
     const res = await t.run("TransferFunds", { fromAccount: "4471", toAccount: "5530", amount: 5000 });
     expect(res.isError).toBe(true);
     expect(textOf(res)).toBe("This call is blocked by policy.");
+    expect(res.structuredContent).toEqual({ status: "blocked", reason: "This call is blocked by policy." });
   });
 
   it("keeps reason text and argument values out of the transcript summary", async () => {
@@ -712,6 +713,7 @@ describe("pipeline: hold path", () => {
 
     expect(res.isError).toBe(true);
     expect(textOf(res)).toBe("A human refused this call. Not today");
+    expect(res.structuredContent).toEqual({ status: "blocked", reason: "A human refused this call. Not today" });
     expect(t.calls).toHaveLength(0);
     expect(JSON.stringify(t.bank())).toBe(before);
     const a = await onlyApproval(t);
@@ -727,6 +729,7 @@ describe("pipeline: hold path", () => {
     const res = await t.run("CloseAccount", CLOSE);
     expect(res.isError).toBe(true);
     expect(textOf(res)).toBe("A human refused this call.");
+    expect(res.structuredContent).toEqual({ status: "blocked", reason: "A human refused this call." });
   });
 
   it("fails closed when the approval store fails on create", async () => {
@@ -787,6 +790,7 @@ describe("pipeline: hold path", () => {
 
     expect(res.isError).toBe(true);
     expect(textOf(res)).toBe("Closures are frozen");
+    expect(res.structuredContent).toEqual({ status: "blocked", reason: "Closures are frozen" });
     expect(t.calls).toHaveLength(0);
     expect(t.bank().accounts.find((x) => x.id === "4471")?.status).toBe("OPEN");
     const a = await onlyApproval(t);
@@ -935,6 +939,7 @@ describe("pipeline: check_approval", () => {
     const res = await check(t, id);
     expect(res.isError).toBe(true);
     expect(textOf(res)).toBe("A human refused this call. Not today");
+    expect(res.structuredContent).toEqual({ status: "blocked", reason: "A human refused this call. Not today" });
     expect(t.calls).toHaveLength(0);
   });
 
@@ -989,6 +994,7 @@ describe("pipeline: check_approval", () => {
     const res = await check(t, id);
     expect(res.isError).toBe(true);
     expect(textOf(res)).toBe("Closures are frozen");
+    expect(res.structuredContent).toEqual({ status: "blocked", reason: "Closures are frozen" });
     expect(t.calls).toHaveLength(0);
     expect(closedStatus(t)).toBe("OPEN");
   });

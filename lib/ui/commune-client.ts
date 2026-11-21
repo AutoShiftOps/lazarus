@@ -76,12 +76,19 @@ function mapToolResult(raw: unknown): CommuneResult {
   const text = textOf(content);
 
   if (isError === true) {
+    // Machine-readable marker from the pipeline: policy blocks and human refusals, including custom rule reasons.
+    if (structuredContent?.status === "blocked") {
+      const reason = structuredContent.reason;
+      const shown = typeof reason === "string" && reason !== "" ? reason : text;
+      return { kind: "blocked", message: shown === "" ? COMMUNE_MESSAGES.blocked_default : cap(shown) };
+    }
     if (text === PIPELINE_RATE_LIMITED) return { kind: "rate_limited" };
     if (text.startsWith(PIPELINE_RATE_UNAVAILABLE_PREFIX)) return { kind: "unavailable" };
     if (text === PIPELINE_BLOCKED_TEXT || text.startsWith(PIPELINE_DENIED_PREFIX)) {
       return { kind: "blocked", message: cap(text) };
     }
-    // Rule reasons, SOAP faults and validation errors all arrive as plain isError text with no marker.
+    // SOAP faults and validation errors arrive as plain isError text. The two fixed texts above are
+    // fallbacks for older responses that carry no structured status.
     return { kind: "fault", message: text === "" ? COMMUNE_MESSAGES.malformed : cap(text) };
   }
 

@@ -80,6 +80,22 @@ describe("callTool", () => {
     });
   });
 
+  it("maps a custom rule reason with the blocked status to blocked, not fault", async () => {
+    const reason = "Transfers over 1000 are blocked";
+    const f = fetchReturning(
+      rpcResult(textResult(reason, { isError: true, structuredContent: { status: "blocked", reason } })),
+    );
+    expect(await callTool("s", "Transfer", {}, { fetch: f.fetch })).toEqual({ kind: "blocked", message: reason });
+  });
+
+  it("keeps a plain isError text without the status as a fault", async () => {
+    const f = fetchReturning(rpcResult(textResult("Transfers over 1000 are blocked", { isError: true })));
+    expect(await callTool("s", "Transfer", {}, { fetch: f.fetch })).toEqual({
+      kind: "fault",
+      message: "Transfers over 1000 are blocked",
+    });
+  });
+
   it("maps a ghost result with its marker", async () => {
     const f = fetchReturning(
       rpcResult(textResult("[GHOST — x]\n{}", { structuredContent: { ghost: true, result: { closed: true } } })),

@@ -113,6 +113,11 @@ function errorResult(text: string): McpToolResult {
   return { content: [{ type: "text", text }], isError: true };
 }
 
+/** A policy block or human refusal: same text, plus a machine-readable marker so clients can tell it from a fault. */
+function blockedResult(reason: string): McpToolResult {
+  return { content: [{ type: "text", text: reason }], structuredContent: { status: "blocked", reason }, isError: true };
+}
+
 /** A check_approval record: no arguments are ever stored on it (`args` is null). */
 function checkRecord(
   result: McpToolResult,
@@ -328,7 +333,7 @@ export async function executeApproved(
     if (decision.action === "block") {
       const reason = sanitizeText(decision.reason, MAX_REASON_CHARS);
       return {
-        result: errorResult(reason === "" ? MSG_BLOCKED : reason),
+        result: blockedResult(reason === "" ? MSG_BLOCKED : reason),
         outcome: "blocked",
         decision: "block",
         approvalId,
@@ -416,7 +421,7 @@ async function holdAndWait(
       case "denied": {
         const note = sanitizeText(current.note, MAX_NOTE_CHARS);
         return {
-          result: errorResult(note === "" ? MSG_DENIED : `${MSG_DENIED} ${note}`),
+          result: blockedResult(note === "" ? MSG_DENIED : `${MSG_DENIED} ${note}`),
           outcome: "blocked",
           approvalId,
           summary: `${op.name}: refused by a human, nothing was sent`,
@@ -555,7 +560,7 @@ export function createPipeline(deps: Deps): Pipeline {
         return {
           risk,
           rec: checkRecord(
-            errorResult(note === "" ? MSG_DENIED : `${MSG_DENIED} ${note}`),
+            blockedResult(note === "" ? MSG_DENIED : `${MSG_DENIED} ${note}`),
             "blocked",
             "hold",
             `${CHECK_TOOL}: refused by a human, nothing was sent`,
@@ -687,7 +692,7 @@ export function createPipeline(deps: Deps): Pipeline {
         const reason = sanitizeText(decision.reason, MAX_REASON_CHARS);
         return {
           ...common,
-          result: errorResult(reason === "" ? MSG_BLOCKED : reason),
+          result: blockedResult(reason === "" ? MSG_BLOCKED : reason),
           outcome: "blocked",
           summary: `${op.name}: blocked by policy, nothing was sent`,
         };

@@ -70,7 +70,7 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - Verify: npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
     - _Requirements: 1.4, 1.7_
 
-  - [-] 4.8 Make the awake ghost scary, not cute (SpiritAwakening.tsx and its CSS only)
+  - [ ] 4.8 Make the awake ghost scary, not cute (SpiritAwakening.tsx and its CSS only)
     - Do not touch public/lazarus-logo.svg or .env.local. Keep stage names, timing, a11y, reduced-motion/Still static states and all tests passing. Do not commit.
     - 1. Proportions: tall and thin (about 1:2.6), narrow shoulders, long stretched hood and face; body tapers into a long torn trailing shroud of uneven ragged strips, not a bell with a zig-zag hem.
     - 2. Asymmetry: head tilted 12 to 15 degrees; one very long thin arm reaching forward and slightly down with five bony curled fingers, the other arm hanging low and limp. No raised-arms pose.
@@ -96,6 +96,14 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
   - [x] 7.1 `CommuneForm` calling the MCP endpoint
     - _Requirements: 4.1â€“4.4_
 
+  - [x] 7.2 Mark blocked calls with a machine-readable status (pipeline + commune client)
+    - Do not touch public/lazarus-logo.svg or .env.local. Do not commit. Backward compatible: same texts, same decisions, same transcript entries.
+    - 1. lib/mcp/pipeline.ts: every block outcome (policy block, human denial, refused or expired approval as appropriate) returns isError: true with the same text AND structuredContent { status: "blocked", reason: <same sanitised text> }. Faults and upstream errors never carry status "blocked".
+    - 2. Tests in tests/mcp for each block path and for a SOAP fault without the status; update e2e/mcp-gateway.spec.ts or exact-object assertions only where they must change.
+    - 3. lib/ui/commune-client.ts maps structuredContent.status === "blocked" to kind "blocked" with that reason (keep the two fixed-text fallbacks); tests include a custom rule reason that now maps to blocked.
+    - 4. CommuneForm shows the blocked reason as text with clear blocked styling.
+    - Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
+    - _Requirements: 4.4_
 - [x] 8. Transcript
   - [x] 8.1 `TranscriptPanel` with expandable four-step view and `aria-live`
     - _Requirements: 5.1â€“5.6_

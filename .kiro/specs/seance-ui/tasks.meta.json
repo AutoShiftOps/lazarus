@@ -369,6 +369,23 @@
         "executionId": "0e78f934-d783-4fe8-8520-d434eb48b9bf",
         "chatSessionId": "sess_0ab920ba-5f17-45d8-b6ac-d706dad78c8a",
         "timestamp": 1795222182522
+      },
+      {
+        "executionId": "0e78f934-d783-4fe8-8520-d434eb48b9bf",
+        "chatSessionId": "sess_0ab920ba-5f17-45d8-b6ac-d706dad78c8a",
+        "timestamp": 1795222571223
+      }
+    ],
+    "7.2 Mark blocked calls with a machine-readable status (pipeline + commune client)": [
+      {
+        "executionId": "9d6f36d9-d1f8-474c-a2d4-0a8aad3470a4",
+        "chatSessionId": "sess_01b7b9ad-b553-4b0c-a75a-2d7542efbe3e",
+        "timestamp": 1795222668769
+      },
+      {
+        "executionId": "9d6f36d9-d1f8-474c-a2d4-0a8aad3470a4",
+        "chatSessionId": "sess_01b7b9ad-b553-4b0c-a75a-2d7542efbe3e",
+        "timestamp": 1795222806768
       }
     ]
   }
