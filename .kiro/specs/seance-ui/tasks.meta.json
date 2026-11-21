@@ -409,6 +409,18 @@
         "chatSessionId": "sess_4ca18682-7fbf-4db0-846b-cf6d9ec5e70a",
         "timestamp": 1795226680095
       }
+    ],
+    "4.10 Use the painted ghost illustration in the awake stage (public/ritual/ghost.png)": [
+      {
+        "executionId": "6dc2a0ef-ce72-4065-a074-40af08bc28b3",
+        "chatSessionId": "sess_23429cee-6e93-4419-9db3-98fa116c4ef8",
+        "timestamp": 1795228846342
+      },
+      {
+        "executionId": "6dc2a0ef-ce72-4065-a074-40af08bc28b3",
+        "chatSessionId": "sess_23429cee-6e93-4419-9db3-98fa116c4ef8",
+        "timestamp": 1795230327119
+      }
     ]
   }
 }

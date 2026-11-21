@@ -137,7 +137,7 @@ export function AwakeningRitual({ kind, summonStatus, onDone, onClosed }: Props)
       onKeyDown={onKeyDown}
       className="ritual fixed inset-0 z-[1000] flex h-dvh w-screen flex-col items-center justify-center gap-4 overflow-hidden bg-background px-4"
     >
-      <div aria-hidden="true" className={`w-full [&_.awakening-scene]:max-h-none! [&_.awakening-scene]:max-w-none! [&_.awakening-scene]:w-[min(66vh,90vw)]! ${state.pulseLast ? "ritual-pulse" : ""}`}>
+      <div aria-hidden="true" className={`w-full ${state.pulseLast ? "ritual-pulse" : ""}`}>
         <SpiritAwakening stage={ritualSceneStage(kind, state.stageIndex)} />
       </div>
       <div aria-live="polite" className="min-h-8 text-center font-display text-xl text-spectral">

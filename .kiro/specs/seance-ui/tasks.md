@@ -87,6 +87,18 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - 3. Trim the rise animation to about 1600 ms (still stepped, arms last) so the ghost is fully risen well before the hold ends.
     - 4. Keep everything else unchanged. Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
     - _Requirements: 1.4, 1.7_
+  - [x] 4.10 Use the painted ghost illustration in the awake stage (public/ritual/ghost.png)
+    - Do not touch public/lazarus-logo.svg or .env.local. Do not commit. One task at a time.
+    - Asset: public/ritual/ghost.png (1664x2496, 2:3 portrait, light figure on a pure black background). Leave the file as is.
+    - 1. In SpiritAwakening.tsx (or AwakeningRitual.tsx) replace the hand-drawn vector ghost group of the awake stage with the illustration rendered through next/image (width 832, height 1248, sizes sensible, quality 80, alt="", aria-hidden). Keep the grave, runes, rising hand, moon and mist of the earlier stages. Remove the now-dead vector ghost markup and unused .aw-* ghost CSS.
+    - 2. Composite with mix-blend-mode: screen so the black background disappears over the overlay background. Fade the bottom smoke into the grave with a CSS mask-image (linear gradient to transparent) and keep the front mist layer in front of the lower smoke so it looks like the ghost rises out of the mound.
+    - 3. Size: height about min(72vh, 120vw) keeping the 2:3 ratio, centred; the stage text and Skip button must stay visible without scrolling at 1280x720 and 360x640.
+    - 4. Render the image from the start of the ritual with opacity 0 (preloaded, no layout shift) so it is ready at the awake stage. Use priority/preload.
+    - 5. Motion (transform and opacity only): stepped slow rise from below the mound (translateY about 18% to 0, opacity 0 to 1, scale 0.94 to 1) in about 1600 ms; then idle: slow breathing scale 1 to 1.02 over 6 s, a slow horizontal drift of a few px, and an occasional stepped opacity dip to 0.7 every 5 to 7 s. A faint teal eye glow: a small radial-gradient element (screen blend) at the eye position (about 48% across and 20% down the image) pulsing opacity.
+    - 6. Reduced motion and Still mode: static final pose, no keyframes. Keep timing from ritual-timing.ts unchanged.
+    - 7. Update spirit-awakening-source.test.ts (allowed animation names, uses next/image with the asset, aria-hidden, only transform/opacity); add a test that public/ritual/ghost.png exists.
+    - Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
+    - _Requirements: 1.4, 1.7, 8.7_
 - [x] 5. Home page
   - [x] 5.1 `SummonForm` with staged progress and error display
     - _Requirements: 1.1, 1.4, 1.5_

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -23,7 +23,7 @@ describe("SpiritAwakening source", () => {
         expect(["transform", "opacity"]).toContain(part.trim().split(/\s+/)[0]);
       }
     }
-    expect(awCss).not.toMatch(/animation:[^;]*\baw-(?!drift|tremble|float|sway|breathe)/);
+    expect(awCss).not.toMatch(/animation:[^;]*\baw-(?!drift|tremble|float|breathe|glow)/);
   });
 
   it("renders all four stage phases and CSS rules for each", () => {
@@ -35,23 +35,36 @@ describe("SpiritAwakening source", () => {
     for (const phase of ["stirring", "awake"]) {
       expect(awCss).toContain(`.awakening[data-phase="${phase}"]`);
     }
-    expect(awCss).toContain('.awakening[data-eyes="blazing"]');
     expect(awCss).toContain('.aw-rune[data-lit="true"]');
   });
 
-  it("has the scene layers and a static clip-path mask for the rise", () => {
-    for (const cls of ["aw-halo", "aw-mist", "aw-mound", "aw-crack", "aw-stone", "aw-ghost", "aw-hand", "aw-eyes", "aw-wisp"]) {
+  it("has the scene layers and a static clip-path mask for the hand", () => {
+    for (const cls of ["aw-halo", "aw-mist", "aw-mound", "aw-crack", "aw-stone", "aw-ghost", "aw-hand", "aw-eye-glow", "aw-wisp"]) {
       expect(scene).toContain(cls);
     }
     expect(scene).toContain('clipPath="url(#aw-clip)"');
     expect(awCss).not.toMatch(/clip-path\s*:/);
   });
 
-  it("uses one static soft-edge filter with a fixed seed and no external assets", () => {
-    expect(scene).toMatch(/<feTurbulence[^>]*seed="\d+"/);
-    expect(scene).toContain("<feDisplacementMap");
-    expect(scene).toContain("<feGaussianBlur");
-    expect(scene).not.toMatch(/<animate|<image|https?:\/\/|\.svg|\.png/);
+  it("draws the ghost with next/image from the painted asset, hidden from assistive tech", () => {
+    expect(scene).toContain('import Image from "next/image"');
+    expect(scene).toContain('src="/ritual/ghost.png"');
+    expect(scene).toMatch(/alt=""/);
+    expect(scene).toMatch(/aria-hidden="true"\s+width=\{832\}\s+height=\{1248\}/);
+    expect(scene).toContain("quality={80}");
+    expect(scene).toContain("preload");
+    expect(scene).not.toMatch(/<animate|<image|https?:\/\/|<feTurbulence/);
+    expect(scene).not.toMatch(/aw-robe|aw-hood|aw-ghost-g/);
+  });
+
+  it("the ghost illustration exists in public/ritual", () => {
+    expect(existsSync(join(process.cwd(), "public", "ritual", "ghost.png"))).toBe(true);
+  });
+
+  it("composites with screen blend, a bottom mask and a 1600 ms stepped rise", () => {
+    expect(awCss).toMatch(/\.aw-ghost-pos\s*\{[^}]*mix-blend-mode:\s*screen/);
+    expect(awCss).toMatch(/\.aw-ghost-pos\s*\{[^}]*mask-image:\s*linear-gradient\([^)]*transparent 100%\)/);
+    expect(awCss).toMatch(/transition:\s*transform 1600ms[^;]*opacity 1600ms/);
   });
 
   it("the old flame-with-eyes artwork is gone", () => {
@@ -61,7 +74,13 @@ describe("SpiritAwakening source", () => {
   });
 
   it("reduced motion and Still mode switch the scene animations off", () => {
-    for (const sel of [".aw-mist-a", '.awakening[data-phase="awake"] .aw-float', '.awakening[data-phase="stirring"] .aw-mound-g']) {
+    for (const sel of [
+      ".aw-mist-a",
+      '.awakening[data-phase="awake"] .aw-float',
+      '.awakening[data-phase="awake"] .aw-breathe',
+      '.awakening[data-phase="awake"] .aw-eye-glow',
+      '.awakening[data-phase="stirring"] .aw-mound-g',
+    ]) {
       expect(css).toContain(`  ${sel},`);
       expect(css).toContain(`html[data-still="true"] ${sel},`);
     }
