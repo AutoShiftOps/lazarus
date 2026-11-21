@@ -167,3 +167,35 @@ describe("cleanServiceName", () => {
     expect(Array.from(name)).toHaveLength(80);
   });
 });
+
+describe("toServiceView commune data", () => {
+  const field = { name: "accountId", xsdType: "string", minOccurs: 1, maxOccurs: 1, nillable: false } as const;
+
+  it("exposes the input descriptor and the MCP tool name for each spirit", () => {
+    const view = toServiceView(
+      def([{ name: "P", operations: [op("Get Balance", { inputDescriptor: [{ ...field }] })] }]),
+      ORIGIN,
+    );
+    expect(view.spirits[0].inputDescriptor).toEqual([field]);
+    expect(view.spirits[0].toolName).toBe("Get_Balance");
+  });
+
+  it("names tools like buildTools: reserved check_approval and duplicates are renamed", () => {
+    const view = toServiceView(
+      def([{ name: "P", operations: [op("check_approval"), op("A"), op("A")] }]),
+      ORIGIN,
+    );
+    expect(view.spirits.map((s) => s.toolName)).toEqual(["check_approval_2", "A", "A_2"]);
+  });
+
+  it("copies only known descriptor fields, including nested children", () => {
+    const hostile = {
+      ...field,
+      secret: "x",
+      children: [{ ...field, name: "inner", extra: 1 }],
+    } as unknown as typeof field;
+    const view = toServiceView(def([{ name: "P", operations: [op("A", { inputDescriptor: [hostile] })] }]), ORIGIN);
+    expect(JSON.stringify(view.spirits[0].inputDescriptor)).not.toMatch(/secret|extra/);
+    expect(view.spirits[0].inputDescriptor[0].children?.[0].name).toBe("inner");
+  });
+});

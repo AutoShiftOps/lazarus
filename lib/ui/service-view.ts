@@ -2,10 +2,10 @@
 // Pure view model for the service page. Every string that came from a WSDL is
 // untrusted and is sanitised here, once, so components can render it as plain text.
 
-import { sanitizeText } from "../mcp/tools";
+import { CHECK_APPROVAL_TOOL, sanitizeText, sanitizeToolName } from "../mcp/tools";
 import { publicDefinition } from "../owner-token";
 import { isServiceId } from "../registry/ids";
-import type { Risk, ServiceDefinition } from "../soap/types";
+import type { FieldDescriptor, Risk, ServiceDefinition } from "../soap/types";
 
 export const MAX_DESCRIPTION_CHARS = 140;
 export const MAX_SERVICE_NAME_CHARS = 80;
@@ -16,6 +16,10 @@ const MAX_SLUG_CHARS = 40;
 const DEFAULT_SLUG = "lazarus-service";
 
 export type SpiritView = {
+  /** The MCP tool name for this operation, as `buildTools` names it. */
+  toolName: string;
+  /** Public input fields. Names are kept exact because they are the argument keys; render as text only. */
+  inputDescriptor: FieldDescriptor[];
   name: string;
   port: string;
   description: string;
@@ -83,6 +87,18 @@ function describeOperation(name: string, documentation: unknown): string {
   return sanitizeText(`${label} is an operation of the legacy service.`, MAX_DESCRIPTION_CHARS);
 }
 
+/** Copies only the known descriptor fields, so nothing else from a stored definition reaches the client. */
+function copyDescriptor(fields: FieldDescriptor[]): FieldDescriptor[] {
+  return fields.map((f) => ({
+    name: f.name,
+    xsdType: f.xsdType,
+    minOccurs: f.minOccurs,
+    maxOccurs: f.maxOccurs,
+    nillable: f.nillable,
+    ...(f.children ? { children: copyDescriptor(f.children) } : {}),
+  }));
+}
+
 export function toServiceView(def: ServiceDefinition, origin: string): ServiceView {
   const id = def.id;
   if (typeof id !== "string" || !isServiceId(id)) {
@@ -99,12 +115,16 @@ export function toServiceView(def: ServiceDefinition, origin: string): ServiceVi
   const mcpUrl = `${safeOrigin}/api/mcp/${id}`;
   const slug = slugify(name);
 
+  // Same order and reserved name as buildTools, so toolName matches the live MCP tool.
+  const takenToolNames = new Set<string>([CHECK_APPROVAL_TOOL]);
   const spirits: SpiritView[] = [];
   for (const port of pub.ports) {
     const portName = sanitizeText(port.name, MAX_PORT_NAME_CHARS);
     for (const op of port.operations) {
       const opName = sanitizeText(op.name, MAX_OPERATION_NAME_CHARS);
       spirits.push({
+        toolName: sanitizeToolName(op.name, takenToolNames),
+        inputDescriptor: copyDescriptor(op.inputDescriptor),
         name: opName,
         port: portName,
         description: describeOperation(opName, op.documentation),

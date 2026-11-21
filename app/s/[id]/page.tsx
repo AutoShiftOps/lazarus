@@ -99,11 +99,11 @@ function groupByPort(spirits: SpiritView[]): { port: string; spirits: SpiritView
   return Array.from(groups, ([port, list]) => ({ port, spirits: list }));
 }
 
-function SpiritGrid({ spirits, label }: { spirits: SpiritView[]; label: string }) {
+function SpiritGrid({ spirits, label, serviceId }: { spirits: SpiritView[]; label: string; serviceId: string }) {
   return (
     <ul aria-label={label} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {spirits.map((s, i) => (
-        <SpiritCard key={`${s.port}:${s.name}:${i}`} spirit={s} index={i} />
+        <SpiritCard key={`${s.port}:${s.name}:${i}`} spirit={s} serviceId={serviceId} index={i} />
       ))}
     </ul>
   );
@@ -148,12 +148,12 @@ function ServiceDetails({ view, serviceId, isDemo }: { view: ServiceView; servic
                 <p id={`port-${i}`} className="font-mono text-sm text-muted">
                   Port: {g.port}
                 </p>
-                <SpiritGrid spirits={g.spirits} label={`Operations on port ${g.port}`} />
+                <SpiritGrid spirits={g.spirits} label={`Operations on port ${g.port}`} serviceId={serviceId} />
               </section>
             ))}
           </div>
         ) : (
-          <SpiritGrid spirits={view.spirits} label="Operations" />
+          <SpiritGrid spirits={view.spirits} label="Operations" serviceId={serviceId} />
         )}
       </section>
 

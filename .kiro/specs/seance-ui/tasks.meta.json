@@ -344,6 +344,32 @@
         "chatSessionId": "sess_7716938e-a916-4189-b4a2-8d6ff07ba20f",
         "timestamp": 1795208455898
       }
+    ],
+    "7.1 `CommuneForm` calling the MCP endpoint": [
+      {
+        "executionId": "44c6c6c1-ba87-49d5-8495-4633cd0c4418",
+        "chatSessionId": "sess_b72ea61a-4ca6-4ba7-a3a9-40a5eb8c1e48",
+        "timestamp": 1795221462191
+      },
+      {
+        "executionId": "44c6c6c1-ba87-49d5-8495-4633cd0c4418",
+        "chatSessionId": "sess_b72ea61a-4ca6-4ba7-a3a9-40a5eb8c1e48",
+        "timestamp": 1795221859699
+      }
+    ],
+    "7. Commune form": [
+      {
+        "executionId": "44c6c6c1-ba87-49d5-8495-4633cd0c4418",
+        "chatSessionId": "sess_b72ea61a-4ca6-4ba7-a3a9-40a5eb8c1e48",
+        "timestamp": 1795221859801
+      }
+    ],
+    "4.8 Make the awake ghost scary, not cute (SpiritAwakening.tsx and its CSS only)": [
+      {
+        "executionId": "0e78f934-d783-4fe8-8520-d434eb48b9bf",
+        "chatSessionId": "sess_0ab920ba-5f17-45d8-b6ac-d706dad78c8a",
+        "timestamp": 1795222182522
+      }
     ]
   }
 }

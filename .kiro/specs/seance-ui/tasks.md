@@ -70,6 +70,16 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - Verify: npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
     - _Requirements: 1.4, 1.7_
 
+  - [-] 4.8 Make the awake ghost scary, not cute (SpiritAwakening.tsx and its CSS only)
+    - Do not touch public/lazarus-logo.svg or .env.local. Keep stage names, timing, a11y, reduced-motion/Still static states and all tests passing. Do not commit.
+    - 1. Proportions: tall and thin (about 1:2.6), narrow shoulders, long stretched hood and face; body tapers into a long torn trailing shroud of uneven ragged strips, not a bell with a zig-zag hem.
+    - 2. Asymmetry: head tilted 12 to 15 degrees; one very long thin arm reaching forward and slightly down with five bony curled fingers, the other arm hanging low and limp. No raised-arms pose.
+    - 3. Face: no round face plate or small bright dots. Tall narrow dark slit eyes (about 3x taller than wide) with a faint cold teal glow deep inside, slightly different sizes, left eye a little lower; thin dark vertical mouth gap; deep shadow in the hood.
+    - 4. Light and colour: desaturated cold grey-blue, lower opacity at the edges, lit from below with a faint cold grave glow and rim light on one side only; darker upper hood; subtle dark vignette; remove the warm halo behind the ghost (keep the pale moon).
+    - 5. Motion (transform/opacity only): slow, slightly jerky stepped rise with the long arm unfolding last; idle is a very slow drift, a delayed head tilt of a few degrees over about 6 s, and an occasional stepped opacity dip to 0.55 every 4 to 7 s. No bounce or bob.
+    - 6. SVG under about 14 KB, original design, aria-hidden; reduced motion and Still mode show a static version of the same pose. Update spirit-awakening-source.test.ts only if a selector changed.
+    - Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
+    - _Requirements: 1.4, 1.7, 8.7_
 - [x] 5. Home page
   - [x] 5.1 `SummonForm` with staged progress and error display
     - _Requirements: 1.1, 1.4, 1.5_
@@ -82,8 +92,8 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
   - [x] 6.2 `SpiritCard` list and `McpConfig`
     - _Requirements: 3.2, 3.4, 3.6_
 
-- [ ] 7. Commune form
-  - [ ] 7.1 `CommuneForm` calling the MCP endpoint
+- [x] 7. Commune form
+  - [x] 7.1 `CommuneForm` calling the MCP endpoint
     - _Requirements: 4.1â€“4.4_
 
 - [x] 8. Transcript

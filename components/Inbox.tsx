@@ -225,12 +225,12 @@ export function Inbox({ serviceId, isDemo }: InboxProps) {
   );
 
   if (token === undefined) {
-    return <section aria-labelledby="inbox-heading" className="space-y-4">{heading}</section>;
+    return <section id="inbox" aria-labelledby="inbox-heading" className="space-y-4">{heading}</section>;
   }
 
   if (!allowed) {
     return (
-      <section aria-labelledby="inbox-heading" className="space-y-4">
+      <section id="inbox" aria-labelledby="inbox-heading" className="space-y-4">
         {heading}
         <p role="status" className="text-muted">
           Only the owner can release calls.
@@ -243,7 +243,7 @@ export function Inbox({ serviceId, isDemo }: InboxProps) {
   const resolved = (approvals ?? []).filter((a) => a.status !== "pending").slice(0, RESOLVED_MAX);
 
   return (
-    <section aria-labelledby="inbox-heading" className="space-y-4">
+    <section id="inbox" aria-labelledby="inbox-heading" className="space-y-4">
       {heading}
       {pollFailed ? <p className="text-sm text-muted">Listening for the spirits…</p> : null}
       <div aria-live="polite">
