@@ -31,7 +31,7 @@ describe("ritualState", () => {
     expect(s).toEqual({ stageIndex: 2, phase: "running", pulseLast: false });
   });
 
-  it("holds the awake moment for at least 1.2 s, then is done", () => {
+  it("holds the awake moment for at least 3 s, then is done", () => {
     const start = 3 * STAGE_MIN_MS;
     const s = (elapsedMs: number) => at({ elapsedMs, summonStatus: "success", settledAtMs: 200 });
     expect(s(start)).toEqual({ stageIndex: AWAKE_INDEX, phase: "awake-hold", pulseLast: false });

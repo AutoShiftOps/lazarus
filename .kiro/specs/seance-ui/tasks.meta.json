@@ -397,6 +397,18 @@
         "chatSessionId": "sess_01b7b9ad-b553-4b0c-a75a-2d7542efbe3e",
         "timestamp": 1795222806768
       }
+    ],
+    "4.9 Fix ritual vignette box and let the awake ghost finish rising": [
+      {
+        "executionId": "3a73a1df-5fb5-4c94-9038-5a579b8a537a",
+        "chatSessionId": "sess_4ca18682-7fbf-4db0-846b-cf6d9ec5e70a",
+        "timestamp": 1795226294935
+      },
+      {
+        "executionId": "3a73a1df-5fb5-4c94-9038-5a579b8a537a",
+        "chatSessionId": "sess_4ca18682-7fbf-4db0-846b-cf6d9ec5e70a",
+        "timestamp": 1795226680095
+      }
     ]
   }
 }

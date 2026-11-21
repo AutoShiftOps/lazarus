@@ -12,7 +12,7 @@ const LAST_WORKING_INDEX = 2;
 
 export const STAGE_MIN_MS = 1400;
 export const STAGE_MIN_REDUCED_MS = 600;
-export const AWAKE_HOLD_MS = 1200;
+export const AWAKE_HOLD_MS = 3000;
 export const AWAKE_HOLD_REDUCED_MS = 500;
 
 export interface RitualInput {

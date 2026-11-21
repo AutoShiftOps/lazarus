@@ -80,7 +80,7 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - 6. SVG under about 14 KB, original design, aria-hidden; reduced motion and Still mode show a static version of the same pose. Update spirit-awakening-source.test.ts only if a selector changed.
     - Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
     - _Requirements: 1.4, 1.7, 8.7_
-  - [ ] 4.9 Fix ritual vignette box and let the awake ghost finish rising
+  - [x] 4.9 Fix ritual vignette box and let the awake ghost finish rising
     - Do not touch public/lazarus-logo.svg or .env.local. Do not commit. One task at a time.
     - 1. SpiritAwakening.tsx: the vignette is a hard-edged rectangle around the scene (visible dark square on the overlay). Replace it with a soft radial gradient (transparent centre, fading to the overlay background colour at the edges, no visible boundary) or move it to the overlay background in AwakeningRitual.tsx. No rectangle edge may be visible at 1280x720 or 360x640.
     - 2. lib/ui/ritual-timing.ts: the awake hold becomes 3000 ms (reduced motion and Still mode stay 500 ms) so the full rise and the first idle motion can be seen before navigation. Update tests/ui/ritual-timing.test.ts and any test that asserts 1200 ms. Requirement 1.7 is a minimum, so also update its wording to say at least 3 s.

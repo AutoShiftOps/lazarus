@@ -579,7 +579,7 @@ summary,
   opacity: 0;
   transform: translateY(240px);
   transition:
-    transform 2400ms steps(10, end),
+    transform 1000ms steps(8, end),
     opacity 600ms ease-out;
 }
 
@@ -602,14 +602,14 @@ summary,
 .aw-head {
   transform-origin: 160px 80px;
   transform: rotate(24deg) translateY(2px);
-  transition: transform 1600ms steps(6, end) 1200ms;
+  transition: transform 800ms steps(5, end) 600ms;
 }
 
 .awakening[data-phase="awake"] .aw-head { transform: rotate(13deg); }
 
 /* The long reaching arm hangs folded and unfolds last; the other arm stays limp. */
 .aw-arm {
-  transition: transform 1800ms steps(6, end) 2800ms;
+  transition: transform 600ms steps(4, end) 1000ms;
 }
 
 .aw-arm-l { transform-origin: 142px 86px; transform: rotate(8deg); }

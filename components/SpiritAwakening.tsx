@@ -88,9 +88,12 @@ export function SpiritAwakening({ stage, label }: { stage: AwakeningStage; label
             <stop offset="65%" stopColor="#02060a" stopOpacity="0.8" />
             <stop offset="100%" stopColor="#02060a" stopOpacity="0" />
           </radialGradient>
-          <radialGradient id="aw-vig-g" cx="50%" cy="50%" r="62%">
-            <stop offset="55%" stopColor="#02050a" stopOpacity="0" />
-            <stop offset="100%" stopColor="#02050a" stopOpacity="0.5" />
+          {/* Soft vignette: transparent at the centre and again at the box edge, so no rectangle shows. */}
+          <radialGradient id="aw-vig-g" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#02050a" stopOpacity="0" />
+            <stop offset="45%" stopColor="#02050a" stopOpacity="0" />
+            <stop offset="78%" stopColor="#02050a" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#02050a" stopOpacity="0" />
           </radialGradient>
           {/* Static soft edge: fixed seed, applied once, never animated. */}
           <filter id="aw-soft" x="-10%" y="-5%" width="120%" height="115%">
