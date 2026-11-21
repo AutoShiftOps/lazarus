@@ -86,8 +86,8 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
   - [ ] 7.1 `CommuneForm` calling the MCP endpoint
     - _Requirements: 4.1â€“4.4_
 
-- [ ] 8. Transcript
-  - [ ] 8.1 `TranscriptPanel` with expandable four-step view and `aria-live`
+- [x] 8. Transcript
+  - [x] 8.1 `TranscriptPanel` with expandable four-step view and `aria-live`
     - _Requirements: 5.1â€“5.6_
 
 - [x] 9. Inbox and Candle

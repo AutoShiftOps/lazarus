@@ -325,6 +325,25 @@
         "chatSessionId": "sess_930a1b8f-47a4-4d42-b6cb-81ca3295e90c",
         "timestamp": 1795206895122
       }
+    ],
+    "8.1 `TranscriptPanel` with expandable four-step view and `aria-live`": [
+      {
+        "executionId": "1fbf5030-bb59-41ac-b972-98c140f6854a",
+        "chatSessionId": "sess_7716938e-a916-4189-b4a2-8d6ff07ba20f",
+        "timestamp": 1795208105658
+      },
+      {
+        "executionId": "1fbf5030-bb59-41ac-b972-98c140f6854a",
+        "chatSessionId": "sess_7716938e-a916-4189-b4a2-8d6ff07ba20f",
+        "timestamp": 1795208455791
+      }
+    ],
+    "8. Transcript": [
+      {
+        "executionId": "1fbf5030-bb59-41ac-b972-98c140f6854a",
+        "chatSessionId": "sess_7716938e-a916-4189-b4a2-8d6ff07ba20f",
+        "timestamp": 1795208455898
+      }
     ]
   }
 }

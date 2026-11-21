@@ -6,6 +6,7 @@ import { cache, Suspense } from "react";
 import { Heartbeat } from "../../../components/Heartbeat";
 import { Inbox } from "../../../components/Inbox";
 import { McpConfig } from "../../../components/McpConfig";
+import { TranscriptPanel } from "../../../components/TranscriptPanel";
 import { isDemoService } from "../../../lib/auth/owner";
 import { SpiritCard } from "../../../components/SpiritCard";
 import { isServiceId, registry } from "../../../lib/registry";
@@ -157,6 +158,7 @@ function ServiceDetails({ view, serviceId, isDemo }: { view: ServiceView; servic
       </section>
 
       <Inbox serviceId={serviceId} isDemo={isDemo} />
+      <TranscriptPanel serviceId={serviceId} isDemo={isDemo} />
     </div>
   );
 }
