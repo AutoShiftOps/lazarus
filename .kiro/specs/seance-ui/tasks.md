@@ -99,7 +99,7 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - 7. Update spirit-awakening-source.test.ts (allowed animation names, uses next/image with the asset, aria-hidden, only transform/opacity); add a test that public/ritual/ghost.png exists.
     - Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
     - _Requirements: 1.4, 1.7, 8.7_
-  - [-] 4.11 Service page spacing and readable service name
+  - [x] 4.11 Service page spacing and readable service name
     - Do not touch public/lazarus-logo.svg or .env.local. Do not commit.
     - 1. app/s/[id]/page.tsx and the section components: consistent vertical rhythm. Every top-level section (Endpoint, Spirits, Safety, Held calls, Ouija transcript) is a labelled section with at least 3rem of space above it and 1rem between its heading and content; the Spirits grid, the Safety block (ghost switch, rules, starter rules) and the Inbox must not touch the heading or block above. Check 1280x720 and 360x640.
     - 2. Display name: in lib/ui/service-view.ts add a pure displayName(name) that splits camelCase and PascalCase boundaries into words ("GravewoodBank" becomes "Gravewood Bank", "CountryInfoService" becomes "Country Info Service", acronym runs like "SOAPService" become "SOAP Service") and use it for the page heading and the page title (metadata); keep the original name for the MCP config key and slug. Tests with examples and a fast-check property that it never returns an empty string for a non-empty input and only adds spaces.
