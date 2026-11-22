@@ -3,7 +3,10 @@ import type { TranscriptItem } from "./transcripts-client";
 export const BODY_MAX = 4000;
 export const NOT_SENT = "Not sent";
 
-export type DecisionLabel = { label: "Allowed" | "Held" | "Blocked" | "Ghost"; icon: string };
+export type DecisionLabel = { label: "Allowed" | "Held" | "Blocked" | "Ghost" | "Collected"; icon: string };
+
+/** Name of the built-in tool that collects a held call's result (same value as CHECK_APPROVAL_TOOL on the server). */
+const CHECK_APPROVAL = "check_approval";
 
 const DECISIONS: Record<TranscriptItem["decision"], DecisionLabel> = {
   allow: { label: "Allowed", icon: "✓" },
@@ -23,6 +26,15 @@ const OUTCOMES: Record<TranscriptItem["outcome"], string> = {
 
 export function decisionLabel(decision: TranscriptItem["decision"]): DecisionLabel {
   return DECISIONS[decision];
+}
+
+/**
+ * Label for one entry. A successful check_approval call collected the result of a held call; it was
+ * not held itself, so it must not read "Held".
+ */
+export function entryDecisionLabel(entry: Pick<TranscriptItem, "tool" | "decision" | "outcome">): DecisionLabel {
+  if (entry.tool === CHECK_APPROVAL && entry.outcome === "ok") return { label: "Collected", icon: "📥" };
+  return decisionLabel(entry.decision);
 }
 
 export function outcomeLabel(outcome: TranscriptItem["outcome"]): string {
@@ -47,7 +59,7 @@ function truncate(text: string): string {
 }
 
 function prettyArgs(args: unknown): string {
-  if (args === undefined) return "No arguments";
+  if (args === undefined || args === null) return "No arguments";
   try {
     return JSON.stringify(args, null, 2) ?? String(args);
   } catch {

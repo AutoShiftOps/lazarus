@@ -136,10 +136,10 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - _Requirements: 6.1, 6.2, 6.7, 6.11, 6.12_
   - [x] 9.4 Component tests: early release sends nothing; keyboard repeat ignored; checkbox path; 409 message
 
-- [ ] 10. Rules and ghost mode
-  - [ ] 10.1 `GhostSwitch` and banner
+- [x] 10. Rules and ghost mode
+  - [x] 10.1 `GhostSwitch` and banner
     - _Requirements: 7.1, 7.2_
-  - [ ] 10.2 `RulesPanel`: plain-English list, one-click starter rules, read-only state
+  - [x] 10.2 `RulesPanel`: plain-English list, one-click starter rules, read-only state
     - _Requirements: 7.3, 7.6, 7.7_
   - [ ]* 10.3 (stretch) Add-rule form with destructive-allow warning and confirm checkbox
     - _Requirements: 7.4, 7.5_

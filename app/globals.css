@@ -945,3 +945,22 @@ html[data-still="true"] .candle-hold-button {
     cursor: not-allowed;
   }
 }
+
+/* Ghost mode: a faint cold tint over the service page. Filter only; off with reduced motion or Still mode. */
+.ghost-shell {
+  transition: filter 600ms ease;
+}
+
+.ghost-tint {
+  filter: saturate(0.8) hue-rotate(8deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost-tint {
+    filter: none;
+  }
+}
+
+html[data-still="true"] .ghost-tint {
+  filter: none;
+}

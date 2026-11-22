@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   decisionLabel,
+  entryDecisionLabel,
   formatDuration,
   formatTime,
   fourSteps,
@@ -36,6 +37,19 @@ describe("transcript-view", () => {
       expect(outcomeLabel(o)).not.toBe("");
     }
     expect(outcomeLabel("fault")).toBe("SOAP fault");
+  });
+
+  it("labels only a successful check_approval as Collected", () => {
+    const held = { ...base, tool: "check_approval", decision: "hold" as const };
+    expect(entryDecisionLabel({ ...held, outcome: "ok" })).toMatchObject({ label: "Collected" });
+    expect(entryDecisionLabel({ ...held, outcome: "ok" }).icon).not.toBe("");
+    expect(entryDecisionLabel({ ...held, outcome: "held" }).label).toBe("Held");
+    expect(entryDecisionLabel({ ...base, tool: "CloseAccount", decision: "hold", outcome: "held" }).label).toBe("Held");
+  });
+
+  it("says No arguments when args is null or undefined", () => {
+    expect(fourSteps({ ...base, args: null })[0].body).toBe("No arguments");
+    expect(fourSteps({ ...base, args: undefined })[0].body).toBe("No arguments");
   });
 
   it("formats duration and time", () => {

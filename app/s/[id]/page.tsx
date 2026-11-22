@@ -3,7 +3,11 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { cache, Suspense } from "react";
+import { GhostShell } from "../../../components/GhostShell";
+import { GhostSwitch } from "../../../components/GhostSwitch";
 import { Heartbeat } from "../../../components/Heartbeat";
+import { RulesPanel } from "../../../components/RulesPanel";
+import type { StarterOperation } from "../../../lib/ui/starter-rules";
 import { Inbox } from "../../../components/Inbox";
 import { McpConfig } from "../../../components/McpConfig";
 import { TranscriptPanel } from "../../../components/TranscriptPanel";
@@ -112,9 +116,14 @@ function SpiritGrid({ spirits, label, serviceId }: { spirits: SpiritView[]; labe
 function ServiceDetails({ view, serviceId, isDemo }: { view: ServiceView; serviceId: string; isDemo: boolean }) {
   const count = `${view.operationCount} ${view.operationCount === 1 ? "spirit" : "spirits"}`;
   const groups = groupByPort(view.spirits);
+  const operations: StarterOperation[] = view.spirits.map((s) => ({
+    name: s.name,
+    risk: s.risk,
+    inputFields: s.inputDescriptor.map((f) => f.name),
+  }));
 
   return (
-    <div className="space-y-10">
+    <GhostShell serviceId={serviceId}>
       <header className="space-y-2">
         <h1 className="font-display text-3xl leading-tight text-text sm:text-4xl">{view.name}</h1>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
@@ -157,8 +166,16 @@ function ServiceDetails({ view, serviceId, isDemo }: { view: ServiceView; servic
         )}
       </section>
 
+      <section id="safety" aria-labelledby="safety-heading" className="space-y-6">
+        <h2 id="safety-heading" className="text-2xl text-text">
+          Safety
+        </h2>
+        <GhostSwitch />
+        <RulesPanel serviceId={serviceId} operations={operations} />
+      </section>
+
       <Inbox serviceId={serviceId} isDemo={isDemo} />
       <TranscriptPanel serviceId={serviceId} isDemo={isDemo} />
-    </div>
+    </GhostShell>
   );
 }

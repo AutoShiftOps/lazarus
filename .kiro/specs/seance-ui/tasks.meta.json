@@ -421,6 +421,47 @@
         "chatSessionId": "sess_23429cee-6e93-4419-9db3-98fa116c4ef8",
         "timestamp": 1795230327119
       }
+    ],
+    "10.1 `GhostSwitch` and banner": [
+      {
+        "executionId": "8c9eab2a-fae5-4fb6-a47f-21485f0f993e",
+        "chatSessionId": "sess_28c26827-87ae-48fc-b33f-62f97c43e86f",
+        "timestamp": 1795278621119
+      },
+      {
+        "executionId": "19d9e0bb-77a0-42b6-827c-1d02afd83b88",
+        "chatSessionId": "sess_28c26827-87ae-48fc-b33f-62f97c43e86f",
+        "timestamp": 1795278663728
+      },
+      {
+        "executionId": "3105d705-2708-40e2-a045-2d2a65ac24a3",
+        "chatSessionId": "sess_28c26827-87ae-48fc-b33f-62f97c43e86f",
+        "timestamp": 1795364535162
+      }
+    ],
+    "10.2 `RulesPanel`: plain-English list, one-click starter rules, read-only state": [
+      {
+        "executionId": "19d9e0bb-77a0-42b6-827c-1d02afd83b88",
+        "chatSessionId": "sess_28c26827-87ae-48fc-b33f-62f97c43e86f",
+        "timestamp": 1795278649689
+      },
+      {
+        "executionId": "3105d705-2708-40e2-a045-2d2a65ac24a3",
+        "chatSessionId": "sess_28c26827-87ae-48fc-b33f-62f97c43e86f",
+        "timestamp": 1795364270637
+      },
+      {
+        "executionId": "3105d705-2708-40e2-a045-2d2a65ac24a3",
+        "chatSessionId": "sess_28c26827-87ae-48fc-b33f-62f97c43e86f",
+        "timestamp": 1795364535312
+      }
+    ],
+    "10. Rules and ghost mode": [
+      {
+        "executionId": "3105d705-2708-40e2-a045-2d2a65ac24a3",
+        "chatSessionId": "sess_28c26827-87ae-48fc-b33f-62f97c43e86f",
+        "timestamp": 1795364535399
+      }
     ]
   }
 }

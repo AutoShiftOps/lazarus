@@ -66,6 +66,23 @@ describe("TranscriptPanel", () => {
     }
   });
 
+  it("labels a successful check_approval Collected and keeps Held for the held call", async () => {
+    stubFetch(() => [
+      entry({ id: "a", tool: "check_approval", decision: "hold", outcome: "ok", args: null }),
+      entry({ id: "b", tool: "CloseAccount", decision: "hold", outcome: "held" }),
+    ]);
+    const { container } = render(<TranscriptPanel serviceId={SID} isDemo />);
+    await flush();
+    const labels = Array.from(container.querySelectorAll("li[data-entry] [data-decision]")).map(
+      (n) => n.textContent,
+    );
+    expect(labels[0]).toContain("Collected");
+    expect(labels[0]).not.toContain("Held");
+    expect(labels[1]).toContain("Held");
+    fireEvent.click(container.querySelector("summary") as HTMLElement);
+    expect(container.querySelector("pre")?.textContent).toBe("No arguments");
+  });
+
   it("expands to show four steps and keeps [redacted]", async () => {
     stubFetch(() => [entry({ args: { pin: "[redacted]" }, soapRequest: "<req/>" })]);
     const { container } = render(<TranscriptPanel serviceId={SID} isDemo />);

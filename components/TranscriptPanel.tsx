@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { fourSteps, decisionLabel, formatDuration, formatTime, outcomeLabel } from "../lib/ui/transcript-view";
+import { fourSteps, entryDecisionLabel, formatDuration, formatTime, outcomeLabel } from "../lib/ui/transcript-view";
 import { listTranscripts, type TranscriptItem } from "../lib/ui/transcripts-client";
 import { usePolling } from "../lib/ui/poll";
 import { getOwnerToken } from "../lib/ui/token-store";
@@ -29,14 +29,14 @@ export function announcement(fresh: TranscriptItem[]): string {
   if (fresh.length === 0) return "";
   const parts = fresh
     .slice(0, MAX_ANNOUNCED)
-    .map((e) => `${e.tool} ${decisionLabel(e.decision).label.toLowerCase()}`);
+    .map((e) => `${e.tool} ${entryDecisionLabel(e).label.toLowerCase()}`);
   const more = fresh.length > MAX_ANNOUNCED ? `, and ${fresh.length - MAX_ANNOUNCED} more` : "";
   const noun = fresh.length === 1 ? "call" : "calls";
   return `${fresh.length} new ${noun}: ${parts.join(", ")}${more}`;
 }
 
 function Entry({ entry }: { entry: TranscriptItem }) {
-  const decision = decisionLabel(entry.decision);
+  const decision = entryDecisionLabel(entry);
   return (
     <li className="rounded-md border border-border bg-surface" data-entry={entry.id}>
       <details>
@@ -46,7 +46,7 @@ function Entry({ entry }: { entry: TranscriptItem }) {
           </time>
           <span className="font-mono text-spectral" data-tool>{entry.tool}</span>
           <span
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${DECISION_COLORS[entry.decision]}`}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${decision.label === "Collected" ? DECISION_COLORS.allow : DECISION_COLORS[entry.decision]}`}
             data-decision={entry.decision}
           >
             <span aria-hidden="true">{decision.icon}</span>
