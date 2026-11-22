@@ -99,6 +99,13 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - 7. Update spirit-awakening-source.test.ts (allowed animation names, uses next/image with the asset, aria-hidden, only transform/opacity); add a test that public/ritual/ghost.png exists.
     - Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
     - _Requirements: 1.4, 1.7, 8.7_
+  - [-] 4.11 Service page spacing and readable service name
+    - Do not touch public/lazarus-logo.svg or .env.local. Do not commit.
+    - 1. app/s/[id]/page.tsx and the section components: consistent vertical rhythm. Every top-level section (Endpoint, Spirits, Safety, Held calls, Ouija transcript) is a labelled section with at least 3rem of space above it and 1rem between its heading and content; the Spirits grid, the Safety block (ghost switch, rules, starter rules) and the Inbox must not touch the heading or block above. Check 1280x720 and 360x640.
+    - 2. Display name: in lib/ui/service-view.ts add a pure displayName(name) that splits camelCase and PascalCase boundaries into words ("GravewoodBank" becomes "Gravewood Bank", "CountryInfoService" becomes "Country Info Service", acronym runs like "SOAPService" become "SOAP Service") and use it for the page heading and the page title (metadata); keep the original name for the MCP config key and slug. Tests with examples and a fast-check property that it never returns an empty string for a non-empty input and only adds spaces.
+    - 3. Group Endpoint details so the first screen shows the heading, the service status and the Spirits grid sooner: collapse the Client config JSON and the Claude Code command into a <details> section titled "Connect an agent" (open by default on screens wider than 1024 px only is optional; closed is fine), keeping Copy buttons.
+    - Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
+    - _Requirements: 2.1, 8.1_
 - [x] 5. Home page
   - [x] 5.1 `SummonForm` with staged progress and error display
     - _Requirements: 1.1, 1.4, 1.5_
@@ -123,7 +130,7 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - 4. CommuneForm shows the blocked reason as text with clear blocked styling.
     - Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
     - _Requirements: 4.4_
-  - [ ] 7.3 Date picker for xsd:date fields in the commune form
+  - [x] 7.3 Date picker for xsd:date fields in the commune form
     - Do not touch public/lazarus-logo.svg or .env.local. Do not commit.
     - 1. lib/ui/form-model.ts: add kind "date" for xsdType "date" (leafKind), alongside "datetime". toArguments keeps the value as the YYYY-MM-DD string (the input's native value), drops it when empty, and rejects anything that is not a valid calendar date with a FormError naming the field. Keep "datetime" behaviour unchanged.
     - 2. components/CommuneForm.tsx: render kind "date" as <input type="date"> (native calendar picker), with the same label, required mark and error wiring as the other fields. Check the date value passes buildZodSchema for xsd:date as the gateway expects it (look at lib/soap/schema-generator.ts and lib/safety/ghost.ts, which already treat dates).

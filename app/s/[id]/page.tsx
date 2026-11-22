@@ -19,6 +19,7 @@ import { originFromHeaders } from "../../../lib/ui/origin";
 import {
   ServiceViewError,
   cleanServiceName,
+  displayName,
   toServiceView,
   type ServiceView,
   type SpiritView,
@@ -39,7 +40,7 @@ export async function generateMetadata({ params }: PageProps<"/s/[id]">): Promis
   if (loaded.value === null) return { title: "Lazarus", robots: { index: false, follow: false } };
   const name = cleanServiceName(loaded.value.name);
   if (name === "") return { title: "Lazarus" };
-  const title = `${name} spirit`;
+  const title = `${displayName(name)} spirit`;
   return {
     title,
     openGraph: { type: "website", siteName: "Lazarus", title: `${title} | Lazarus`, images: [SOCIAL_IMAGE] },
@@ -132,7 +133,7 @@ function ServiceDetails({ view, serviceId, isDemo }: { view: ServiceView; servic
   return (
     <GhostShell serviceId={serviceId}>
       <header className="space-y-2">
-        <h1 className="font-display text-3xl leading-tight text-text sm:text-4xl">{view.name}</h1>
+        <h1 className="font-display text-3xl leading-tight text-text sm:text-4xl">{displayName(view.name)}</h1>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
           <p className="text-muted">{count}</p>
           <Heartbeat />

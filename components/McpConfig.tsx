@@ -73,9 +73,7 @@ export function McpConfig({
     { id: "cli", label: "Claude Code command", value: cliCommand, multiline: false },
   ];
 
-  return (
-    <div className="space-y-4">
-      {blocks.map((block) => (
+  const renderBlock = (block: Block) => (
         <div key={block.id} className="min-w-0 space-y-2">
           <div className="flex items-center justify-between gap-3">
             <p id={`mcp-${block.id}-label`} className="text-sm font-medium text-text">
@@ -101,7 +99,17 @@ export function McpConfig({
             </code>
           </pre>
         </div>
-      ))}
+  );
+
+  return (
+    <div className="space-y-4">
+      {renderBlock(blocks[0])}
+      <details className="group rounded-md border border-border">
+        <summary className="cursor-pointer rounded-md p-3 text-sm font-medium text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-candle">
+          Connect an agent
+        </summary>
+        <div className="space-y-4 border-t border-border p-3">{blocks.slice(1).map(renderBlock)}</div>
+      </details>
       <p role="status" aria-live="polite" className="min-h-5 text-sm text-spectral">
         {message}
       </p>

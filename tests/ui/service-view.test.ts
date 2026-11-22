@@ -1,8 +1,10 @@
+import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import type { OperationSchema, ServiceDefinition } from "../../lib/soap/types";
 import {
   ServiceViewError,
   cleanServiceName,
+  displayName,
   slugify,
   toServiceView,
 } from "../../lib/ui/service-view";
@@ -197,5 +199,30 @@ describe("toServiceView commune data", () => {
     const view = toServiceView(def([{ name: "P", operations: [op("A", { inputDescriptor: [hostile] })] }]), ORIGIN);
     expect(JSON.stringify(view.spirits[0].inputDescriptor)).not.toMatch(/secret|extra/);
     expect(view.spirits[0].inputDescriptor[0].children?.[0].name).toBe("inner");
+  });
+});
+
+describe("displayName", () => {
+  it.each([
+    ["GravewoodBank", "Gravewood Bank"],
+    ["CountryInfoService", "Country Info Service"],
+    ["SOAPService", "SOAP Service"],
+    ["calculator", "calculator"],
+    ["Calculator", "Calculator"],
+    ["Service2Go", "Service2 Go"],
+    ["Already Spaced", "Already Spaced"],
+  ])("%s -> %s", (input, expected) => {
+    expect(displayName(input)).toBe(expected);
+  });
+
+  it("never returns empty for non-empty input and only adds spaces", () => {
+    fc.assert(
+      fc.property(fc.string({ minLength: 1 }), (input) => {
+        const out = displayName(input);
+        expect(out.length).toBeGreaterThan(0);
+        expect(out.replace(/ /g, "")).toBe(input.replace(/ /g, ""));
+        expect(out.length).toBeGreaterThanOrEqual(input.length);
+      }),
+    );
   });
 });

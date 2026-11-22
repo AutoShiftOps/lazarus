@@ -7,7 +7,7 @@ import type { FieldDescriptor } from "../soap/types";
 
 export type FormField =
   | {
-      kind: "text" | "number" | "boolean" | "datetime";
+      kind: "text" | "number" | "boolean" | "datetime" | "date";
       name: string;
       required: boolean;
       nillable: boolean;
@@ -37,10 +37,11 @@ function isList(d: FieldDescriptor): boolean {
   return d.maxOccurs === "unbounded" || d.maxOccurs > 1;
 }
 
-function leafKind(xsdType: string): "text" | "number" | "boolean" | "datetime" {
+function leafKind(xsdType: string): "text" | "number" | "boolean" | "datetime" | "date" {
   if (INTEGER_TYPES.has(xsdType) || NUMBER_TYPES.has(xsdType)) return "number";
   if (xsdType === "boolean") return "boolean";
   if (xsdType === "dateTime") return "datetime";
+  if (xsdType === "date") return "date";
   return "text";
 }
 
@@ -80,6 +81,19 @@ function convertListText(field: FormField, raw: unknown, path: string): unknown 
   return parsed;
 }
 
+const DATE_VALUE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** True for a real calendar date written as YYYY-MM-DD (rejects 2025-02-30). */
+function isCalendarDate(text: string): boolean {
+  const m = DATE_VALUE.exec(text);
+  if (m === null) return false;
+  const [year, month, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  if (year < 1 || month < 1 || month > 12 || day < 1) return false;
+  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  const daysInMonth = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  return day <= (daysInMonth ?? 0);
+}
+
 function convertLeaf(field: FormField, raw: unknown, path: string): unknown {
   switch (field.kind) {
     case "number": {
@@ -98,6 +112,14 @@ function convertLeaf(field: FormField, raw: unknown, path: string): unknown {
       if (raw === "true") return true;
       if (raw === "false") return false;
       return DROP;
+    }
+    case "date": {
+      const text = typeof raw === "string" ? raw.trim() : "";
+      if (text === "") return DROP;
+      if (!isCalendarDate(text)) {
+        throw new FormError(path, "Must be a valid date in the form YYYY-MM-DD.");
+      }
+      return text;
     }
     default: {
       if (typeof raw !== "string") return DROP;

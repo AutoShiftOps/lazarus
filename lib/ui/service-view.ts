@@ -80,6 +80,16 @@ export function cleanServiceName(name: unknown): string {
   return sanitizeText(name, MAX_SERVICE_NAME_CHARS);
 }
 
+/**
+ * Readable form of a service name: splits camelCase and PascalCase boundaries into words
+ * and keeps acronym runs together ("SOAPService" becomes "SOAP Service"). Only adds spaces.
+ */
+export function displayName(name: string): string {
+  return name
+    .replace(/(\p{Ll}|\p{N})(?=\p{Lu})/gu, "$1 ")
+    .replace(/(\p{Lu})(?=\p{Lu}\p{Ll})/gu, "$1 ");
+}
+
 function describeOperation(name: string, documentation: unknown): string {
   const doc = sanitizeText(documentation, MAX_DESCRIPTION_CHARS);
   if (doc !== "") return doc;

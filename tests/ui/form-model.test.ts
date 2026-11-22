@@ -7,7 +7,7 @@ import type { FieldDescriptor } from "../../lib/soap/types";
 import { FormError, toArguments, toFormModel } from "../../lib/ui/form-model";
 
 const NAMES = ["a", "b", "c", "d", "e", "f"] as const;
-const LEAF_TYPES = ["string", "int", "double", "boolean", "dateTime"] as const;
+const LEAF_TYPES = ["string", "int", "double", "boolean", "dateTime", "date"] as const;
 const MAX_DEPTH = 3;
 const MAX_LIST_ITEMS = 3;
 
@@ -56,8 +56,14 @@ const isoDate = fc
   .integer({ min: 0, max: 4_000_000_000_000 })
   .map((ms) => new Date(ms).toISOString());
 
+const plainDate = fc
+  .integer({ min: 0, max: 4_000_000_000_000 })
+  .map((ms) => new Date(ms).toISOString().slice(0, 10));
+
 function leafJson(xsdType: string): fc.Arbitrary<unknown> {
   switch (xsdType) {
+    case "date":
+      return plainDate;
     case "int":
       return fc.integer();
     case "double":
@@ -195,6 +201,37 @@ describe("toArguments list JSON errors", () => {
 
   it("parses a valid JSON array", () => {
     expect(toArguments(toFormModel(listDesc), { ids: "[1, 2]" })).toEqual({ ids: [1, 2] });
+  });
+});
+
+describe("toArguments date fields", () => {
+  const desc = [field("born", "date"), field("seen", "date", { minOccurs: 0 })];
+
+  it("maps xsd:date to the date kind and keeps datetime unchanged", () => {
+    expect(toFormModel([field("d", "date"), field("t", "dateTime")]).map((f) => f.kind)).toEqual([
+      "date",
+      "datetime",
+    ]);
+  });
+
+  it("keeps a valid date as the YYYY-MM-DD string", () => {
+    const args = toArguments(toFormModel(desc), { born: "2024-02-29" });
+    expect(args).toEqual({ born: "2024-02-29" });
+    expect(buildZodSchema(desc).safeParse(args).success).toBe(true);
+  });
+
+  it("drops an empty optional date", () => {
+    expect(toArguments(toFormModel(desc), { born: "2000-01-01", seen: "" })).toEqual({
+      born: "2000-01-01",
+    });
+  });
+
+  it("throws FormError naming the field for an invalid date", () => {
+    for (const bad of ["2025-02-30", "2023-02-29", "2025-13-01", "01/02/2025", "abc"]) {
+      const err = catchError(() => toArguments(toFormModel(desc), { born: "2000-01-01", seen: bad }));
+      expect(err).toBeInstanceOf(FormError);
+      expect((err as FormError).field).toBe("seen");
+    }
   });
 });
 

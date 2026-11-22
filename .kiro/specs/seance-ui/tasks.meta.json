@@ -2,7 +2,7 @@
   "pbtResults": {
     "2.4 Property test 31": {
       "status": "passed",
-      "lastRunTimestamp": 1795189356141
+      "lastRunTimestamp": 1795376849285
     },
     "2.6 Property test 32": {
       "status": "passed",
@@ -480,6 +480,25 @@
         "executionId": "72c51201-7c96-4054-830d-fe4b3c929e9d",
         "chatSessionId": "sess_9617e444-55da-487d-b23b-05a2bdaf31a1",
         "timestamp": 1795365374075
+      }
+    ],
+    "7.3 Date picker for xsd:date fields in the commune form": [
+      {
+        "executionId": "27a587a4-e02f-4073-b443-ab432f9b3cf1",
+        "chatSessionId": "sess_64e2b6d0-563e-4f0b-9bc3-f3894aeba410",
+        "timestamp": 1795376710389
+      },
+      {
+        "executionId": "27a587a4-e02f-4073-b443-ab432f9b3cf1",
+        "chatSessionId": "sess_64e2b6d0-563e-4f0b-9bc3-f3894aeba410",
+        "timestamp": 1795377016090
+      }
+    ],
+    "4.11 Service page spacing and readable service name": [
+      {
+        "executionId": "546e190c-ccb5-4281-b7c4-62b4f1d02903",
+        "chatSessionId": "sess_a5e71fe5-8832-4c94-8cc8-0eb5fea52d91",
+        "timestamp": 1795377047741
       }
     ]
   }

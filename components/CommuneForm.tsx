@@ -138,6 +138,7 @@ function formatJson(data: unknown): string {
 function inputType(kind: FormField["kind"]): string {
   if (kind === "number") return "number";
   if (kind === "datetime") return "datetime-local";
+  if (kind === "date") return "date";
   return "text";
 }
 

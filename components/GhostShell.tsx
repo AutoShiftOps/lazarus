@@ -75,7 +75,7 @@ export function GhostShell({ serviceId, children }: { serviceId: string; childre
 
   return (
     <GhostContext.Provider value={{ ghost, token, busy, error, toggle }}>
-      <div className={`ghost-shell space-y-10${ghost === true ? " ghost-tint" : ""}`}>
+      <div className={`ghost-shell space-y-12${ghost === true ? " ghost-tint" : ""}`}>
         {ghost === true ? (
           <p
             role="status"

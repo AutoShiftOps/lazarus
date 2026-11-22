@@ -47,6 +47,18 @@ afterEach(() => cleanup());
 const submit = () => fireEvent.click(screen.getByRole("button", { name: "Commune" }));
 
 describe("CommuneForm", () => {
+  it("renders an xsd:date field as a native date input and sends the value", async () => {
+    const m = mockFetch([respond(toolResult({}))]);
+    render(<CommuneForm serviceId={SID} toolName="Book" inputDescriptor={[f("when", "date")]} fetchImpl={m.fetch} />);
+    const input = screen.getByLabelText(/^when/);
+    expect(input).toHaveAttribute("type", "date");
+    expect(input).toHaveAttribute("aria-required", "true");
+    fireEvent.change(input, { target: { value: "2025-03-14" } });
+    submit();
+    await waitFor(() => expect(m.sent).toHaveLength(1));
+    expect(JSON.stringify(m.sent[0])).toContain("2025-03-14");
+  });
+
   it("shows a required error next to the field and sends nothing", async () => {
     const m = mockFetch([respond(toolResult({}))]);
     render(<CommuneForm serviceId={SID} toolName="Add" inputDescriptor={[f("a", "int")]} fetchImpl={m.fetch} />);
