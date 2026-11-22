@@ -123,6 +123,13 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
     - 4. CommuneForm shows the blocked reason as text with clear blocked styling.
     - Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
     - _Requirements: 4.4_
+  - [ ] 7.3 Date picker for xsd:date fields in the commune form
+    - Do not touch public/lazarus-logo.svg or .env.local. Do not commit.
+    - 1. lib/ui/form-model.ts: add kind "date" for xsdType "date" (leafKind), alongside "datetime". toArguments keeps the value as the YYYY-MM-DD string (the input's native value), drops it when empty, and rejects anything that is not a valid calendar date with a FormError naming the field. Keep "datetime" behaviour unchanged.
+    - 2. components/CommuneForm.tsx: render kind "date" as <input type="date"> (native calendar picker), with the same label, required mark and error wiring as the other fields. Check the date value passes buildZodSchema for xsd:date as the gateway expects it (look at lib/soap/schema-generator.ts and lib/safety/ghost.ts, which already treat dates).
+    - 3. Property 31 must still hold: extend the form-model value generator with date fields. Add tests for date fields (valid date, empty optional dropped, invalid date error) and a CommuneForm test that a date field renders type="date".
+    - Run npm test, npx tsc --noEmit, npm run lint, npm run build; report exact totals; then git checkout -- next-env.d.ts.
+    - _Requirements: 4.1_
 - [x] 8. Transcript
   - [x] 8.1 `TranscriptPanel` with expandable four-step view and `aria-live`
     - _Requirements: 5.1â€“5.6_
