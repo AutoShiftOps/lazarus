@@ -14,6 +14,7 @@ import { TranscriptPanel } from "../../../components/TranscriptPanel";
 import { isDemoService } from "../../../lib/auth/owner";
 import { SpiritCard } from "../../../components/SpiritCard";
 import { isServiceId, registry } from "../../../lib/registry";
+import { SOCIAL_IMAGE } from "../../../lib/site-url";
 import { originFromHeaders } from "../../../lib/ui/origin";
 import {
   ServiceViewError,
@@ -37,7 +38,13 @@ export async function generateMetadata({ params }: PageProps<"/s/[id]">): Promis
   if (!loaded.ok) return { title: "Lazarus" };
   if (loaded.value === null) return { title: "Lazarus", robots: { index: false, follow: false } };
   const name = cleanServiceName(loaded.value.name);
-  return { title: name === "" ? "Lazarus" : `${name} — raised by Lazarus` };
+  if (name === "") return { title: "Lazarus" };
+  const title = `${name} spirit`;
+  return {
+    title,
+    openGraph: { type: "website", siteName: "Lazarus", title: `${title} | Lazarus`, images: [SOCIAL_IMAGE] },
+    twitter: { card: "summary_large_image", title: `${title} | Lazarus`, images: [{ url: SOCIAL_IMAGE.url, alt: SOCIAL_IMAGE.alt }] },
+  };
 }
 
 export default function ServicePage({ params }: PageProps<"/s/[id]">) {

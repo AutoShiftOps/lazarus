@@ -144,8 +144,8 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
   - [ ]* 10.3 (stretch) Add-rule form with destructive-allow warning and confirm checkbox
     - _Requirements: 7.4, 7.5_
 
-- [ ] 11. Metadata and assets
-  - [ ] 11.1 Open Graph/Twitter metadata using the thumbnail in `public/`
+- [x] 11. Metadata and assets
+  - [x] 11.1 Open Graph/Twitter metadata using the thumbnail in `public/`
     - _Requirements: 9.1_
 
 - [ ] 12. Checkpoint: all tests pass; ask the user if questions arise

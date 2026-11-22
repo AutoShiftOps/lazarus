@@ -164,4 +164,4 @@ Depends on: `summon`, `gravewood-bank`, `mcp-gateway` (APIs only; this spec adds
 #### Acceptance Criteria
 
 1. THE app SHALL set Open Graph and Twitter card metadata using `public/lazarus-thumbnail-1500x1000.png`.
-2. EACH Service_Page SHALL set a title of the form `<service name> — raised by Lazarus`.
+2. EACH Service_Page SHALL set a title of the form `<service name> spirit`.

@@ -48,6 +48,19 @@ export function gravewoodHost(): string | undefined {
   return GravewoodHostSchema.parse(process.env.LAZARUS_GRAVEWOOD_HOST);
 }
 
+export type SiteEnv = {
+  NEXT_PUBLIC_SITE_URL: string | undefined;
+  VERCEL_PROJECT_PRODUCTION_URL: string | undefined;
+};
+
+/** Site URL variables only (does not require Upstash variables). Read on every call. */
+export function siteEnv(): SiteEnv {
+  return {
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  };
+}
+
 export function getEnv(): Env {
   return EnvSchema.parse(process.env);
 }

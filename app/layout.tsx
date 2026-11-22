@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cinzel, Inter, JetBrains_Mono } from "next/font/google";
 import { Atmosphere } from "../components/Atmosphere";
 import { GhostCursor } from "../components/GhostCursor";
 import { LazarusMark } from "../components/LazarusMark";
 import { StillToggle } from "../components/StillToggle";
+import { SOCIAL_IMAGE, siteUrl } from "../lib/site-url";
 import { STILL_INIT_SCRIPT } from "../lib/ui/still-mode";
 import "./globals.css";
 
@@ -25,10 +26,38 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const DESCRIPTION =
+  "Paste a WSDL. Get a live MCP server with automatic risk judgement, human approval for dangerous calls, and a ghost mode. Built with Kiro.";
+const TITLE = "Lazarus: raise dead SOAP services as safe MCP servers";
+
 export const metadata: Metadata = {
-  title: "Lazarus — dead SOAP services, reborn as MCP tools",
-  description:
-    "Paste a WSDL URL and Lazarus raises the legacy SOAP service as a live MCP server that any AI agent can call.",
+  metadataBase: siteUrl(),
+  title: { default: TITLE, template: "%s | Lazarus" },
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "Lazarus",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [SOCIAL_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [{ url: SOCIAL_IMAGE.url, alt: SOCIAL_IMAGE.alt }],
+  },
+  icons: {
+    icon: [
+      { url: "/lazarus-logo.svg", type: "image/svg+xml" },
+      { url: "/lazarus-icon-1024.png", type: "image/png", sizes: "1024x1024" },
+    ],
+    apple: "/lazarus-icon-1024.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#14101c",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -462,6 +462,25 @@
         "chatSessionId": "sess_28c26827-87ae-48fc-b33f-62f97c43e86f",
         "timestamp": 1795364535399
       }
+    ],
+    "11.1 Open Graph/Twitter metadata using the thumbnail in `public/`": [
+      {
+        "executionId": "72c51201-7c96-4054-830d-fe4b3c929e9d",
+        "chatSessionId": "sess_9617e444-55da-487d-b23b-05a2bdaf31a1",
+        "timestamp": 1795365073400
+      },
+      {
+        "executionId": "72c51201-7c96-4054-830d-fe4b3c929e9d",
+        "chatSessionId": "sess_9617e444-55da-487d-b23b-05a2bdaf31a1",
+        "timestamp": 1795365373864
+      }
+    ],
+    "11. Metadata and assets": [
+      {
+        "executionId": "72c51201-7c96-4054-830d-fe4b3c929e9d",
+        "chatSessionId": "sess_9617e444-55da-487d-b23b-05a2bdaf31a1",
+        "timestamp": 1795365374075
+      }
     ]
   }
 }
