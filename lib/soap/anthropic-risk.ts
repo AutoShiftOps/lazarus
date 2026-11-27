@@ -39,7 +39,6 @@ export function buildRequestBody(model: string, input: ClassifyInput): Record<st
   return {
     model,
     max_tokens: MAX_TOKENS,
-    temperature: 0,
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: JSON.stringify(operations) }],
   };
