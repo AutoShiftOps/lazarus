@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { raiseDemo, summonWsdl, type SummonOutcome } from "../lib/ui/summon-client";
 import type { SummonStatus } from "../lib/ui/ritual-timing";
@@ -27,6 +27,16 @@ export function SummonForm() {
   const [status, setStatus] = useState<SummonStatus>("pending");
   const [error, setError] = useState("");
   const serviceId = useRef("");
+  
+  // Reset the ritual state when this page is left, so coming back (logo or Back button)
+  // shows a clean form instead of a replayed, stuck overlay.
+  useEffect(() => {
+    return () => {
+      setBusy(false);
+      setStatus("pending");
+      serviceId.current = "";
+    };
+  }, []);
 
   async function run(next: SummonKind): Promise<void> {
     if (busy) return;
