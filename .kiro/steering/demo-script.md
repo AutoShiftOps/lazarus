@@ -1,16 +1,16 @@
 ---
 inclusion: manual
 ---
-# Demo video script (under 3 minutes)
+# Demo outline (Gravewood Bank)
 
-Goal: a dead service answers an AI agent live within the first minute.
+Goal: a dead SOAP service answers an AI agent live, then a dangerous call is stopped until a human approves it.
 
-| Time | Beat | On screen |
-|---|---|---|
-| 0:00-0:20 | The problem | "Your company's most important systems still speak SOAP. Your AI agents can't." A wall of XML. |
-| 0:20-0:50 | Summon | Paste the CountryInfoService WSDL; operations rise as spirits. |
-| 0:50-1:30 | Commune | Paste the MCP snippet into Kiro. Ask Kiro "What's the capital and currency of Canada?" Kiro calls Lazarus; the Ouija transcript shows JSON -> XML -> JSON. |
-| 1:30-2:20 | Built with Kiro | Specs gating the design, a hook catching a failing test, steering keeping the UI on theme, Kiro using Lazarus via MCP. |
-| 2:20-3:00 | Why it matters | Enterprise SOAP estates (banking, SAP), what's next, repo link. |
+1. Raise the Gravewood Bank demo from the home page (the awakening ritual).
+2. Show the six spirits and their risk badges: Calm (read), Restless (write), Vengeful (destructive).
+3. Connect an MCP client with the one URL. A read call (GetBalance) goes straight through.
+4. A destructive call (CloseAccount) is held. A human holds the candle for two seconds, and it runs once.
+5. Ghost mode: dangerous calls are rehearsed and never sent. The real balance is unchanged.
+6. Argument-aware rule: "Hold transfers over 1000" lets 500 through and holds 2000.
+7. The Ouija transcript shows the JSON in, the SOAP request, the SOAP response and a summary.
 
-Rules: no copyrighted music; show the app working end to end; keep it under 2:55.
+Keep the video under 3 minutes, with no copyrighted music.
