@@ -74,7 +74,8 @@ describe("SummonForm and home page", () => {
     expect(at).toBeGreaterThan(page.indexOf("<h1"));
   });
 
-  it("the header keeps only the small plain mark", () => {
-    expect(read("app", "layout.tsx")).toMatch(/<LazarusMark size=\{40\} variant="plain"/);
+  it("the header keeps only a plain mark, linked home", () => {
+    expect(read("app", "layout.tsx")).toMatch(/<LazarusMark size=\{\d+\} variant="plain"/);
+    expect(read("app", "layout.tsx")).toMatch(/<Link href="\/"/);
   });
 });

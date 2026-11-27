@@ -61,10 +61,11 @@ describe("SpiritAwakening source", () => {
     expect(existsSync(join(process.cwd(), "public", "ritual", "ghost.png"))).toBe(true);
   });
 
-  it("composites with screen blend, a bottom mask and a 1600 ms stepped rise", () => {
+  it("composites with screen blend, a bottom mask and a smooth eased rise", () => {
     expect(awCss).toMatch(/\.aw-ghost-pos\s*\{[^}]*mix-blend-mode:\s*screen/);
     expect(awCss).toMatch(/\.aw-ghost-pos\s*\{[^}]*mask-image:\s*linear-gradient\([^)]*transparent 100%\)/);
-    expect(awCss).toMatch(/transition:\s*transform 1600ms[^;]*opacity 1600ms/);
+    expect(awCss).toMatch(/transition:\s*transform 2200ms cubic-bezier[^;]*,\s*opacity 1800ms ease-out/);
+    expect(awCss).not.toMatch(/\.aw-ghost\s*\{[^}]*steps\(/);
   });
 
   it("the old flame-with-eyes artwork is gone", () => {
