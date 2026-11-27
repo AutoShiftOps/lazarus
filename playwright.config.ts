@@ -3,6 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   timeout: 90_000,
+  // One worker: the demo endpoint is rate limited per IP.
+  workers: 1,
   use: {
     baseURL: "http://localhost:3000",
   },

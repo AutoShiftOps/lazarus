@@ -164,12 +164,12 @@ Delivery slices (each ends in something demoable): **A** = tasks 1.2, 2.1-2.2, 4
 
 - [ ] 12. Checkpoint: all tests pass; ask the user if questions arise
 
-- [ ] 13. End-to-end and accessibility
-  - [ ] 13.1 Playwright: full demo flow (call `CloseAccount`, see held, hold candle 2.2 s, see closed)
-  - [ ] 13.2 Playwright: 1 s hold releases nothing
-  - [ ] 13.3 Playwright: `axe` on Home and Service pages, zero serious/critical
+- [x] 13. End-to-end and accessibility
+  - [x] 13.1 Playwright: full demo flow (call `CloseAccount`, see held, hold candle 2.2 s, see closed)
+  - [x] 13.2 Playwright: 1 s hold releases nothing
+  - [x] 13.3 Playwright: `axe` on Home and Service pages, zero serious/critical
     - _Requirements: 8.5_
-  - [ ] 13.4 Playwright: 360 px viewport, no horizontal scroll
+  - [x] 13.4 Playwright: 360 px viewport, no horizontal scroll
     - _Requirements: 3.6_
 
 - [ ] 14. Final checkpoint

@@ -505,6 +505,46 @@
         "chatSessionId": "sess_a5e71fe5-8832-4c94-8cc8-0eb5fea52d91",
         "timestamp": 1795377355115
       }
+    ],
+    "13.1 Playwright: full demo flow (call `CloseAccount`, see held, hold candle 2.2 s, see closed)": [
+      {
+        "executionId": "20c6d6b2-42bb-40a0-846b-c3b7c3b72871",
+        "chatSessionId": "sess_4e2c448b-ff3f-4dd1-902c-d3bda7fab361",
+        "timestamp": 1795378920629
+      },
+      {
+        "executionId": "20c6d6b2-42bb-40a0-846b-c3b7c3b72871",
+        "chatSessionId": "sess_4e2c448b-ff3f-4dd1-902c-d3bda7fab361",
+        "timestamp": 1795450888701
+      }
+    ],
+    "13.2 Playwright: 1 s hold releases nothing": [
+      {
+        "executionId": "20c6d6b2-42bb-40a0-846b-c3b7c3b72871",
+        "chatSessionId": "sess_4e2c448b-ff3f-4dd1-902c-d3bda7fab361",
+        "timestamp": 1795450893630
+      }
+    ],
+    "13.3 Playwright: `axe` on Home and Service pages, zero serious/critical": [
+      {
+        "executionId": "20c6d6b2-42bb-40a0-846b-c3b7c3b72871",
+        "chatSessionId": "sess_4e2c448b-ff3f-4dd1-902c-d3bda7fab361",
+        "timestamp": 1795450895315
+      }
+    ],
+    "13.4 Playwright: 360 px viewport, no horizontal scroll": [
+      {
+        "executionId": "20c6d6b2-42bb-40a0-846b-c3b7c3b72871",
+        "chatSessionId": "sess_4e2c448b-ff3f-4dd1-902c-d3bda7fab361",
+        "timestamp": 1795450904822
+      }
+    ],
+    "13. End-to-end and accessibility": [
+      {
+        "executionId": "20c6d6b2-42bb-40a0-846b-c3b7c3b72871",
+        "chatSessionId": "sess_4e2c448b-ff3f-4dd1-902c-d3bda7fab361",
+        "timestamp": 1795450905976
+      }
     ]
   }
 }
