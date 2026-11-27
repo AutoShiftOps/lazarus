@@ -611,13 +611,13 @@ summary,
   object-fit: contain;
 }
 
-/* Rise: slow and slightly jerky (stepped), from below the mound. Transform and opacity only. */
+/* Rise: slow and smooth, easing out as it clears the mound. Transform and opacity only. */
 .aw-ghost {
   opacity: 0;
   transform: translateY(18%) scale(0.94);
   transition:
-    transform 1600ms steps(8, end),
-    opacity 1600ms steps(8, end);
+    transform 2200ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 1800ms ease-out;
 }
 
 .awakening[data-phase="awake"] .aw-ghost {
