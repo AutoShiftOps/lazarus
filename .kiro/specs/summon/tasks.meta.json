@@ -505,6 +505,18 @@
         "chatSessionId": "sess_f0a63460-260f-46e6-98bd-d6801a565a52",
         "timestamp": 1794928080139
       }
+    ],
+    "15.5 Anthropic risk adapter (replaces Bedrock; optional)": [
+      {
+        "executionId": "1a4c4090-2006-4e3c-b115-18bd954554ad",
+        "chatSessionId": "sess_7c59a61a-b0a5-4e9e-97a9-2eec2932e286",
+        "timestamp": 1795747618851
+      },
+      {
+        "executionId": "1a4c4090-2006-4e3c-b115-18bd954554ad",
+        "chatSessionId": "sess_7c59a61a-b0a5-4e9e-97a9-2eec2932e286",
+        "timestamp": 1795748468808
+      }
     ]
   }
 }

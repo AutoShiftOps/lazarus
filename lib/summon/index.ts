@@ -8,6 +8,9 @@ import { generateSchemas } from "../soap/schema-generator";
 import { upsertService } from "../registry";
 import { classifyOperations } from "../soap/risk";
 import { generateOwnerToken } from "../owner-token";
+import { createAnthropicRisk } from "../soap/anthropic-risk";
+import { anthropicEnv } from "../env";
+import { isDemoService } from "../auth/owner";
 import type {
   BindingStyle,
   Risk,
@@ -44,7 +47,7 @@ export type SummonDeps = {
   parseWsdl: (xml: string, deps?: { baseUrl?: string }) => Promise<ParseOutcome>;
   generateSchemas: (service: ServiceDefinition) => Map<string, OperationSchema>;
   upsertService: (def: ServiceDefinition) => Promise<UpsertOutcome>;
-  classifyOperations: (ops: OperationSchema[]) => Promise<OperationSchema[]>;
+  classifyOperations: (ops: OperationSchema[], ctx?: { wsdlUrl: string }) => Promise<OperationSchema[]>;
   generateOwnerToken: () => Promise<{ token: string; hash: string }>;
 };
 
@@ -53,8 +56,14 @@ const defaultDeps: SummonDeps = {
   parseWsdl,
   generateSchemas,
   upsertService,
-  // Heuristic only. The Bedrock adapter is wired in a later task.
-  classifyOperations: (ops) => classifyOperations(ops),
+  // Anthropic model only when configured; never for the Gravewood demo service.
+  classifyOperations: (ops, ctx) => {
+    const model =
+      ctx !== undefined && isDemoService({ wsdlUrl: ctx.wsdlUrl })
+        ? undefined
+        : createAnthropicRisk(anthropicEnv());
+    return classifyOperations(ops, model === undefined ? {} : { bedrock: model });
+  },
   generateOwnerToken,
 };
 
@@ -205,7 +214,7 @@ export async function summon(
     }));
     const ports: ServicePort[] = [];
     for (const port of swapped) {
-      ports.push({ ...port, operations: await d.classifyOperations(port.operations) });
+      ports.push({ ...port, operations: await d.classifyOperations(port.operations, { wsdlUrl }) });
     }
     // Generated before upsert; only returned to the caller when the service is newly created.
     const { token, hash } = await d.generateOwnerToken();

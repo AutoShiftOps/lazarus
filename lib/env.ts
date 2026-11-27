@@ -48,6 +48,38 @@ export function gravewoodHost(): string | undefined {
   return GravewoodHostSchema.parse(process.env.LAZARUS_GRAVEWOOD_HOST);
 }
 
+export const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-5-5";
+
+const AnthropicEnvSchema = z.object({
+  ANTHROPIC_API_KEY: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const s = v?.trim();
+      return s ? s : undefined;
+    }),
+  ANTHROPIC_MODEL: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const s = v?.trim();
+      return s ? s : DEFAULT_ANTHROPIC_MODEL;
+    }),
+});
+
+export type AnthropicEnv = z.output<typeof AnthropicEnvSchema>;
+
+/**
+ * Optional Anthropic risk-model settings (does not require Upstash variables).
+ * Read on every call. Never log or echo the key.
+ */
+export function anthropicEnv(): AnthropicEnv {
+  return AnthropicEnvSchema.parse({
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL,
+  });
+}
+
 export type SiteEnv = {
   NEXT_PUBLIC_SITE_URL: string | undefined;
   VERCEL_PROJECT_PRODUCTION_URL: string | undefined;

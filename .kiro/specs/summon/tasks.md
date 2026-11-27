@@ -246,6 +246,13 @@ Build the full "summon" pipeline: install dependencies, define shared types, imp
     - **Property 27**: a destructive token always yields destructive
     - Minimum 100 iterations each
     - **Validates: Requirements 11.3, 11.8**
+  - [x] 15.5 Anthropic risk adapter (replaces Bedrock; optional)
+    - Add `lib/soap/anthropic-risk.ts` exporting `createAnthropicRisk(env)` that implements `BedrockLike` using `fetch` to `https://api.anthropic.com/v1/messages` (no new dependency); returns `undefined` when `ANTHROPIC_API_KEY` is unset
+    - Add optional `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` (default `claude-haiku-5-5`) to `lib/env.ts`; never log or echo the key
+    - Send only operation names, documentation and field names; never call arguments, URLs or secrets; ask for a JSON array of `{name, risk, reason}`
+    - Wire into `lib/summon/index.ts` default `classifyOperations` so it is used when configured; skip it for the Gravewood demo service
+    - Tests with a mocked `fetch`: invalid JSON, HTTP error, timeout and missing key fall back to `riskSource: "heuristic"`; a response that lowers risk is ignored (existing Property 25 must still pass); the request body contains no field values
+    - _Requirements: 11.3, 11.5, 11.8_
 
 - [x] 16. Owner token
   - [x] 16.1 `upsertService` reports `created: boolean`; the route generates a 32-byte base64url token on create only, stores its SHA-256 hash, and returns it once
