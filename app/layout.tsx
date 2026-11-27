@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata, Viewport } from "next";
 import { Cinzel, Inter, JetBrains_Mono } from "next/font/google";
 import { Atmosphere } from "../components/Atmosphere";
@@ -81,10 +82,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <GhostCursor />
         <header className="relative z-10 border-b border-border">
           <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-4 sm:px-6">
-            <LazarusMark size={40} variant="plain" className="shrink-0" />
-            <span className="relative z-10 font-display text-2xl tracking-wide text-text">
-              Lazarus
-            </span>
+            <Link href="/" className="-ml-1 flex items-center gap-2 rounded-md hover:text-candle focus-visible:outline-2 focus-visible:outline-candle" aria-label="Lazarus, home">
+              <LazarusMark size={48} variant="plain" className="shrink-0" />
+              <span className="relative z-10 font-display text-3xl tracking-wide text-text">
+                Lazarus
+              </span>
+            </Link>
             <StillToggle />
           </div>
         </header>
